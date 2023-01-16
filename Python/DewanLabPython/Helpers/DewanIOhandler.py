@@ -63,3 +63,9 @@ def get_video_base(data_directory: os.path) -> str:
 def get_video_paths(video_base: str, video_directory: os.path) -> list:
     video_files = glob.glob(os.path.join(video_directory, '*.isxd'))
     return video_files
+
+def check_files(file_list: list):
+    for files in file_list:
+        if not os.path.exists(files) or not os.path.getsize(files) > 2048:
+            return False
+    return True
