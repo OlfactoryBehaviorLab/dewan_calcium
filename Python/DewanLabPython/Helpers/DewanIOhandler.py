@@ -1,3 +1,4 @@
+import glob
 import os
 import pickle
 
@@ -50,3 +51,15 @@ def generateFolderPath(*Folders) -> os.path:
         path = os.path.join(path, folder)
 
     return path
+
+
+def get_video_base(data_directory: os.path) -> str:
+    gpio_file_path = glob.glob(os.path.join(data_directory, '*.gpio'))[0]
+    gpio_file_name = os.path.basename(gpio_file_path)
+    video_base = gpio_file_name[:-5]
+
+    return video_base
+
+def get_video_paths(video_base: str, video_directory: os.path) -> list:
+    video_files = glob.glob(os.path.join(video_directory, '*.isxd'))
+    return video_files
