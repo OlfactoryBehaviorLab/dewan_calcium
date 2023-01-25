@@ -61,8 +61,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         ## I tried importing baseline_start_idx from DewanAuroc up top, not sure if that works properly yet
 
-        ##plt.axvline(x=timearray?(baseline_start_idx), linewidth = 2, color = 'r')   Not sure which variable to index by baseline_start_idx
-        ##plt.axvline(x=timearray?(response_start_idx), linewidth = 2, color = 'g')
+
 
 
         y_min = []
@@ -79,6 +78,12 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
             max_val = np.max(data2plot)
             y_max.append(max_val)
             ax1.plot(x_vals, data2plot, linewidth=0.5)
+            plt.axvline(x_vals[inputData.baseline_start_indexes], linewidth=2, color='r')  # Not sure which variable to index by baseline_start_idx
+            plt.axvline(x_vals[inputData.evoked_start_indexes], linewidth=2, color='g')
+            plt.axvline(x_vals[inputData.baseline_end_indexes], linewidth=2, color='r')  # Not sure which variable to index by baseline_start_idx
+            plt.axvline(x_vals[inputData.evoked_end_indexes], linewidth=2, color='g')
+
+
 
         data4average = np.mean(data4average, axis=0)
         ax1.plot(x_vals, data4average, "k", linewidth=1.5)

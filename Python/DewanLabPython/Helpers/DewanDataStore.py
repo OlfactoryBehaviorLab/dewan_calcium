@@ -71,7 +71,8 @@ class AUROCdataStore(DataStore):
 class PlottingDataStore(AUROCdataStore):
     def __init__(self, Data, CellList, OdorData, FVData, fileHeader,
                  FVTimeMap, FVonIdx, UnixTimeArray, baselineDuration, responseDuration,
-                 AUROCValueTable, lower_bounds, upper_bounds, percentiles):
+                 AUROCValueTable, lower_bounds, upper_bounds, percentiles, baseline_start_indexes, baseline_end_indexes,
+                 evoked_start_indexes, evoked_end_indexes):
         super().__init__(Data, CellList, OdorData, FVData, fileHeader, FVonIdx, UnixTimeArray,
                          baselineDuration, responseDuration, False)
 
@@ -82,14 +83,17 @@ class PlottingDataStore(AUROCdataStore):
         self.lower_bounds = lower_bounds
         self.upper_bounds = upper_bounds
         self.percentiles = percentiles
+        self.baseline_start_indexes = baseline_start_indexes
+        self.baseline_end_indexes = baseline_end_indexes
+        self.evoked_start_indexes = evoked_start_indexes
+        self.evoked_end_indexes = evoked_end_indexes
 
     def makeCopy(self):
-        copy = PlottingDataStore(self.Data, self.Cell_List, self.Odor_Data,
-                                 self.FV_Data, self.file_header, self.FV_time_map, self.FV_on_index,
-                                 self.unix_time_array, self.baseline_duration,
+        copy = PlottingDataStore(self.Data, self.Cell_List, self.Odor_Data, self.FV_Data, self.file_header,
+                                 self.FV_time_map, self.FV_on_index, self.unix_time_array, self.baseline_duration,
                                  self.response_duration, self.significance_table, self.lower_bounds,
-                                 self.upper_bounds,
-                                 self.percentiles)
+                                 self.upper_bounds, self.percentiles, self.baseline_start_indexes,
+                                 self.baseline_end_indexes, self.evoked_start_indexes, self.evoked_end_indexes)
 
         return copy
 
