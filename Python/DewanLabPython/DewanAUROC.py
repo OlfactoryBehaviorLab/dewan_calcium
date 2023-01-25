@@ -23,9 +23,14 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
-def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, latentCellsOnly: bool = False) -> tuple:
+def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: DewanDataStore.AUROCReturn,
+                       latentCellsOnly: bool = False) -> tuple:
     baseline_data = []
     evoked_data = []
+    baseline_start_indexes = []
+    baseline_end_indexes = []
+    evoked_start_indexes = []
+    evoked_end_indexes = []
 
     for trial in dataInput.current_odor_trials:
 
@@ -39,14 +44,24 @@ def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, latentCellsOnly
         baseline_data.append(trial_data[baseline_start_index: baseline_end_index])
 
         if latentCellsOnly:
-            response_start_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
-            response_end_index = len(np.nonzero(time_array < (time_array[response_start_index]
+            evoked_start_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
+            evoked_end_index = len(np.nonzero(time_array < (time_array[evoked_start_index]
                                                               + dataInput.response_duration))[0])
         else:
-            response_start_index = fv_on_index
-            response_end_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
+            evoked_start_index = fv_on_index
+            evoked_end_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
 
-        evoked_data.append(trial_data[response_start_index: response_end_index])
+        evoked_data.append(trial_data[evoked_start_index: evoked_end_index])
+
+        baseline_start_indexes.append(baseline_start_index)
+        baseline_end_indexes.append(baseline_end_index)
+        evoked_start_indexes.append(evoked_start_index)
+        evoked_end_indexes.append(evoked_end_index)
+
+    returnValues.baseline_start_indexes.append(baseline_start_indexes)
+    returnValues.baseline_end_indexes.append(baseline_end_indexes)
+    returnValues.evoked_start_indexes.append(evoked_start_indexes)
+    returnValues.evoked_end_indexes.append(evoked_end_indexes)
 
     return baseline_data, evoked_data
 
@@ -106,7 +121,7 @@ def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: 
 
         data_input.update_odor(odor_iterator)
 
-        baseline_data, evoked_data = collect_trial_data(data_input, latentCellsOnly)
+        baseline_data, evoked_data = collect_trial_data(data_input, return_values, latentCellsOnly)
         baseline_means, evoked_means = averageTrialData(baseline_data, evoked_data)
 
         max_baseline_val = max(baseline_means)

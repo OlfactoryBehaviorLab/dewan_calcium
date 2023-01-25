@@ -17,7 +17,7 @@ from multiprocessing import Pool
 from .Helpers import DewanIOhandler
 from .Helpers import DewanDataStore
 from . import DewanAUROC
-
+#from DewanAUROC import baseline_start_idx
 
 # noinspection DuplicatedCode
 
@@ -58,6 +58,12 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         plt.suptitle(f'Cell:{cell_name} Odor:{odor_name}', fontsize=14)
         ax1.set_title('Cell Traces', fontsize=10)
         ax1.set(xlabel="Time ((s) since FV On)", ylabel="Signal")
+
+        ## I tried importing baseline_start_idx from DewanAuroc up top, not sure if that works properly yet
+
+        ##plt.axvline(x=timearray?(baseline_start_idx), linewidth = 2, color = 'r')   Not sure which variable to index by baseline_start_idx
+        ##plt.axvline(x=timearray?(response_start_idx), linewidth = 2, color = 'g')
+
 
         y_min = []
         y_max = []

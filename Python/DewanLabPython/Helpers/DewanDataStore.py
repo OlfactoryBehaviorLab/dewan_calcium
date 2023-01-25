@@ -101,3 +101,7 @@ class AUROCReturn(object):
         self.all_lower_bounds = []
         self.all_upper_bounds = []
         self.percentiles = []
+        self.baseline_start_indexes = []
+        self.baseline_end_indexes = []
+        self.evoked_start_indexes = []
+        self.evoked_end_indexes = []
