@@ -4,16 +4,16 @@ import pickle
 
 
 def createProjectFramework() -> None:
-    paths = ['./RawData/',
-             './PreProcessedData',
-             './AUROCImports',
-             './AUROCData',
-             './CombinedData',
-             './Figures/AUROCPlots/LatentCells',
-             './Figures/AUROCPlots/OnTimeCells',
-             './Figures/AllCellTracePlots/LatentCells',
+    paths = ['./ImagingAnalysis/RawData/',
+             './ImagingAnalysis/PreProcessedData',
+             './ImagingAnalysis/AUROCImports',
+             './ImagingAnalysis/AUROCData',
+             './ImagingAnalysis/CombinedData',
+             './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
+             './/Figures/AUROCPlots/OnTimeCells',
+             './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
              './Figures/AllCellTracePlots/OnTimeCells',
-             './Figures/TrialVariancePlots/OnTimeCells',
+             './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
              './Figures/TrialVariancePlots/LatentCells',
              ]
 

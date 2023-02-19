@@ -23,7 +23,7 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
-def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: DewanDataStore.AUROCReturn,
+def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: DewanDataStore.AUROCReturn = None,
                        latentCellsOnly: bool = False) -> tuple:
     baseline_data = []
     evoked_data = []
@@ -58,10 +58,11 @@ def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: D
         evoked_start_indexes.append(evoked_start_index)
         evoked_end_indexes.append(evoked_end_index)
 
-    returnValues.baseline_start_indexes.append(baseline_start_indexes)
-    returnValues.baseline_end_indexes.append(baseline_end_indexes)
-    returnValues.evoked_start_indexes.append(evoked_start_indexes)
-    returnValues.evoked_end_indexes.append(evoked_end_indexes)
+    if returnValues is not None:
+        returnValues.baseline_start_indexes.append(baseline_start_indexes)
+        returnValues.baseline_end_indexes.append(baseline_end_indexes)
+        returnValues.evoked_start_indexes.append(evoked_start_indexes)
+        returnValues.evoked_end_indexes.append(evoked_end_indexes)
 
     return baseline_data, evoked_data
 

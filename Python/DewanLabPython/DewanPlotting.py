@@ -17,7 +17,7 @@ from multiprocessing import Pool
 from .Helpers import DewanIOhandler
 from .Helpers import DewanDataStore
 from . import DewanAUROC
-#from DewanAUROC import baseline_start_idx
+
 
 # noinspection DuplicatedCode
 
@@ -59,11 +59,6 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         ax1.set_title('Cell Traces', fontsize=10)
         ax1.set(xlabel="Time ((s) since FV On)", ylabel="Signal")
 
-        ## I tried importing baseline_start_idx from DewanAuroc up top, not sure if that works properly yet
-
-
-
-
         y_min = []
         y_max = []
         data4average = []
@@ -78,12 +73,12 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
             max_val = np.max(data2plot)
             y_max.append(max_val)
             ax1.plot(x_vals, data2plot, linewidth=0.5)
-            plt.axvline(x_vals[inputData.baseline_start_indexes], linewidth=2, color='r')  # Not sure which variable to index by baseline_start_idx
-            plt.axvline(x_vals[inputData.evoked_start_indexes], linewidth=2, color='g')
-            plt.axvline(x_vals[inputData.baseline_end_indexes], linewidth=2, color='r')  # Not sure which variable to index by baseline_start_idx
-            plt.axvline(x_vals[inputData.evoked_end_indexes], linewidth=2, color='g')
-
-
+            # plt.axvline(x_vals[inputData.baseline_start_indexes], linewidth=2,
+            #             color='r')  # Not sure which variable to index by baseline_start_idx
+            # plt.axvline(x_vals[inputData.evoked_start_indexes], linewidth=2, color='g')
+            # plt.axvline(x_vals[inputData.baseline_end_indexes], linewidth=2,
+            #             color='r')  # Not sure which variable to index by baseline_start_idx
+            # plt.axvline(x_vals[inputData.evoked_end_indexes], linewidth=2, color='g')
 
         data4average = np.mean(data4average, axis=0)
         ax1.plot(x_vals, data4average, "k", linewidth=1.5)
@@ -107,13 +102,30 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
 
-        fv_rectangle = mpatches.Rectangle((0, y_min - 30), 2, (y_max - y_min) + 60,
-                                          alpha=0.3, facecolor='red')
-        ax1.add_patch(fv_rectangle)
+        rectangle_y_min = y_min - 30
+        rectangle_y_max = y_max - y_min + 60
+
+        #fv_rectangle = mpatches.Rectangle((0, rectangle_y_min), 2, rectangle_y_max,
+        #                                  alpha=0.3, facecolor='red')
+
+        baselineXStart = inputData.FV_time_map[0, min(inputData.baseline_start_indexes[cell][index])]
+        baselineXEnd = inputData.FV_time_map[0, max(inputData.baseline_end_indexes[cell][index])]
+        evokedXStart = inputData.FV_time_map[0, min(inputData.evoked_start_indexes[cell][index])]
+        evokedXEnd = inputData.FV_time_map[0, max(inputData.evoked_end_indexes[cell][index])]
+
+        baseline_rectangle = mpatches.Rectangle((baselineXStart, rectangle_y_min), (baselineXEnd-baselineXStart),
+                                                rectangle_y_max, alpha=0.3, facecolor='blue')
+
+        evoked_rectangle = mpatches.Rectangle((evokedXStart, rectangle_y_min), (evokedXEnd-evokedXStart), rectangle_y_max,
+                                              alpha=0.3, facecolor='green')
+
+        #ax1.add_patch(fv_rectangle)
+        ax1.add_patch(baseline_rectangle)
+        ax1.add_patch(evoked_rectangle)
 
         plotEvokedAndBaselineMeans(inputData, ax2, colormap)
 
-        path = DewanIOhandler.generateFolderPath(['.', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}'])
+        path = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}'])
 
         filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.png'
 
@@ -138,10 +150,12 @@ def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2:
     greater_than_colors = cycler.cycler('color', color_vals[greater_than_indexes])
 
     plt.rcParams['axes.prop_cycle'] = less_than_colors
-    ax2.plot(x_vals[:, :len(less_than_indexes)], (baseline_means[less_than_indexes], evoked_means[less_than_indexes]), '-s',
+    ax2.plot(x_vals[:, :len(less_than_indexes)], (baseline_means[less_than_indexes], evoked_means[less_than_indexes]),
+             '-s',
              linewidth=2)
     plt.rcParams['axes.prop_cycle'] = greater_than_colors
-    ax2.plot(x_vals[:, :len(greater_than_indexes)], (baseline_means[greater_than_indexes], evoked_means[greater_than_indexes]),
+    ax2.plot(x_vals[:, :len(greater_than_indexes)],
+             (baseline_means[greater_than_indexes], evoked_means[greater_than_indexes]),
              '-o', linewidth=2)
 
     ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
@@ -165,6 +179,7 @@ def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: b
     partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly)
 
     workers.map(partial_function, range(inputData.number_cells))
+    #workers.map(partial_function, range(0, 1))
     workers.close()
     workers.join()
 
@@ -238,7 +253,7 @@ def plotAuroc(fileHeader, auroc_shuffl, auroc, ub, lb, CellList, cellNum, unique
     else:
         sub_folder = 'OnTimeCells'
 
-    folder = DewanIOhandler.generateFolderPath(['.', 'Figures', 'AUROCPlots', f'{sub_folder}'])
+    folder = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', f'{sub_folder}'])
     filename = f'{fileHeader}Cell{cell_name}-{odor_name}.png'
     plt.savefig(f'{folder}/{filename}')
     plt.close()
