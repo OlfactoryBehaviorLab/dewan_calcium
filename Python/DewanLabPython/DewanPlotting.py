@@ -99,7 +99,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         rectangle_y_min = y_min - 30
         rectangle_y_max = y_max - y_min + 60
 
-        #fv_rectangle = mpatches.Rectangle((0, rectangle_y_min), 2, rectangle_y_max,
+        # fv_rectangle = mpatches.Rectangle((0, rectangle_y_min), 2, rectangle_y_max,
         #                                  alpha=0.3, facecolor='red')
 
         baselineXStart = inputData.FV_time_map[0, min(inputData.baseline_start_indexes[cell][index])]
@@ -107,19 +107,21 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         evokedXStart = inputData.FV_time_map[0, min(inputData.evoked_start_indexes[cell][index])]
         evokedXEnd = inputData.FV_time_map[0, max(inputData.evoked_end_indexes[cell][index])]
 
-        baseline_rectangle = mpatches.Rectangle((baselineXStart, rectangle_y_min), (baselineXEnd-baselineXStart),
+        baseline_rectangle = mpatches.Rectangle((baselineXStart, rectangle_y_min), (baselineXEnd - baselineXStart),
                                                 rectangle_y_max, alpha=0.3, facecolor='blue')
 
-        evoked_rectangle = mpatches.Rectangle((evokedXStart, rectangle_y_min), (evokedXEnd-evokedXStart), rectangle_y_max,
+        evoked_rectangle = mpatches.Rectangle((evokedXStart, rectangle_y_min), (evokedXEnd - evokedXStart),
+                                              rectangle_y_max,
                                               alpha=0.3, facecolor='green')
 
-        #ax1.add_patch(fv_rectangle)
+        # ax1.add_patch(fv_rectangle)
         ax1.add_patch(baseline_rectangle)
         ax1.add_patch(evoked_rectangle)
 
         plotEvokedAndBaselineMeans(inputData, ax2, colormap)
 
-        path = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}'])
+        path = DewanIOhandler.generateFolderPath(
+            ['.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}'])
 
         filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.png'
 
@@ -129,7 +131,6 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
 
 def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
-
     baseline_means, evoked_means = DewanAUROC.averageTrialData(*DewanAUROC.collect_trial_data(inputData))
 
     x_val = [[1], [2]]
@@ -159,7 +160,7 @@ def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: b
     partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly)
 
     workers.map(partial_function, range(inputData.number_cells))
-    #workers.map(partial_function, range(0, 1))
+    # workers.map(partial_function, range(0, 1))
     workers.close()
     workers.join()
 
@@ -219,12 +220,12 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
     plt.close()
 
 
-def plotAuroc(fileHeader, auroc_shuffl, auroc, ub, lb, CellList, cellNum, uniqueOdors, odori, latentCellsOnly) -> None:
+def plotAuroc(fileHeader, auroc_shuffle, auroc, ub, lb, CellList, cellNum, uniqueOdors, odori, latentCellsOnly) -> None:
     cell_name = str(CellList[cellNum])
     odor_name = str(uniqueOdors[odori])
 
     fig, ax = plt.subplots()
-    plt.hist(auroc_shuffl, bins=10)
+    plt.hist(auroc_shuffle, bins=10)
     plt.axvline(x=ub, color='b'), plt.axvline(x=lb, color='b'), plt.axvline(x=auroc, color='r')
     plt.title(f'Cell:{cell_name} {odor_name}')
 
@@ -260,12 +261,24 @@ def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceT
         for odor in responsive_odor_indexes:
             inputData.update_odor(odor)
 
-            baseline_data, evok_data = DewanAUROC.collect_trial_data(inputData, latentCells)
+            baseline_data, evok_data = DewanAUROC.collect_trial_data(inputData, None, latentCells)
 
-            baseline_data = np.mean(np.hstack(baseline_data))
-            evok_data = np.subtract(evok_data, baseline_data)
+            baseline_mean = np.mean(np.hstack(baseline_data))
 
-            verticalScatterPlot(evok_data, inputData, folders)
+            truncated_evok_data = truncateData(evok_data)
+
+            baseline_corrected_evok_data = truncated_evok_data - baseline_mean
+
+            verticalScatterPlot(baseline_corrected_evok_data, inputData, folders)
+
+
+def truncateData(data):
+    row_len = np.min([len(row) for row in data])
+    # print(row_len)
+    for i, row in enumerate(data):
+        data[i] = row[:row_len]
+
+    return data
 
 
 def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStore, folders):
@@ -282,7 +295,7 @@ def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStor
     ax.set_xticks(range(1, len(data2Plot) + 1))
 
     folders_path = DewanIOhandler.generateFolderPath(folders)
-    path = os.path.join('./Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
+    path = os.path.join('./ImagingAnalysis/Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
                         f'{dataInput.odor_name}-TrialTraces.png')
     plt.savefig(path, dpi=800)
     plt.close()
