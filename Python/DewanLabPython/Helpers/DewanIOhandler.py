@@ -10,11 +10,11 @@ def createProjectFramework() -> None:
              './ImagingAnalysis/AUROCData',
              './ImagingAnalysis/CombinedData',
              './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
-             './/Figures/AUROCPlots/OnTimeCells',
+             './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
              './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
-             './Figures/AllCellTracePlots/OnTimeCells',
+             './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
              './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
-             './Figures/TrialVariancePlots/LatentCells',
+             './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
              ]
 
     for path in paths:
@@ -39,7 +39,7 @@ def loadDataFromDisk(name, fileHeader, folder) -> object:
 
 
 def makeCellFolder4Plot(cell: str, *Folders: list) -> None:
-    path = os.path.join('./Figures/', generateFolderPath(Folders[0]), f'Cell-{cell}')
+    path = os.path.join('./ImagingAnalysis/Figures/', generateFolderPath(Folders[0]), f'Cell-{cell}')
 
     if not os.path.exists(path):
         os.makedirs(path)

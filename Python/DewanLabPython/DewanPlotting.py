@@ -73,12 +73,6 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
             max_val = np.max(data2plot)
             y_max.append(max_val)
             ax1.plot(x_vals, data2plot, linewidth=0.5)
-            # plt.axvline(x_vals[inputData.baseline_start_indexes], linewidth=2,
-            #             color='r')  # Not sure which variable to index by baseline_start_idx
-            # plt.axvline(x_vals[inputData.evoked_start_indexes], linewidth=2, color='g')
-            # plt.axvline(x_vals[inputData.baseline_end_indexes], linewidth=2,
-            #             color='r')  # Not sure which variable to index by baseline_start_idx
-            # plt.axvline(x_vals[inputData.evoked_end_indexes], linewidth=2, color='g')
 
         data4average = np.mean(data4average, axis=0)
         ax1.plot(x_vals, data4average, "k", linewidth=1.5)
@@ -135,7 +129,6 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
 
 def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
-    color_vals = np.array([color for color in colormap.by_key()['color']])
 
     baseline_means, evoked_means = DewanAUROC.averageTrialData(*DewanAUROC.collect_trial_data(inputData))
 
@@ -143,20 +136,7 @@ def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2:
     x_vals = np.tile(x_val, (1, len(baseline_means)))
     ax2.set_title('Baseline v. Evoked Means', fontsize=10)
 
-    less_than_indexes = np.nonzero(evoked_means < baseline_means)[0]
-    greater_than_indexes = np.nonzero(evoked_means >= baseline_means)[0]
-
-    less_than_colors = cycler.cycler('color', color_vals[less_than_indexes])
-    greater_than_colors = cycler.cycler('color', color_vals[greater_than_indexes])
-
-    plt.rcParams['axes.prop_cycle'] = less_than_colors
-    ax2.plot(x_vals[:, :len(less_than_indexes)], (baseline_means[less_than_indexes], evoked_means[less_than_indexes]),
-             '-s',
-             linewidth=2)
-    plt.rcParams['axes.prop_cycle'] = greater_than_colors
-    ax2.plot(x_vals[:, :len(greater_than_indexes)],
-             (baseline_means[greater_than_indexes], evoked_means[greater_than_indexes]),
-             '-o', linewidth=2)
+    ax2.plot(x_vals, (baseline_means, evoked_means), '-o', linewidth=2)
 
     ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
     ax2.yaxis.tick_right()
@@ -233,7 +213,7 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
 
     fig.tight_layout()
 
-    folders = DewanIOhandler.generateFolderPath(['.', 'Figures', 'AUROCPlots', folder])
+    folders = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
     filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.png'
     plt.savefig(f'{folders}/{filename}', dpi=1200)
     plt.close()
