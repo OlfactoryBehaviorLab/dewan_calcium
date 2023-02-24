@@ -60,9 +60,11 @@ def get_video_base(data_directory: os.path) -> str:
 
     return video_base
 
-def get_video_paths(video_base: str, video_directory: os.path) -> list:
+
+def get_video_paths(video_directory: os.path) -> list:
     video_files = glob.glob(os.path.join(video_directory, '*.isxd'))
     return video_files
+
 
 def check_files(file_list: list):
     for files in file_list:
