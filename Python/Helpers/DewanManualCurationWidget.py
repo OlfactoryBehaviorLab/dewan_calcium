@@ -1,14 +1,16 @@
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect,
-                            QSize, Qt)
+from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont)
 from PySide6.QtWidgets import (QFrame, QGraphicsView, QGridLayout,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout,
                                QWidget)
 
 
-class Ui_manual_curation_window(object):
+class ManualCurationUI(QWidget):
 
     def __init__(self):
+
+        super().__init__()
+
         self.cell_trace_graphic_2 = None
         self.cell_trace_graphic_3 = None
         self.cell_trace_graphic_1 = None
@@ -33,6 +35,8 @@ class Ui_manual_curation_window(object):
         self.font = None
         self.size_policy = None
 
+        self.setupUi(self)
+
     def setupUi(self, manual_curation_window):
         self.size_policy = self.def_size_policy(self, manual_curation_window)
         self.font1 = self.def_font_1(self)
@@ -45,7 +49,7 @@ class Ui_manual_curation_window(object):
         manual_curation_window.setSizePolicy(self.size_policy)
         manual_curation_window.setMinimumSize(QSize(600, 0))
         manual_curation_window.setFont(self.font)
-        manual_curation_window.setFrameShape(QFrame.NoFrame)
+        # manual_curation_window.setFrameShape(QFrame.NoFrame)
 
         self.verticalLayout = QVBoxLayout(manual_curation_window)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -152,8 +156,6 @@ class Ui_manual_curation_window(object):
         self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area, 0, 0, 1, 1)
 
         self.verticalLayout.addWidget(self.cell_traces_group)
-
-        self.retranslateUi(manual_curation_window)
 
     @staticmethod
     def def_size_policy(self, manual_curation_window):
