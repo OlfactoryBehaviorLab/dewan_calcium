@@ -2,7 +2,7 @@ from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont)
 from PySide6.QtWidgets import (QFrame, QGraphicsView, QGridLayout,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout,
-                               QWidget)
+                               QWidget, QListWidgetItem)
 
 
 class ManualCurationUI(QWidget):
@@ -76,9 +76,8 @@ class ManualCurationUI(QWidget):
         self.select_all_button = QPushButton(self.cell_list_group)
         self.select_all_button.setObjectName(u"select_all_button")
         self.select_all_button.setText(u"Select All")
-
-
         self.select_all_button.setFont(self.font1)
+        self.select_all_button.clicked.connect(self.select_all)
 
         self.cell_list_control_horizontal.addWidget(self.select_all_button)
 
@@ -86,7 +85,7 @@ class ManualCurationUI(QWidget):
         self.select_none_button.setObjectName(u"select_none_button")
         self.select_none_button.setText(u"Select None")
         self.select_none_button.setFont(self.font1)
-
+        self.select_none_button.clicked.connect(self.deselect_all)
         self.cell_list_control_horizontal.addWidget(self.select_none_button)
 
         self.cell_list_vertical_layout.addLayout(self.cell_list_control_horizontal)
@@ -156,6 +155,26 @@ class ManualCurationUI(QWidget):
         self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area, 0, 0, 1, 1)
 
         self.verticalLayout.addWidget(self.cell_traces_group)
+
+    def get_all_list_items(self):
+        num_items = self.cell_list.count()
+        list_items = []
+
+        for each in range(num_items):
+            list_items.append(self.cell_list.item(each))
+
+        return list_items
+
+    def select_all(self):
+        num_items = self.cell_list.count()
+        for i in range(num_items):
+            self.cell_list.item(i).setCheckState(Qt.CheckState.Checked)
+
+    def deselect_all(self):
+        num_items = self.cell_list.count()
+        for i in range(num_items):
+            self.cell_list.item(i).setCheckState(Qt.CheckState.Unchecked)
+
 
     @staticmethod
     def def_size_policy(self, manual_curation_window):
