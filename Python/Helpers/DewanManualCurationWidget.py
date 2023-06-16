@@ -1,8 +1,17 @@
 from PySide6.QtCore import (QRect, QSize, Qt)
-from PySide6.QtGui import (QFont)
+from PySide6.QtGui import (QFont, QPixmap)
 from PySide6.QtWidgets import (QFrame, QGraphicsView, QGridLayout,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout,
-                               QWidget, QListWidgetItem)
+                               QWidget, QLabel)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
+from matplotlib.figure import Figure
+import numpy as np
+
+class CellTrace(FigureCanvasQTAgg):
+    def __init__(self, parent=None, width=5, height=5, dpi=100):
+        fig = Figure(figsize=(width,height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(CellTrace, self).__init__(fig)
 
 
 class ManualCurationUI(QWidget):
@@ -60,14 +69,14 @@ class ManualCurationUI(QWidget):
         self.cell_list_group.setObjectName(u"cell_list_group")
         self.size_policy.setHeightForWidth(self.cell_list_group.sizePolicy().hasHeightForWidth())
         self.cell_list_group.setSizePolicy(self.size_policy)
-        self.cell_list_group.setMaximumSize(QSize(160, 16777215))
+        self.cell_list_group.setMaximumSize(QSize(250, 16777215))
         self.cell_list_group.setFont(self.font)
         self.cell_list_group.setAlignment(Qt.AlignCenter)
         self.cell_list_vertical_layout = QVBoxLayout(self.cell_list_group)
         self.cell_list_vertical_layout.setObjectName(u"cell_list_vertical_layout")
         self.cell_list = QListWidget(self.cell_list_group)
         self.cell_list.setObjectName(u"cell_list")
-        self.cell_list.setMaximumSize(QSize(150, 16777215))
+        self.cell_list.setMaximumSize(QSize(250, 16777215))
 
         self.cell_list_vertical_layout.addWidget(self.cell_list)
 
@@ -78,6 +87,7 @@ class ManualCurationUI(QWidget):
         self.select_all_button.setText(u"Select All")
         self.select_all_button.setFont(self.font1)
         self.select_all_button.clicked.connect(self.select_all)
+        self.select_all_button.setMinimumSize(100,20)
 
         self.cell_list_control_horizontal.addWidget(self.select_all_button)
 
@@ -86,6 +96,7 @@ class ManualCurationUI(QWidget):
         self.select_none_button.setText(u"Select None")
         self.select_none_button.setFont(self.font1)
         self.select_none_button.clicked.connect(self.deselect_all)
+        self.select_none_button.setMinimumSize(100,20)
         self.cell_list_control_horizontal.addWidget(self.select_none_button)
 
         self.cell_list_vertical_layout.addLayout(self.cell_list_control_horizontal)
@@ -98,10 +109,15 @@ class ManualCurationUI(QWidget):
         self.max_projection_group.setAlignment(Qt.AlignCenter)
         self.max_projection_vertical_layout = QVBoxLayout(self.max_projection_group)
         self.max_projection_vertical_layout.setObjectName(u"max_projection_vertical_layout")
-        self.max_projection_view = QGraphicsView(self.max_projection_group)
-        self.max_projection_view.setObjectName(u"max_projection_view")
-        self.max_projection_view.setMinimumSize(QSize(400, 300))
-        self.max_projection_view.setFrameShape(QFrame.NoFrame)
+        # self.max_projection_view = QGraphicsView(self.max_projection_group)
+
+        self.max_projection_view = QLabel(self)
+        pixmap = QPixmap('..\\maxprojection.jpg')
+        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize(), Qt.KeepAspectRatio))
+        # self.max_projection_view.setObjectName(u"max_projection_view")
+        # self.max_projection_view.setMinimumSize(QSize(pixmap.width()/4, pixmap.height())/4)
+        # self.max_projection_view.setScaledContents(True)
+        # self.max_projection_view.setFrameShape(QFrame.NoFrame)
 
         self.max_projection_vertical_layout.addWidget(self.max_projection_view)
 
@@ -132,9 +148,11 @@ class ManualCurationUI(QWidget):
         self.scroll_area_contents.setAutoFillBackground(True)
         self.scroll_area_vertical_layout = QVBoxLayout(self.scroll_area_contents)
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
-        self.cell_trace_graphic_1 = QGraphicsView(self.scroll_area_contents)
+
+        self.cell_trace_graphic_1 = CellTrace(self, 5, 4, 100)
         self.cell_trace_graphic_1.setObjectName(u"cell_trace_graphic_1")
-        self.cell_trace_graphic_1.setMinimumSize(QSize(0, 100))
+        self.cell_trace_graphic_1.setMinimumSize(QSize(0, self.cell_trace_graphic_1.get_width_height()[1]))
+        self.cell_trace_graphic_1.axes.plot(np.linspace(0,5), np.linspace(5,10))
 
         self.scroll_area_vertical_layout.addWidget(self.cell_trace_graphic_1)
 
