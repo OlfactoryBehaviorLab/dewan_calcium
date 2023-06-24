@@ -7,9 +7,10 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import numpy as np
 
+
 class CellTrace(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=5, dpi=100):
-        fig = Figure(figsize=(width,height), dpi=dpi)
+    def __init__(self, parent=None, width=5, height=1, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(CellTrace, self).__init__(fig)
 
@@ -148,25 +149,6 @@ class ManualCurationUI(QWidget):
         self.scroll_area_contents.setAutoFillBackground(True)
         self.scroll_area_vertical_layout = QVBoxLayout(self.scroll_area_contents)
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
-
-        self.cell_trace_graphic_1 = CellTrace(self, 5, 4, 100)
-        self.cell_trace_graphic_1.setObjectName(u"cell_trace_graphic_1")
-        self.cell_trace_graphic_1.setMinimumSize(QSize(0, self.cell_trace_graphic_1.get_width_height()[1]))
-        self.cell_trace_graphic_1.axes.plot(np.linspace(0,5), np.linspace(5,10))
-
-        self.scroll_area_vertical_layout.addWidget(self.cell_trace_graphic_1)
-
-        self.cell_trace_graphic_3 = QGraphicsView(self.scroll_area_contents)
-        self.cell_trace_graphic_3.setObjectName(u"cell_trace_graphic_3")
-        self.cell_trace_graphic_3.setMinimumSize(QSize(0, 100))
-
-        self.scroll_area_vertical_layout.addWidget(self.cell_trace_graphic_3)
-
-        self.cell_trace_graphic_2 = QGraphicsView(self.scroll_area_contents)
-        self.cell_trace_graphic_2.setObjectName(u"cell_trace_graphic_2")
-        self.cell_trace_graphic_2.setMinimumSize(QSize(0, 100))
-
-        self.scroll_area_vertical_layout.addWidget(self.cell_trace_graphic_2)
 
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
 
