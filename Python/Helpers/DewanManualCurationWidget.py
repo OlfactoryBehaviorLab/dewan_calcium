@@ -1,15 +1,16 @@
 from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont, QPixmap)
 from PySide6.QtWidgets import (QFrame, QGraphicsView, QGridLayout,
-                               QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout,
+                               QGroupBox, QHBoxLayout, QListWidget, QPushButton, QAbstractScrollArea, QScrollArea, QSizePolicy, QVBoxLayout,
                                QWidget, QLabel)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-import numpy as np
+
+from .. import DewanManualCuration
 
 
 class CellTrace(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=5, height=1, dpi=100):
+    def __init__(self, parent=None, width=10, height=1.1, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(CellTrace, self).__init__(fig)
@@ -21,6 +22,7 @@ class ManualCurationUI(QWidget):
 
         super().__init__()
 
+        self.export_selection_button = None
         self.cell_trace_graphic_2 = None
         self.cell_trace_graphic_3 = None
         self.cell_trace_graphic_1 = None
@@ -102,6 +104,14 @@ class ManualCurationUI(QWidget):
 
         self.cell_list_vertical_layout.addLayout(self.cell_list_control_horizontal)
 
+        self.export_selection_button = QPushButton(self.cell_list_group)
+        self.export_selection_button.setObjectName(u'export_selection_button')
+        self.export_selection_button.setText(u'Export Selected Cells')
+        self.export_selection_button.setFont(self.font1)
+        self.export_selection_button.clicked.connect(lambda: DewanManualCuration.get_checked_items(manual_curation_window))
+        self.export_selection_button.setMinimumSize(150, 20)
+        self.cell_list_vertical_layout.addWidget(self.export_selection_button)
+
         self.cell_layout_horizontal.addWidget(self.cell_list_group)
 
         self.max_projection_group = QGroupBox(manual_curation_window)
@@ -136,9 +146,10 @@ class ManualCurationUI(QWidget):
         self.cell_traces_group.setTitle(u"Cell Traces")
         self.cell_traces_group.setMinimumSize(QSize(0, 110))
         self.cell_traces_group.setAlignment(Qt.AlignCenter)
-        self.cell_traces_group.setFlat(False)
+
         self.cell_traces_grid_layout = QGridLayout(self.cell_traces_group)
         self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
+
         self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group)
         self.cell_trace_scroll_area.setObjectName(u"cell_trace_scroll_area")
         self.cell_trace_scroll_area.setMinimumSize(QSize(0, 110))
@@ -151,7 +162,7 @@ class ManualCurationUI(QWidget):
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
 
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
-
+        #self.cell_trace_scroll_area.setLayout(self.scroll_area_vertical_layout)
         self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area, 0, 0, 1, 1)
 
         self.verticalLayout.addWidget(self.cell_traces_group)
