@@ -1,6 +1,6 @@
 from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont, QPixmap)
-from PySide6.QtWidgets import (QFrame, QGraphicsView, QGridLayout,
+from PySide6.QtWidgets import (QFrame, QMessageBox, QGridLayout,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QAbstractScrollArea, QScrollArea, QSizePolicy, QVBoxLayout,
                                QWidget, QLabel)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -14,6 +14,49 @@ class CellTrace(FigureCanvasQTAgg):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(CellTrace, self).__init__(fig)
+
+
+class Bruh(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.font = None
+        self.h_layout = None
+        self.button = None
+        self.message = None
+        self.pixmap = None
+        self.bruh_image = None
+        self.v_layout = None
+        self.bruh = None
+        self.setup()
+
+
+    def setup(self):
+        print('bruh')
+
+        self.bruh = QWidget()
+        self.bruh.setWindowTitle('You sure about that?')
+        self.v_layout = QVBoxLayout(self.bruh)
+        self.bruh.setLayout(self.v_layout)
+        self.bruh_image = QLabel()
+        self.pixmap = QPixmap('.\\Python\\Resources\\bruh.png')
+        self.bruh_image.setPixmap(self.pixmap)
+        self.v_layout.addWidget(self.bruh_image)
+        self.h_layout = QHBoxLayout(self.bruh)
+        self.message = QLabel()
+        self.font = QFont()
+        self.font.setBold(True)
+        self.font.setFamily('Arial')
+        self.font.setPointSize(20)
+        self.message.setText("You selected no cells, are you sure about that?")
+        self.message.setLayout(QHBoxLayout(self.bruh))
+        self.message.setFont(self.font)
+        self.message.setAlignment(Qt.AlignCenter)
+        self.v_layout.addWidget(self.message)
+        self.button = QPushButton()
+        self.button.setText("Close")
+        self.button.clicked.connect(self.bruh.close)
+        self.v_layout.addWidget(self.button)
+        self.bruh.show()
 
 
 class ManualCurationUI(QWidget):
@@ -48,6 +91,7 @@ class ManualCurationUI(QWidget):
         self.size_policy = None
 
         self.setupUi(self)
+
 
     def setupUi(self, manual_curation_window):
         self.size_policy = self.def_size_policy(self, manual_curation_window)
@@ -123,7 +167,7 @@ class ManualCurationUI(QWidget):
         # self.max_projection_view = QGraphicsView(self.max_projection_group)
 
         self.max_projection_view = QLabel(self)
-        pixmap = QPixmap('..\\maxprojection.jpg')
+        pixmap = QPixmap('.\\Python\\Resources\\maxprojection.tiff')
         self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize(), Qt.KeepAspectRatio))
         # self.max_projection_view.setObjectName(u"max_projection_view")
         # self.max_projection_view.setMinimumSize(QSize(pixmap.width()/4, pixmap.height())/4)

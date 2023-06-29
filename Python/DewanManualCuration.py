@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QListWidgetItem
+from PySide6.QtWidgets import QApplication, QMessageBox, QListWidgetItem
 from PySide6.QtCore import Qt, QSize
 from Python.Helpers import DewanManualCurationWidget
 
@@ -7,7 +7,7 @@ import numpy as np
 import qdarktheme
 
 
-def manual_curation_gui(cell_list, cell_data, cell_proc, max_projection):
+def manual_curation_gui(cell_list, cell_data, max_projection):
     qdarktheme.enable_hi_dpi()
 
     app = QApplication.instance()
@@ -30,7 +30,7 @@ def manual_curation_gui(cell_list, cell_data, cell_proc, max_projection):
 def generate_cell_traces(cell_list, cell_data):
     from matplotlib import font_manager
     traces = []
-    for each in range(1, len(cell_list)):  # Skip item 1
+    for each in cell_list:  # Skip item 1
         data = cell_data[:, each]
         y_max = np.max(data)
         y_min = np.min(data)
@@ -79,13 +79,12 @@ def populate_cell_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_lis
 def get_checked_items(gui):
     cells_2_keep = []
     for list_item in range(gui.cell_list.count()):
-        print(gui.cell_list.item(list_item).checkState())
         if gui.cell_list.item(list_item).checkState() == Qt.Checked:
             cells_2_keep.append(list_item)
 
-    return cells_2_keep
+    if len(cells_2_keep) == 0:
+        bruh = DewanManualCurationWidget.Bruh(gui)
+    #else:
+        #are_you_sure(gui, cells_2_keep)
 
-
-def are_you_sure(gui, cell_list):
-    pass
 
