@@ -7,7 +7,7 @@ import numpy as np
 import qdarktheme
 
 
-def manual_curation_gui(cell_list, cell_data, max_projection):
+def manual_curation_gui(cell_list, cell_data, good_cells):
     qdarktheme.enable_hi_dpi()
 
     app = QApplication.instance()
@@ -23,12 +23,13 @@ def manual_curation_gui(cell_list, cell_data, max_projection):
 
     widget.show()
 
-    cells = widget.cells_2_keep
     app.aboutToQuit.connect(app.deleteLater)
+
     app.exec()
 
-    return cells
 
+def return_data(widget, cells):
+    cells = widget.cells_2_keep
 
 def generate_cell_traces(cell_list, cell_data):
     from matplotlib import font_manager

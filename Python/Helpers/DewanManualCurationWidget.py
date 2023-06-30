@@ -136,6 +136,8 @@ class Confirmation(QWidget):
     def accept_action(self):
         self.parent().cells_2_keep = self.cells
         self.gui.close()
+        self.parent().close()
+
 
 class ManualCurationUI(QWidget):
 
