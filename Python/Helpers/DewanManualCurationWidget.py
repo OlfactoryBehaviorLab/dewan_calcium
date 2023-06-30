@@ -1,6 +1,6 @@
 from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont, QPixmap)
-from PySide6.QtWidgets import (QFrame, QMessageBox, QGridLayout,
+from PySide6.QtWidgets import (QFrame, QListWidgetItem, QGridLayout,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QAbstractScrollArea, QScrollArea, QSizePolicy, QVBoxLayout,
                                QWidget, QLabel)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -31,6 +31,15 @@ class Bruh(QWidget):
         self.setup()
 
 
+    @staticmethod
+    def def_font(self):
+        font = QFont()
+        font.setBold(True)
+        font.setFamily('Arial')
+        font.setPointSize(20)
+
+        return font
+
     def setup(self):
         self.parent().setEnabled(False)
         self.bruh = QWidget()
@@ -43,10 +52,7 @@ class Bruh(QWidget):
         self.v_layout.addWidget(self.bruh_image)
         self.h_layout = QHBoxLayout(self.bruh)
         self.message = QLabel()
-        self.font = QFont()
-        self.font.setBold(True)
-        self.font.setFamily('Arial')
-        self.font.setPointSize(20)
+        self.font = self.def_font(self)
         self.message.setText("You selected no cells, are you sure about that?")
         self.message.setLayout(QHBoxLayout(self.bruh))
         self.message.setFont(self.font)
@@ -64,7 +70,72 @@ class Bruh(QWidget):
         event.accept()
 
 
+class Confirmation(QWidget):
+    def __init__(self, parent=None, cells=None):
+        super().__init__(parent)
+        self.cancel = None
+        self.accept = None
+        self.button_layout = None
+        self.font = None
+        self.label = None
+        self.cells = cells
+        self.gui = None
+        self.v_layout = None
+        self.cell_list = None
+        self.setup()
 
+
+    def setup(self):
+        self.gui = QWidget()
+        self.gui.setWindowTitle("Confirm Cell Selection")
+        self.v_layout = QVBoxLayout(self.gui)
+        self.gui.setLayout(self.v_layout)
+
+        self.label = QLabel()
+        self.font = Bruh.def_font(self)
+        self.label.setFont(self.font)
+        self.label.setText("Please confirm the selected cells!")
+        self.label.setLayout(QHBoxLayout())
+        self.label.setAlignment(Qt.AlignCenter)
+
+        self.v_layout.addWidget(self.label)
+
+        self.cell_list = QListWidget(self.gui)
+        self.populate_list()
+        self.v_layout.addWidget(self.cell_list)
+
+        self.button_layout = QHBoxLayout(self.gui)
+
+        self.accept = QPushButton()
+        self.accept.setText("Accept")
+        self.accept.setLayout(self.button_layout)
+        self.accept.clicked.connect(self.accept_action)
+        self.button_layout.addWidget(self.accept)
+
+        self.cancel = QPushButton()
+        self.cancel.setText("Cancel")
+        self.cancel.setLayout(self.button_layout)
+        self.cancel.clicked.connect(self.gui.close)
+        self.button_layout.addWidget(self.cancel)
+
+        self.v_layout.addWidget(self.accept)
+        self.v_layout.addWidget(self.cancel)
+
+        self.gui.show()
+
+
+    def populate_list(self):
+        for each in self.cells:
+            item = QListWidgetItem(str(each))
+            item.setCheckState(Qt.CheckState.Unchecked)
+            self.cell_list.addItem(item)
+
+    def closeEvent(self, event):
+        event.accept()
+
+    def accept_action(self):
+        self.parent().cells_2_keep = self.cells
+        self.gui.close()
 
 class ManualCurationUI(QWidget):
 
@@ -97,6 +168,7 @@ class ManualCurationUI(QWidget):
         self.font = None
         self.size_policy = None
         self.gui = None
+        self.cells_2_keep = None
         self.setupUi(self)
 
 
@@ -142,7 +214,7 @@ class ManualCurationUI(QWidget):
         self.select_all_button.setText(u"Select All")
         self.select_all_button.setFont(self.font1)
         self.select_all_button.clicked.connect(self.select_all)
-        self.select_all_button.setMinimumSize(100,20)
+        self.select_all_button.setMinimumSize(100, 20)
 
         self.cell_list_control_horizontal.addWidget(self.select_all_button)
 
@@ -151,7 +223,7 @@ class ManualCurationUI(QWidget):
         self.select_none_button.setText(u"Select None")
         self.select_none_button.setFont(self.font1)
         self.select_none_button.clicked.connect(self.deselect_all)
-        self.select_none_button.setMinimumSize(100,20)
+        self.select_none_button.setMinimumSize(100, 20)
         self.cell_list_control_horizontal.addWidget(self.select_none_button)
 
         self.cell_list_vertical_layout.addLayout(self.cell_list_control_horizontal)

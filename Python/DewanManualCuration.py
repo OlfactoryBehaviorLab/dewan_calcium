@@ -23,8 +23,11 @@ def manual_curation_gui(cell_list, cell_data, max_projection):
 
     widget.show()
 
+    cells = widget.cells_2_keep
     app.aboutToQuit.connect(app.deleteLater)
     app.exec()
+
+    return cells
 
 
 def generate_cell_traces(cell_list, cell_data):
@@ -82,10 +85,7 @@ def get_checked_items(gui):
         if gui.cell_list.item(list_item).checkState() == Qt.Checked:
             cells_2_keep.append(list_item)
     if len(cells_2_keep) == 0:
-        print("Bruh")
         bruh = DewanManualCurationWidget.Bruh(parent=gui)
-
-    #else:
-        #are_you_sure(gui, cells_2_keep)
-
-
+    else:
+        confirmation = DewanManualCurationWidget.Confirmation(parent=gui, cells=cells_2_keep)
+        print(confirmation)
