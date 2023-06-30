@@ -44,7 +44,7 @@ def generate_cell_traces(cell_list, cell_data):
 
         arial_bold = font_manager.FontProperties(family='arial', weight='bold', size=14)
 
-        axes.set_ylabel(f'Cell {cell_list[each]}', fontproperties=arial_bold, rotation=0, va='center', ha='center')
+        axes.set_ylabel(f'Cell {each}', fontproperties=arial_bold, rotation=0, va='center', ha='center')
         axes.plot(x, data, color='k')
 
         axes.tick_params(axis='both', which='both', left=False, bottom=False)
@@ -81,9 +81,10 @@ def get_checked_items(gui):
     for list_item in range(gui.cell_list.count()):
         if gui.cell_list.item(list_item).checkState() == Qt.Checked:
             cells_2_keep.append(list_item)
-
     if len(cells_2_keep) == 0:
-        bruh = DewanManualCurationWidget.Bruh(gui)
+        print("Bruh")
+        bruh = DewanManualCurationWidget.Bruh(parent=gui)
+
     #else:
         #are_you_sure(gui, cells_2_keep)
 

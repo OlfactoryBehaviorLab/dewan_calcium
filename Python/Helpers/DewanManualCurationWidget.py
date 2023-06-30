@@ -27,12 +27,12 @@ class Bruh(QWidget):
         self.bruh_image = None
         self.v_layout = None
         self.bruh = None
+        self.gui = parent
         self.setup()
 
 
     def setup(self):
-        print('bruh')
-
+        self.parent().setEnabled(False)
         self.bruh = QWidget()
         self.bruh.setWindowTitle('You sure about that?')
         self.v_layout = QVBoxLayout(self.bruh)
@@ -54,9 +54,16 @@ class Bruh(QWidget):
         self.v_layout.addWidget(self.message)
         self.button = QPushButton()
         self.button.setText("Close")
-        self.button.clicked.connect(self.bruh.close)
+        self.button.clicked.connect(self.close)
         self.v_layout.addWidget(self.button)
         self.bruh.show()
+
+    def closeEvent(self, event):
+        self.parent().setEnabled(True)
+        self.bruh.hide()
+        event.accept()
+
+
 
 
 class ManualCurationUI(QWidget):
@@ -89,7 +96,7 @@ class ManualCurationUI(QWidget):
         self.font1 = None
         self.font = None
         self.size_policy = None
-
+        self.gui = None
         self.setupUi(self)
 
 
@@ -103,9 +110,10 @@ class ManualCurationUI(QWidget):
         manual_curation_window.setWindowTitle("Manual Curation")
 
         manual_curation_window.setSizePolicy(self.size_policy)
-        manual_curation_window.setMinimumSize(QSize(600, 0))
+        manual_curation_window.setMinimumSize(QSize(600, 600))
         manual_curation_window.setFont(self.font)
-        # manual_curation_window.setFrameShape(QFrame.NoFrame)
+
+        self.gui = manual_curation_window
 
         self.verticalLayout = QVBoxLayout(manual_curation_window)
         self.verticalLayout.setObjectName(u"verticalLayout")
@@ -152,7 +160,7 @@ class ManualCurationUI(QWidget):
         self.export_selection_button.setObjectName(u'export_selection_button')
         self.export_selection_button.setText(u'Export Selected Cells')
         self.export_selection_button.setFont(self.font1)
-        self.export_selection_button.clicked.connect(lambda: DewanManualCuration.get_checked_items(manual_curation_window))
+        self.export_selection_button.clicked.connect(lambda: DewanManualCuration.get_checked_items(self))
         self.export_selection_button.setMinimumSize(150, 20)
         self.cell_list_vertical_layout.addWidget(self.export_selection_button)
 
@@ -168,9 +176,9 @@ class ManualCurationUI(QWidget):
 
         self.max_projection_view = QLabel(self)
         pixmap = QPixmap('.\\Python\\Resources\\maxprojection.tiff')
-        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize(), Qt.KeepAspectRatio))
+        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize()/4, Qt.KeepAspectRatio))
         # self.max_projection_view.setObjectName(u"max_projection_view")
-        # self.max_projection_view.setMinimumSize(QSize(pixmap.width()/4, pixmap.height())/4)
+        self.max_projection_view.setMaximumSize(QSize(pixmap.width()/4, pixmap.height()/4))
         # self.max_projection_view.setScaledContents(True)
         # self.max_projection_view.setFrameShape(QFrame.NoFrame)
 
