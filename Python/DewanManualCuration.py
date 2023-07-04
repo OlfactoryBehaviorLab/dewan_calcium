@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMessageBox, QListWidgetItem
+from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
 from PySide6.QtCore import Qt, QSize
 from Python.Helpers import DewanManualCurationWidget
 
@@ -16,18 +16,25 @@ def manual_curation_gui(cell_list, cell_data, max_projection):
 
     qdarktheme.setup_theme('dark')
 
-    widget = DewanManualCurationWidget.ManualCurationUI()
-    populate_cell_list(widget, cell_list)
+    gui = DewanManualCurationWidget.ManualCurationUI()
+    gui.cell_labels = cell_list
+    populate_cell_selection_list(gui, cell_list)
     cell_traces = generate_cell_traces(cell_list, cell_data)
-    populate_traces(widget, cell_traces)
+    populate_traces(gui, cell_traces)
 
-    widget.show()
+    gui.show()
 
-    cells = widget.cells_2_keep
+    app.aboutToQuit.connect(lambda: cleanup(gui))
     app.aboutToQuit.connect(app.deleteLater)
-    app.exec()
 
-    return cells
+    if gui.exec() == QDialog.Accepted:
+        return gui.cells_2_keep
+
+
+def cleanup(gui):
+    gui.Bruh.close()
+    gui.confirmation.close()
+    gui.close()
 
 
 def generate_cell_traces(cell_list, cell_data):
@@ -71,7 +78,7 @@ def populate_traces(gui, cell_trace_list):
         gui.scroll_area_vertical_layout.addWidget(each)
 
 
-def populate_cell_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_list):
+def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_list):
     for each in cell_list:
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
@@ -79,13 +86,4 @@ def populate_cell_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_lis
         gui.cell_list.addItem(item)
 
 
-def get_checked_items(gui):
-    cells_2_keep = []
-    for list_item in range(gui.cell_list.count()):
-        if gui.cell_list.item(list_item).checkState() == Qt.Checked:
-            cells_2_keep.append(list_item)
-    if len(cells_2_keep) == 0:
-        bruh = DewanManualCurationWidget.Bruh(parent=gui)
-    else:
-        confirmation = DewanManualCurationWidget.Confirmation(parent=gui, cells=cells_2_keep)
-        print(confirmation)
+
