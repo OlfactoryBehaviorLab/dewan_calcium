@@ -1,12 +1,11 @@
 from PySide6.QtCore import (QRect, QSize, Qt)
 from PySide6.QtGui import (QFont, QPixmap)
-from PySide6.QtWidgets import (QFrame, QListWidgetItem, QGridLayout,
-                               QGroupBox, QHBoxLayout, QListWidget, QPushButton, QAbstractScrollArea, QScrollArea, QSizePolicy, QVBoxLayout,
+from PySide6.QtWidgets import (QDialog, QFrame, QListWidgetItem, QGridLayout,
+                               QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea,
+                               QSizePolicy, QVBoxLayout,
                                QWidget, QLabel)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
-
-from .. import DewanManualCuration
 
 
 class CellTrace(FigureCanvasQTAgg):
@@ -30,7 +29,6 @@ class Bruh(QWidget):
         self.gui = parent
         self.setup()
 
-
     @staticmethod
     def def_font(self):
         font = QFont()
@@ -41,7 +39,6 @@ class Bruh(QWidget):
         return font
 
     def setup(self):
-        self.parent().setEnabled(False)
         self.bruh = QWidget()
         self.bruh.setWindowTitle('You sure about that?')
         self.v_layout = QVBoxLayout(self.bruh)
@@ -62,7 +59,6 @@ class Bruh(QWidget):
         self.button.setText("Close")
         self.button.clicked.connect(self.close)
         self.v_layout.addWidget(self.button)
-        self.bruh.show()
 
     def closeEvent(self, event):
         self.parent().setEnabled(True)
@@ -71,19 +67,18 @@ class Bruh(QWidget):
 
 
 class Confirmation(QWidget):
-    def __init__(self, parent=None, cells=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.cancel = None
         self.accept = None
         self.button_layout = None
         self.font = None
         self.label = None
-        self.cells = cells
         self.gui = None
         self.v_layout = None
         self.cell_list = None
+        self.cells_2_keep = None
         self.setup()
-
 
     def setup(self):
         self.gui = QWidget()
@@ -101,7 +96,6 @@ class Confirmation(QWidget):
         self.v_layout.addWidget(self.label)
 
         self.cell_list = QListWidget(self.gui)
-        self.populate_list()
         self.v_layout.addWidget(self.cell_list)
 
         self.button_layout = QHBoxLayout(self.gui)
@@ -121,34 +115,36 @@ class Confirmation(QWidget):
         self.v_layout.addWidget(self.accept)
         self.v_layout.addWidget(self.cancel)
 
-        self.gui.show()
+    def closeEvent(self, e):
+        self.parent().setEnabled(True)
+        e.accept()
 
-
-    def populate_list(self):
-        for each in self.cells:
-            item = QListWidgetItem(str(each))
-            item.setCheckState(Qt.CheckState.Unchecked)
+    def populate_confirmation_list(self):
+        cell_labels = self.parent().cell_labels
+        for each in self.cells_2_keep:
+            cell_name = cell_labels[each]
+            item = QListWidgetItem(str(cell_name))  # Add one so the cell numbers match up
+            item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsUserCheckable)
             self.cell_list.addItem(item)
 
-    def closeEvent(self, event):
-        event.accept()
-
     def accept_action(self):
-        self.parent().cells_2_keep = self.cells
+        self.parent().cells_2_keep = self.cells_2_keep
         self.gui.close()
+<<<<<<< HEAD
         self.parent().close()
 
+=======
+        self.parent().accept()
+>>>>>>> a07cd1965298e9d2ccc5e5647e35953e989ac274
 
-class ManualCurationUI(QWidget):
+
+class ManualCurationUI(QDialog):
 
     def __init__(self):
 
         super().__init__()
 
         self.export_selection_button = None
-        self.cell_trace_graphic_2 = None
-        self.cell_trace_graphic_3 = None
-        self.cell_trace_graphic_1 = None
         self.scroll_area_vertical_layout = None
         self.scroll_area_contents = None
         self.cell_trace_scroll_area = None
@@ -161,6 +157,7 @@ class ManualCurationUI(QWidget):
         self.select_none_button = None
         self.select_all_button = None
         self.cell_list_control_horizontal = None
+        self.cell_labels = None
         self.cell_list = None
         self.cell_list_vertical_layout = None
         self.cell_list_group = None
@@ -171,10 +168,14 @@ class ManualCurationUI(QWidget):
         self.size_policy = None
         self.gui = None
         self.cells_2_keep = None
+        self.Bruh = None
+        self.confirmation = None
         self.setupUi(self)
 
-
     def setupUi(self, manual_curation_window):
+        self.Bruh = Bruh(self)
+        self.confirmation = Confirmation(self)
+
         self.size_policy = self.def_size_policy(self, manual_curation_window)
         self.font1 = self.def_font_1(self)
         self.font = self.def_font(self)
@@ -234,7 +235,7 @@ class ManualCurationUI(QWidget):
         self.export_selection_button.setObjectName(u'export_selection_button')
         self.export_selection_button.setText(u'Export Selected Cells')
         self.export_selection_button.setFont(self.font1)
-        self.export_selection_button.clicked.connect(lambda: DewanManualCuration.get_checked_items(self))
+        self.export_selection_button.clicked.connect(lambda: self.get_checked_items())
         self.export_selection_button.setMinimumSize(150, 20)
         self.cell_list_vertical_layout.addWidget(self.export_selection_button)
 
@@ -250,9 +251,9 @@ class ManualCurationUI(QWidget):
 
         self.max_projection_view = QLabel(self)
         pixmap = QPixmap('.\\Python\\Resources\\maxprojection.tiff')
-        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize()/4, Qt.KeepAspectRatio))
+        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize() / 4, Qt.KeepAspectRatio))
         # self.max_projection_view.setObjectName(u"max_projection_view")
-        self.max_projection_view.setMaximumSize(QSize(pixmap.width()/4, pixmap.height()/4))
+        self.max_projection_view.setMaximumSize(QSize(pixmap.width() / 4, pixmap.height() / 4))
         # self.max_projection_view.setScaledContents(True)
         # self.max_projection_view.setFrameShape(QFrame.NoFrame)
 
@@ -288,19 +289,24 @@ class ManualCurationUI(QWidget):
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
 
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
-        #self.cell_trace_scroll_area.setLayout(self.scroll_area_vertical_layout)
         self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area, 0, 0, 1, 1)
 
         self.verticalLayout.addWidget(self.cell_traces_group)
 
-    def get_all_list_items(self):
-        num_items = self.cell_list.count()
-        list_items = []
+    def get_checked_items(self):
+        cells_2_keep = []  # Indexes of checked cells
+        for list_item in range(self.cell_list.count()):
+            if self.cell_list.item(list_item).checkState() == Qt.Checked:
+                cells_2_keep.append(list_item)
 
-        for each in range(num_items):
-            list_items.append(self.cell_list.item(each))
-
-        return list_items
+        if len(cells_2_keep) == 0:
+            self.setEnabled(False)
+            self.Bruh.bruh.show()
+        else:
+            self.setEnabled(False)
+            self.confirmation.cells_2_keep = cells_2_keep
+            self.confirmation.populate_confirmation_list()
+            self.confirmation.gui.show()
 
     def select_all(self):
         num_items = self.cell_list.count()
@@ -311,7 +317,6 @@ class ManualCurationUI(QWidget):
         num_items = self.cell_list.count()
         for i in range(num_items):
             self.cell_list.item(i).setCheckState(Qt.CheckState.Unchecked)
-
 
     @staticmethod
     def def_size_policy(self, manual_curation_window):
