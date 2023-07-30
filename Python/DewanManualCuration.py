@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
 from PySide6.QtCore import Qt, QSize
 from Python.Helpers import DewanManualCurationWidget
-
+from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import qdarktheme
 
@@ -17,21 +17,15 @@ def manual_curation_gui(cell_list, cell_data, good_cells):
     qdarktheme.setup_theme('dark')
 
     gui = DewanManualCurationWidget.ManualCurationUI()
-    gui.cell_labels = cell_list
+    # gui.cell_labels = cell_list
     populate_cell_selection_list(gui, cell_list)
-    cell_traces = generate_cell_traces(cell_list, cell_data)
+    cell_traces = generate_cell_traces(cell_list, cell_data[:, 1:])
     populate_traces(gui, cell_traces)
 
-    gui.show()
-
-<<<<<<< HEAD
-    app.aboutToQuit.connect(app.deleteLater)
-
-    app.exec()
-
-=======
     app.aboutToQuit.connect(lambda: cleanup(gui))
     app.aboutToQuit.connect(app.deleteLater)
+
+    gui.show()
 
     if gui.exec() == QDialog.Accepted:
         return gui.cells_2_keep
@@ -41,10 +35,7 @@ def cleanup(gui):
     gui.Bruh.close()
     gui.confirmation.close()
     gui.close()
->>>>>>> a07cd1965298e9d2ccc5e5647e35953e989ac274
 
-def return_data(widget, cells):
-    cells = widget.cells_2_keep
 
 def generate_cell_traces(cell_list, cell_data):
     from matplotlib import font_manager
@@ -54,7 +45,10 @@ def generate_cell_traces(cell_list, cell_data):
         y_max = np.max(data)
         y_min = np.min(data)
 
-        data = np.divide(data, y_max)  # Normalize
+        # data = np.divide(data, y_max)  # Normalize
+
+        scaler = MinMaxScaler()
+        data = scaler.fit_transform(data.reshape(-1, 1))
 
         x = np.arange(len(data))
 
@@ -71,14 +65,15 @@ def generate_cell_traces(cell_list, cell_data):
 
         offset = x[-1] * 0.01
         axes.set_xlim([-offset, (x[-1] + offset)])
-
+        axes.set_ylim([-0.05, 1.05])
         axes.set_yticks([0, 1], labels=[round(y_min), round(y_max)])  # Display max/min dF/F value
-        axes.get_yaxis().set_label_coords(-.1, .5)  # Align all the htings
+        axes.get_yaxis().set_label_coords(-.1, .5)  # Align all the things
         axes.yaxis.tick_right()  # Move max/min to other side
 
         traces.append(trace)
 
     return traces
+
 
 
 def populate_traces(gui, cell_trace_list):
