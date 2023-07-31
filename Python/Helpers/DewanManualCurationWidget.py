@@ -130,12 +130,9 @@ class Confirmation(QWidget):
     def accept_action(self):
         self.parent().cells_2_keep = self.cells_2_keep
         self.gui.close()
-<<<<<<< HEAD
         self.parent().close()
-
-=======
         self.parent().accept()
->>>>>>> a07cd1965298e9d2ccc5e5647e35953e989ac274
+
 
 
 class ManualCurationUI(QDialog):
@@ -175,6 +172,7 @@ class ManualCurationUI(QDialog):
     def setupUi(self, manual_curation_window):
         self.Bruh = Bruh(self)
         self.confirmation = Confirmation(self)
+
 
         self.size_policy = self.def_size_policy(self, manual_curation_window)
         self.font1 = self.def_font_1(self)
@@ -297,8 +295,8 @@ class ManualCurationUI(QDialog):
         cells_2_keep = []  # Indexes of checked cells
         for list_item in range(self.cell_list.count()):
             if self.cell_list.item(list_item).checkState() == Qt.Checked:
+                print(self.cell_list.item(list_item).checkState())
                 cells_2_keep.append(list_item)
-
         if len(cells_2_keep) == 0:
             self.setEnabled(False)
             self.Bruh.bruh.show()

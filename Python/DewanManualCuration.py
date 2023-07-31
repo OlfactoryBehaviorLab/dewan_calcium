@@ -1,35 +1,39 @@
 import sys
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt, QSize, QCoreApplication
 from Python.Helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import qdarktheme
 
 
-def manual_curation_gui(cell_list, cell_data, good_cells):
+def manual_curation_gui(cell_list, cell_data):
     qdarktheme.enable_hi_dpi()
 
-    app = QApplication.instance()
+    app = QCoreApplication.instance()
+    print(app)
     if not app:
         app = QApplication(sys.argv)
+
 
     qdarktheme.setup_theme('dark')
 
     gui = DewanManualCurationWidget.ManualCurationUI()
-    # gui.cell_labels = cell_list
     populate_cell_selection_list(gui, cell_list)
-    cell_traces = generate_cell_traces(cell_list, cell_data[:, 1:])
+    cell_traces = generate_cell_traces(cell_list, cell_data)  # ignore column one since its just time
     populate_traces(gui, cell_traces)
+    gui.cell_labels = cell_list
 
     app.aboutToQuit.connect(lambda: cleanup(gui))
-    app.aboutToQuit.connect(app.deleteLater)
+    #app.aboutToQuit.connect(app.deleteLater())
 
     gui.show()
 
     if gui.exec() == QDialog.Accepted:
-        return gui.cells_2_keep
-
+        return_val = gui.cells_2_keep
+        del gui
+        del app
+        return return_val
 
 def cleanup(gui):
     gui.Bruh.close()
