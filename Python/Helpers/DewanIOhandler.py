@@ -1,6 +1,7 @@
 import glob
 import os
 import pickle
+from isx import make_output_file_path, make_output_file_paths
 
 
 def createProjectFramework() -> None:
@@ -71,3 +72,11 @@ def check_files(file_list: list):
         if not os.path.exists(files) or not os.path.getsize(files) > 2048:
             return False
     return True
+
+
+def make_isx_path(input_files, output_dir, addition='', extention='isxd'):
+    if len(input_files) == 1:
+        return [make_output_file_path(input_files[0], output_dir, addition, ext=extention)]
+    else:
+        return make_output_file_paths(input_files, output_dir, addition, ext=extention)
+
