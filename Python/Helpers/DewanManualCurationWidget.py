@@ -15,7 +15,7 @@ class CellTrace(FigureCanvasQTAgg):
         super(CellTrace, self).__init__(fig)
 
 
-class Bruh(QWidget):
+class Error(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.font = None
@@ -25,7 +25,7 @@ class Bruh(QWidget):
         self.pixmap = None
         self.bruh_image = None
         self.v_layout = None
-        self.bruh = None
+        self.error_gui = None
         self.gui = parent
         self.setup()
 
@@ -39,19 +39,19 @@ class Bruh(QWidget):
         return font
 
     def setup(self):
-        self.bruh = QWidget()
-        self.bruh.setWindowTitle('You sure about that?')
-        self.v_layout = QVBoxLayout(self.bruh)
-        self.bruh.setLayout(self.v_layout)
+        self.error_gui = QWidget()
+        self.error_gui.setWindowTitle('You sure about that?')
+        self.v_layout = QVBoxLayout(self.error_gui)
+        self.error_gui.setLayout(self.v_layout)
         self.bruh_image = QLabel()
         self.pixmap = QPixmap('.\\Python\\Resources\\bruh.png')
         self.bruh_image.setPixmap(self.pixmap)
         self.v_layout.addWidget(self.bruh_image)
-        self.h_layout = QHBoxLayout(self.bruh)
+        self.h_layout = QHBoxLayout(self.error_gui)
         self.message = QLabel()
         self.font = self.def_font(self)
         self.message.setText("You selected no cells, are you sure about that?")
-        self.message.setLayout(QHBoxLayout(self.bruh))
+        self.message.setLayout(QHBoxLayout(self.error_gui))
         self.message.setFont(self.font)
         self.message.setAlignment(Qt.AlignCenter)
         self.v_layout.addWidget(self.message)
@@ -62,7 +62,7 @@ class Bruh(QWidget):
 
     def closeEvent(self, event):
         self.parent().setEnabled(True)
-        self.bruh.hide()
+        self.error_gui.hide()
         event.accept()
 
 
@@ -87,7 +87,7 @@ class Confirmation(QWidget):
         self.gui.setLayout(self.v_layout)
 
         self.label = QLabel()
-        self.font = Bruh.def_font(self)
+        self.font = Error.def_font(self)
         self.label.setFont(self.font)
         self.label.setText("Please confirm the selected cells!")
         self.label.setLayout(QHBoxLayout())
@@ -170,7 +170,7 @@ class ManualCurationUI(QDialog):
         self.setupUi(self)
 
     def setupUi(self, manual_curation_window):
-        self.Bruh = Bruh(self)
+        self.Bruh = Error(self)
         self.confirmation = Confirmation(self)
 
 
@@ -248,8 +248,9 @@ class ManualCurationUI(QDialog):
         # self.max_projection_view = QGraphicsView(self.max_projection_group)
 
         self.max_projection_view = QLabel(self)
-        pixmap = QPixmap('.\\Python\\Resources\\maxprojection.tiff')
-        self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize() / 4, Qt.KeepAspectRatio))
+        pixmap = QPixmap('.\\ImagingAnalysis\\RawData\Max_Projection.tiff')
+        #self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize() / 4, Qt.KeepAspectRatio))
+        self.max_projection_view.setPixmap(pixmap)
         # self.max_projection_view.setObjectName(u"max_projection_view")
         self.max_projection_view.setMaximumSize(QSize(pixmap.width() / 4, pixmap.height() / 4))
         # self.max_projection_view.setScaledContents(True)
@@ -299,7 +300,7 @@ class ManualCurationUI(QDialog):
                 cells_2_keep.append(list_item)
         if len(cells_2_keep) == 0:
             self.setEnabled(False)
-            self.Bruh.bruh.show()
+            self.Bruh.error_gui.show()
         else:
             self.setEnabled(False)
             self.confirmation.cells_2_keep = cells_2_keep

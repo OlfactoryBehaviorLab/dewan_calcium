@@ -15,7 +15,6 @@ def manual_curation_gui(cell_list, cell_data):
     if not app:
         app = QApplication(sys.argv)
 
-
     qdarktheme.setup_theme('dark')
 
     gui = DewanManualCurationWidget.ManualCurationUI()
@@ -35,8 +34,9 @@ def manual_curation_gui(cell_list, cell_data):
         del app
         return return_val
 
+
 def cleanup(gui):
-    gui.Bruh.close()
+    gui.Error.close()
     gui.confirmation.close()
     gui.close()
 
@@ -77,7 +77,6 @@ def generate_cell_traces(cell_list, cell_data):
         traces.append(trace)
 
     return traces
-
 
 
 def populate_traces(gui, cell_trace_list):
