@@ -89,7 +89,7 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
     for each in cell_list:
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-        item.setCheckState(Qt.CheckState.Unchecked)
+        item.setCheckState(Qt.CheckState.Checked)
         gui.cell_list.addItem(item)
 
 
