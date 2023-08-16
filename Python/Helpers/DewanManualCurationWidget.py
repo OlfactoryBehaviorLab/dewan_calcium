@@ -104,13 +104,13 @@ class Confirmation(QWidget):
         self.accept.setText("Accept")
         self.accept.setLayout(self.button_layout)
         self.accept.clicked.connect(self.accept_action)
-        self.button_layout.addWidget(self.accept)
+        # self.button_layout.addWidget(self.accept)
 
         self.cancel = QPushButton()
         self.cancel.setText("Cancel")
         self.cancel.setLayout(self.button_layout)
         self.cancel.clicked.connect(self.gui.close)
-        self.button_layout.addWidget(self.cancel)
+        # self.button_layout.addWidget(self.cancel)
 
         self.v_layout.addWidget(self.accept)
         self.v_layout.addWidget(self.cancel)
@@ -134,13 +134,12 @@ class Confirmation(QWidget):
         self.parent().accept()
 
 
-
 class ManualCurationUI(QDialog):
 
-    def __init__(self):
+    def __init__(self, max_projection_image):
 
         super().__init__()
-
+        self.max_projection_image = max_projection_image
         self.export_selection_button = None
         self.scroll_area_vertical_layout = None
         self.scroll_area_contents = None
@@ -165,18 +164,16 @@ class ManualCurationUI(QDialog):
         self.size_policy = None
         self.gui = None
         self.cells_2_keep = None
-        self.Bruh = None
+        self.Error = None
         self.confirmation = None
         self.setupUi(self)
 
     def setupUi(self, manual_curation_window):
-        self.Bruh = Error(self)
+        self.Error = Error(self)
         self.confirmation = Confirmation(self)
-
-
-        self.size_policy = self.def_size_policy(self, manual_curation_window)
+        self.size_policy = self.def_size_policy(manual_curation_window)
         self.font1 = self.def_font_1(self)
-        self.font = self.def_font(self)
+        self.font = self.def_font()
 
         manual_curation_window.setObjectName(u"manual_curation_window")
         manual_curation_window.resize(900, 500)
@@ -226,7 +223,6 @@ class ManualCurationUI(QDialog):
         self.select_none_button.clicked.connect(self.deselect_all)
         self.select_none_button.setMinimumSize(100, 20)
         self.cell_list_control_horizontal.addWidget(self.select_none_button)
-
         self.cell_list_vertical_layout.addLayout(self.cell_list_control_horizontal)
 
         self.export_selection_button = QPushButton(self.cell_list_group)
@@ -248,13 +244,9 @@ class ManualCurationUI(QDialog):
         # self.max_projection_view = QGraphicsView(self.max_projection_group)
 
         self.max_projection_view = QLabel(self)
-        pixmap = QPixmap('.\\ImagingAnalysis\\RawData\Max_Projection.tiff')
-        #self.max_projection_view.setPixmap(pixmap.scaled(self.frameSize() / 4, Qt.KeepAspectRatio))
-        self.max_projection_view.setPixmap(pixmap)
-        # self.max_projection_view.setObjectName(u"max_projection_view")
-        self.max_projection_view.setMaximumSize(QSize(pixmap.width() / 4, pixmap.height() / 4))
-        # self.max_projection_view.setScaledContents(True)
-        # self.max_projection_view.setFrameShape(QFrame.NoFrame)
+
+        pixmap = QPixmap(self.max_projection_image)
+        self.max_projection_view.setPixmap(pixmap.scaled(pixmap.size(), Qt.KeepAspectRatio))
 
         self.max_projection_vertical_layout.addWidget(self.max_projection_view)
 
@@ -296,11 +288,10 @@ class ManualCurationUI(QDialog):
         cells_2_keep = []  # Indexes of checked cells
         for list_item in range(self.cell_list.count()):
             if self.cell_list.item(list_item).checkState() == Qt.Checked:
-                print(self.cell_list.item(list_item).checkState())
                 cells_2_keep.append(list_item)
         if len(cells_2_keep) == 0:
             self.setEnabled(False)
-            self.Bruh.error_gui.show()
+            self.Error.error_gui.show()
         else:
             self.setEnabled(False)
             self.confirmation.cells_2_keep = cells_2_keep
@@ -318,7 +309,7 @@ class ManualCurationUI(QDialog):
             self.cell_list.item(i).setCheckState(Qt.CheckState.Unchecked)
 
     @staticmethod
-    def def_size_policy(self, manual_curation_window):
+    def def_size_policy(manual_curation_window):
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -326,7 +317,7 @@ class ManualCurationUI(QDialog):
         return sizePolicy
 
     @staticmethod
-    def def_font(self):
+    def def_font():
         font = QFont()
         font.setFamilies([u"Arial"])
         font.setPointSize(12)
@@ -340,3 +331,4 @@ class ManualCurationUI(QDialog):
         self.font1.setPointSize(10)
         self.font1.setBold(True)
         return self.font1
+
