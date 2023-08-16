@@ -1,23 +1,23 @@
 import sys
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
 from PySide6.QtCore import Qt, QSize, QCoreApplication
+from PySide6.QtGui import QPixmap
 from Python.Helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import qdarktheme
 
 
-def manual_curation_gui(cell_list, cell_data):
+def manual_curation_gui(cell_list, cell_data, max_projection_image):
     qdarktheme.enable_hi_dpi()
 
     app = QCoreApplication.instance()
-    print(app)
     if not app:
         app = QApplication(sys.argv)
 
     qdarktheme.setup_theme('dark')
 
-    gui = DewanManualCurationWidget.ManualCurationUI()
+    gui = DewanManualCurationWidget.ManualCurationUI(max_projection_image)
     populate_cell_selection_list(gui, cell_list)
     cell_traces = generate_cell_traces(cell_list, cell_data)  # ignore column one since its just time
     populate_traces(gui, cell_traces)
@@ -44,8 +44,8 @@ def cleanup(gui):
 def generate_cell_traces(cell_list, cell_data):
     from matplotlib import font_manager
     traces = []
-    for each in cell_list:  # Skip item 1
-        data = cell_data[:, each]
+    for each in cell_list:
+        data = np.array(cell_data.iloc[:, (each+1)])  # Skip item 1
         y_max = np.max(data)
         y_min = np.min(data)
 
@@ -91,6 +91,47 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Unchecked)
         gui.cell_list.addItem(item)
+
+
+def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, scale_val=3):
+    import cv2
+    from PIL import Image, ImageDraw, ImageFont, ImageQt
+
+    font = ImageFont.truetype('arial.ttf', 12)
+
+    if MaxProjectionImage is None:
+        MaxProjection = '.\\ImagingAnalysis\\RawData\\Max_Projection.tiff'
+    else:
+        MaxProjection = MaxProjectionImage
+
+    image = cv2.imread(MaxProjection)
+
+    if image is None:
+        print("Error, could not load image!")
+        return None
+
+    # For some reason PIL won't load the image, so we do a little trickery to make it work
+    image = np.array(image) * 2
+    # Computer, Enhance Brightness by a factor of two
+    image = Image.fromarray(image)
+    centroids = np.stack((AllCellProps['CentroidX'].values, AllCellProps['CentroidY'].values), axis=-1)
+
+    drawer = ImageDraw.Draw(image)  # Give the computer a crayon
+
+    for i, each in enumerate(CellKeys):
+        points = CellOutlines[each][0]
+        points = [tuple(x) for x in points]
+        centroid = (centroids[i][0], centroids[i][1])
+        drawer.polygon(points, outline='yellow', width=1)
+        drawer.text(centroid, str(each[1:]), font=font)
+
+    new_size = (int(image.size[0] * scale_val), int(image.size[1] * scale_val))
+    image = image.resize(new_size, Image.LANCZOS)
+
+    q_image = ImageQt.ImageQt(image)
+    # Some voodoo to change the image format so Qt likes it
+
+    return q_image
 
 
 
