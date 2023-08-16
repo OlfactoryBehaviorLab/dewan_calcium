@@ -45,7 +45,7 @@ def generate_cell_traces(cell_list, cell_data):
     from matplotlib import font_manager
     traces = []
     for each in cell_list:
-        data = np.array(cell_data.iloc[:, (each+1)])  # Skip item 1
+        data = np.array(cell_data.iloc[:, each])
         y_max = np.max(data)
         y_min = np.min(data)
 

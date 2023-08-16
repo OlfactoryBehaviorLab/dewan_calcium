@@ -14,19 +14,21 @@ import numpy as np
 
 def findGoodTrials(TraceData, TimeStamps, good_criterion):
     number_of_timestamps = len(TimeStamps)
-    data_length = len(TraceData[:, 0])
+    data_length = len(TraceData.index.values)
     number_good_trials = -1
     cell_trace_idx = np.zeros((number_of_timestamps, 1))
     good_trials = np.zeros((number_of_timestamps, 1))
 
     for i, TIMESTAMP in enumerate(TimeStamps):
-        list_of_time_points = np.nonzero(TraceData[:, 0] < TIMESTAMP)[0]
+        list_of_time_points = np.nonzero(TraceData.index.values.astype(float) < TIMESTAMP)[0]
         # Number of time points less than the current one
         # Gives current index - 1
         current_position = len(list_of_time_points)  # The index before valve switched on/off
         if 0 < current_position < data_length:  # Not interested in very first or very last time point
-            one_before_current_point = TraceData[current_position, 0]  # Time stamp one before the current position
-            one_post_current_point = TraceData[current_position + 1, 0]  # Time point one after the current position
+            one_before_current_point = float(TraceData.index.values[current_position])
+            # Time stamp one before the current position
+            one_post_current_point = float(TraceData.index.values[current_position + 1])
+            # Time point one after the current position
             if ((TIMESTAMP - one_before_current_point) < good_criterion and
                     (one_post_current_point - TIMESTAMP) < good_criterion):
                 # Check to make sure that the time point before and after is within the goodCriterion

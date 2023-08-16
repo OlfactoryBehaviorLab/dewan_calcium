@@ -132,7 +132,7 @@ def truncateData(data1, data2) -> tuple:
 
 
 def returnDifferenceOfMeans(dataInput: DewanDataStore.AUROCdataStore) -> float:
-    baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, False)
+    baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
 
     baseline_data, evoked_data = truncateData(baseline_data, evoked_data)
     # Sometimes the frame numbers don't line up between trials
@@ -164,7 +164,7 @@ def crossTrialConsistency(dataInput: DewanDataStore.AUROCdataStore, significance
 
         for odor in odor_indexes:
             dataInput.update_odor(odor)
-            baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, False)
+            baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
             baseline_mean, evoked_trials = truncateData(baseline_data, evoked_data)
 
             baseline_mean = np.mean(baseline_mean)
