@@ -54,17 +54,15 @@ def generateFolderPath(*Folders) -> os.path:
     return path
 
 
-def get_video_base(data_directory: os.path) -> str:
-    gpio_file_path = glob.glob(os.path.join(data_directory, '*.gpio'))[0]
+def get_project_files(directory: os.path) -> (str, list, str):
+    gpio_file_path = glob.glob(os.path.join(directory, '*.gpio'))[0]
     gpio_file_name = os.path.basename(gpio_file_path)
     video_base = gpio_file_name[:-5]
 
-    return video_base
+    video_files = glob.glob(os.path.join(directory, '*.isxd'))
+    video_files = [path for path in video_files if 'gpio' not in path]
 
-
-def get_video_paths(video_directory: os.path) -> list:
-    video_files = glob.glob(os.path.join(video_directory, '*.isxd'))
-    return video_files
+    return video_base, video_files, gpio_file_path
 
 
 def check_files(file_list: list):
