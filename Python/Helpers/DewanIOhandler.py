@@ -99,3 +99,12 @@ def get_outline_coordinates(override_path=None):
     json_file.close()
 
     return keys, json_data
+
+
+def generate_deinterleaved_video_paths(video_files, output_directory, efocus_vals):
+    paths = []
+    for each in efocus_vals:
+        focus_paths = make_isx_path(video_files, output_directory, addition=each, extention='isxd')
+        paths.extend(focus_paths)
+
+    return paths
