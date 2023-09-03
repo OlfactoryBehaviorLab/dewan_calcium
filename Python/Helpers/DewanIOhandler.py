@@ -54,29 +54,81 @@ def generateFolderPath(*Folders) -> os.path:
     return path
 
 
-def get_project_files(directory: os.path) -> (str, list, str):
+def get_project_files(directory: str) -> (str, list, str):
+    """
+    Takes an input raw data folder and generates a list of video files, the gpio file, and the video base
+    (file name minus extension).
+
+    Args:
+        directory (string):
+            Folder containing the raw data for the project
+    Returns:
+        tuple (string, list, string)
+            0) Video Base (file name minus extension)
+            1) List of video files in the folder excluding the GPIO file
+            2) Path to the GPIO file
+    """
+
     gpio_file_path = glob.glob(os.path.join(directory, '*.gpio'))[0]
     gpio_file_name = os.path.basename(gpio_file_path)
     video_base = gpio_file_name[:-5]
 
     video_files = glob.glob(os.path.join(directory, '*.isxd'))
     video_files = [path for path in video_files if 'gpio' not in path]
+    # Sometimes the GPIO file will accidentally get an 'isxd' extension instead of gpio,
+    # so we make sure to filter it out
 
     return video_base, video_files, gpio_file_path
 
 
-def check_files(file_list: list):
+def check_files(file_list: list[str]) -> bool:
+    """
+    Check whether a list of files exists, and that they are larger than 2MB
+
+    Args:
+        file_list (list of strings):
+            Input list of files to check
+
+    Returns:
+        bool:
+            False if the file does not exist or is not larger than 2MB
+            True if the file exists and is larger than 2MB
+    """
+
     for files in file_list:
         if not os.path.exists(files) or not os.path.getsize(files) > 2048:
             return False
     return True
 
 
-def make_isx_path(input_files, output_dir, addition='', extention='isxd'):
+def make_isx_path(input_files: list[str], output_dir: str, addition: str = '', extension: str = 'isxd') \
+        -> str or list[str]:
+    """
+    The Inscopix API has two convenient functions for taking lists of files and adding output directories, extra labels,
+    and new extensions. There are times when there is only one video, and other times when we have multiple videos.
+    This function runs the appropriate Inscopix function based on the number of video files.
+
+    Args:
+        input_files (list of strings):
+            Input video files to create paths for
+        output_dir (string):
+            Folder to place new files in. Each input file will be appended to this path.
+        addition (string):
+            Addition information to add at the end of the file name.
+            Default Value: Empty String ('')
+        extension (string):
+            File extension for the file path.
+            Default Value: 'isxd'
+
+
+    Returns:
+        path(s) (list of strings):
+            A list containing the newly generated file paths
+    """
     if len(input_files) == 1:
-        return [make_output_file_path(input_files[0], output_dir, addition, ext=extention)]
+        return [make_output_file_path(input_files[0], output_dir, addition, ext=extension)]
     else:
-        return make_output_file_paths(input_files, output_dir, addition, ext=extention)
+        return make_output_file_paths(input_files, output_dir, addition, ext=extension)
 
 
 def get_outline_coordinates(override_path=None):
@@ -101,10 +153,28 @@ def get_outline_coordinates(override_path=None):
     return keys, json_data
 
 
-def generate_deinterleaved_video_paths(video_files, output_directory, efocus_vals):
+def generate_deinterleaved_video_paths(video_files: list[str], output_directory: str, efocus_vals: list[int]) -> list:
+    """
+    When deinterleaving a video file into its component focal planes, we must pass the de_interleave function a list
+    of file paths. The paths have to be in the form [video1_focal1, video1_focal2, video2_focal1, video2_focal2, etc.]
+    This function takes a list of video files and focal planes and outputs all the needed file paths.
+
+    Args:
+        video_files (list of strings):
+            List of the video files to generate paths for.
+        output_directory (str):
+            Output path to place the new video files into. Video files will be appended to this path.
+        efocus_vals (list of ints):
+            List of the focal planes used in the experiment
+
+    Returns:
+        paths (list of strings):
+            A list containing all the generated video_file-focal_plane paths used in the deinterleaving process
+    """
+
     paths = []
-    for each in efocus_vals:
-        focus_paths = make_isx_path(video_files, output_directory, addition=each, extention='isxd')
+    for each in efocus_vals:  # Iterate through each focal plane and generate file paths
+        focus_paths = make_isx_path(video_files, output_directory, addition=str(each), extension='isxd')
         paths.extend(focus_paths)
 
     return paths
