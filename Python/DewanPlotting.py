@@ -65,7 +65,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         x_vals = []
 
         for trial in inputData.current_odor_trials:
-            data2plot = inputData.Data[cell, trial, :]
+            data2plot = inputData.CombinedDataArray[cell, trial, :]
             data4average.append(data2plot)
             x_vals = inputData.FV_time_map[trial, :]
             min_val = np.min(data2plot)
