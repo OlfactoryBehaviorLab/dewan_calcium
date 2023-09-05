@@ -1,6 +1,5 @@
-import glob
-import os
 import pickle
+from pathlib import Path
 from isx import make_output_file_path, make_output_file_paths
 
 
@@ -17,10 +16,11 @@ def createProjectFramework() -> None:
              './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
              './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
              ]
+    paths = [Path(path) for path in paths]
 
     for path in paths:
-        if not os.path.exists(path):
-            os.makedirs(path)
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
 
 
 def saveDataToDisk(data, name, fileHeader, folder) -> None:
@@ -39,22 +39,18 @@ def loadDataFromDisk(name, fileHeader, folder) -> object:
     return data_in
 
 
-def makeCellFolder4Plot(cell: str, *Folders: list) -> None:
-    path = os.path.join('./ImagingAnalysis/Figures/', generateFolderPath(Folders[0]), f'Cell-{cell}')
+def makeCellFolder4Plot(cell: str or int, *Folders: list) -> None:
+    base_path = Path('ImagingAnalysis', 'Figures')
+    additional_folders = Path('').joinpath(*Folders)
+    cell_name = f'Cell-{cell}'
 
-    if not os.path.exists(path):
-        os.makedirs(path)
+    path = Path(base_path, additional_folders, cell_name)
 
-
-def generateFolderPath(*Folders) -> os.path:
-    path = ''
-    for folder in Folders[0]:
-        path = os.path.join(path, folder)
-
-    return path
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
 
 
-def get_project_files(directory: str) -> (str, list, str):
+def get_project_files(directory: str) -> (str, list, Path):
     """
     Takes an input raw data folder and generates a list of video files, the gpio file, and the video base
     (file name minus extension).
@@ -67,26 +63,38 @@ def get_project_files(directory: str) -> (str, list, str):
             0) Video Base (file name minus extension)
             1) List of video files in the folder excluding the GPIO file
             2) Path to the GPIO file
+        tuple (None, None, None):
+            If one of the file types cannot be found, function returns None
     """
+    data_folder = Path(directory)
 
-    gpio_file_path = glob.glob(os.path.join(directory, '*.gpio'))[0]
-    gpio_file_name = os.path.basename(gpio_file_path)
-    video_base = gpio_file_name[:-5]
+    #gpio_file_path = glob.glob(os.path.join(directory, '*.gpio'))[0]
+    try:
+        gpio_file_path = Path(sorted(data_folder.glob('*.gpio'))[0])
+        video_base = gpio_file_path.stem
+    except IndexError:
+        print(f'GPIO File not found in {data_folder.absolute()}')
+        return None, None, None
 
-    video_files = glob.glob(os.path.join(directory, '*.isxd'))
-    video_files = [path for path in video_files if 'gpio' not in path]
-    # Sometimes the GPIO file will accidentally get an 'isxd' extension instead of gpio,
-    # so we make sure to filter it out
+    # video_files = glob.glob(os.path.join(directory, '*.isxd'))
+    try:
+        video_files = sorted(data_folder.glob('*.isxd'))
+        video_files = [path for path in video_files if 'gpio' not in path]
+        # After processing is run once, an isxd file with gpio in the name is generated.
+        # If processing is run again, this will ignore that file and only load the video files
+    except IndexError:
+        print(f'No video files found in {data_folder.absolute()}')
+        return None, None, None
 
     return video_base, video_files, gpio_file_path
 
-
-def check_files(file_list: list[str]) -> bool:
+def check_files(file_list: list) -> bool:
+    from numpy import hstack
     """
-    Check whether a list of files exists, and that they are larger than 2MB
+    Check whether each file in a list of files exists
 
     Args:
-        file_list (list of strings):
+        file_list (list of strings or list of lists):
             Input list of files to check
 
     Returns:
@@ -95,8 +103,9 @@ def check_files(file_list: list[str]) -> bool:
             True if the file exists and is larger than 2MB
     """
 
-    for files in file_list:
-        if not os.path.exists(files) or not os.path.getsize(files) > 2048:
+    file_list = hstack(file_list)  # To allow lists of lists, we condense everything down to 1D
+    for file in file_list:
+        if not Path(file).exists():
             return False
     return True
 
