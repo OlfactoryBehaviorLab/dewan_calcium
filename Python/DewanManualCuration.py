@@ -93,11 +93,13 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, scale_val=3):
+def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, save_image=False,
+                            save_directory=None,
+                            scale_val=3, font_size=12, text_color='cyan', outline_color='yellow', outline_width=1):
     import cv2
     from PIL import Image, ImageDraw, ImageFont, ImageQt
 
-    font = ImageFont.truetype('arial.ttf', 12)
+    font = ImageFont.truetype('arial.ttf', font_size) # Font size defaults to 12 but can be changed
 
     if MaxProjectionImage is None:
         MaxProjection = '.\\ImagingAnalysis\\RawData\\Max_Projection.tiff'
@@ -122,14 +124,20 @@ def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionI
         points = CellOutlines[each][0]
         points = [tuple(x) for x in points]
         centroid = (centroids[i][0], centroids[i][1])
-        drawer.polygon(points, outline='yellow', width=1)
-        drawer.text(centroid, str(each[1:]), font=font)
+        drawer.polygon(points, outline=outline_color, width=outline_width)
+        drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
+        # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
 
     new_size = (int(image.size[0] * scale_val), int(image.size[1] * scale_val))
     image = image.resize(new_size, Image.LANCZOS)
 
     q_image = ImageQt.ImageQt(image)
     # Some voodoo to change the image format so Qt likes it
+
+    if save_image:
+        if save_directory is None:
+            save_directory = 'default'
+        # save the image
 
     return q_image
 
