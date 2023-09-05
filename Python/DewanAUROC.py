@@ -10,7 +10,7 @@ December, 2022
 import itertools
 from multiprocessing import Pool
 from functools import partial
-from tqdm import trange
+from tqdm.contrib.concurrent import process_map
 import numpy as np
 from sklearn.model_selection import train_test_split
 
@@ -33,7 +33,6 @@ def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: D
     evoked_end_indexes = []
 
     for trial in dataInput.current_odor_trials:
-
         time_array = dataInput.unix_time_array[trial, :]
         trial_data = dataInput.Data[dataInput.cell_index, trial, :]
         fv_on_time = float(dataInput.FV_Data[dataInput.FV_on_index[trial], 0])
@@ -41,7 +40,8 @@ def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: D
         baseline_start_index = len(np.nonzero(time_array < (fv_on_time - dataInput.baseline_duration))[0])
         baseline_end_index = fv_on_index - 1
 
-        baseline_data.append(trial_data[baseline_start_index: baseline_end_index])
+        baseline_trial_data = trial_data[baseline_start_index: baseline_end_index]
+        baseline_data.append(baseline_trial_data)
 
         if latentCellsOnly:
             evoked_start_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
@@ -51,7 +51,8 @@ def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: D
             evoked_start_index = fv_on_index
             evoked_end_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
 
-        evoked_data.append(trial_data[evoked_start_index: evoked_end_index])
+        evoked_trial_data = trial_data[evoked_start_index: evoked_end_index]
+        evoked_data.append(evoked_trial_data)
 
         baseline_start_indexes.append(baseline_start_index)
         baseline_end_indexes.append(baseline_end_index)
@@ -114,17 +115,13 @@ def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: 
 
     data_input = data_input.makeCopy()
     data_input.update_cell(cellNum)
-
     return_values = DewanDataStore.AUROCReturn()
 
-    for odor_iterator in trange(data_input.num_unique_odors, desc=f"Cell:{data_input.Cell_List[cellNum]} Odors: ",
-                                position=cellNum, leave=True):
-
+    for odor_iterator in range(data_input.num_unique_odors):
         data_input.update_odor(odor_iterator)
 
         baseline_data, evoked_data = collect_trial_data(data_input, return_values, latentCellsOnly)
         baseline_means, evoked_means = averageTrialData(baseline_data, evoked_data)
-
         max_baseline_val = max(baseline_means)
         min_baseline_val = min(baseline_means)
 
@@ -176,10 +173,8 @@ def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: 
 
 def AUROC(data_input: DewanDataStore.AUROCdataStore, latent_cells_only: bool) -> list:
     workers = Pool()
-
     partial_function = partial(allOdorsPerCell, data_input, latent_cells_only)
-    return_values = workers.map(partial_function, range(data_input.number_cells))
-
+    return_values = process_map(partial_function, range(data_input.number_cells), desc='AUROC Progress: ')
     workers.close()
     workers.join()
 
