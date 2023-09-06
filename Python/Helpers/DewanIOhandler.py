@@ -143,13 +143,15 @@ def make_isx_path(input_files: list[str], output_dir: str, addition: str = '', e
 def get_outline_coordinates(override_path=None):
     import json
     import numpy as np
+    from pathlib import Path
     if override_path is None:
-        path = '.\\ImagingAnalysis\\RawData\\Cell_Contours.json'
+        path = ['ImagingAnalysis', 'RawData', 'Cell_Contours.json']
     else:
         path = override_path
 
     try:
-        json_file = open(path)
+        json_path = Path(*path)
+        json_file = open(json_path)
     except (FileNotFoundError, IOError):
         print("Error loading Cell_Contours File!")
         return None

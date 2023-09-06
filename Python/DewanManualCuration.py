@@ -1,7 +1,7 @@
 import sys
+from pathlib import Path
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
 from PySide6.QtCore import Qt, QSize, QCoreApplication
-from PySide6.QtGui import QPixmap
 from Python.Helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
@@ -99,22 +99,22 @@ def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionI
     import cv2
     from PIL import Image, ImageDraw, ImageFont, ImageQt
 
-    font = ImageFont.truetype('arial.ttf', font_size) # Font size defaults to 12 but can be changed
+    font = ImageFont.truetype('arial.ttf', font_size)  # Font size defaults to 12 but can be changed
 
     if MaxProjectionImage is None:
-        MaxProjection = '.\\ImagingAnalysis\\RawData\\Max_Projection.tiff'
+        folders = ['ImagingAnalysis', 'RawData', 'Max_Projection.tiff']
     else:
-        MaxProjection = MaxProjectionImage
+        folders = MaxProjectionImage
 
-    image = cv2.imread(MaxProjection)
+    max_projection_path = str(Path(*folders))
+    image = cv2.imread(max_projection_path)
 
     if image is None:
         print("Error, could not load image!")
         return None
 
     # For some reason PIL won't load the image, so we do a little trickery to make it work
-    image = np.array(image) * 2
-    # Computer, Enhance Brightness by a factor of two
+    image = np.array(image)
     image = Image.fromarray(image)
     centroids = np.stack((AllCellProps['CentroidX'].values, AllCellProps['CentroidY'].values), axis=-1)
 
