@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem
+from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from Python.Helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
@@ -49,8 +49,6 @@ def generate_cell_traces(cell_list, cell_data):
         y_max = np.max(data)
         y_min = np.min(data)
 
-        # data = np.divide(data, y_max)  # Normalize
-
         scaler = MinMaxScaler()
         data = scaler.fit_transform(data.reshape(-1, 1))
 
@@ -79,9 +77,12 @@ def generate_cell_traces(cell_list, cell_data):
     return traces
 
 
-def populate_traces(gui, cell_trace_list):
-    for each in cell_trace_list:
+def populate_traces(gui, cell_trace_list: list[DewanManualCurationWidget.CellTrace]):
+    for i,each in enumerate(cell_trace_list):
         each.setMinimumSize(QSize(0, each.get_width_height()[1]))
+        each.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum))
+        each.installEventFilter(each.installEventFilter(gui))
+        each.setObjectName(f'graph{i}')
         gui.scroll_area_vertical_layout.addWidget(each)
 
 
@@ -94,10 +95,10 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
 
 
 def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, save_image=False,
-                            save_directory=None,
-                            scale_val=3, font_size=12, text_color='cyan', outline_color='yellow', outline_width=1):
+                            save_directory=None, brightness=1.5, contrast=2,
+                            font_size=24, text_color='cyan', outline_color='yellow', outline_width=2):
     import cv2
-    from PIL import Image, ImageDraw, ImageFont, ImageQt
+    from PIL import Image, ImageDraw, ImageFont, ImageQt, ImageEnhance
 
     font = ImageFont.truetype('arial.ttf', font_size)  # Font size defaults to 12 but can be changed
 
@@ -116,20 +117,19 @@ def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionI
     # For some reason PIL won't load the image, so we do a little trickery to make it work
     image = np.array(image)
     image = Image.fromarray(image)
+    image = ImageEnhance.Brightness(image).enhance(brightness)
+    image = ImageEnhance.Contrast(image).enhance(contrast)
     centroids = np.stack((AllCellProps['CentroidX'].values, AllCellProps['CentroidY'].values), axis=-1)
 
     drawer = ImageDraw.Draw(image)  # Give the computer a crayon
 
     for i, each in enumerate(CellKeys):
-        points = CellOutlines[each][0]
+        points = np.multiply(CellOutlines[each][0], 4)
         points = [tuple(x) for x in points]
-        centroid = (centroids[i][0], centroids[i][1])
+        centroid = np.multiply((centroids[i][0], centroids[i][1]), 4)
         drawer.polygon(points, outline=outline_color, width=outline_width)
         drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
         # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
-
-    new_size = (int(image.size[0] * scale_val), int(image.size[1] * scale_val))
-    image = image.resize(new_size, Image.LANCZOS)
 
     q_image = ImageQt.ImageQt(image)
     # Some voodoo to change the image format so Qt likes it
