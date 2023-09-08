@@ -46,17 +46,16 @@ def generate_cell_traces(cell_list, cell_data):
     traces = []
     for each in cell_list:
         data = np.array(cell_data.iloc[:, each])
-        y_max = np.max(data)
-        y_min = np.min(data)
+        y_max_label = max(data)
+        y_min_label = min(data)
 
-        scaler = MinMaxScaler()
-        data = scaler.fit_transform(data.reshape(-1, 1))
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        data = scaler.fit_transform(data.reshape(-1, 1)).ravel()
 
         x = np.arange(len(data))
 
         trace = DewanManualCurationWidget.CellTrace()  # Create trace container
         axes = trace.axes
-
         arial_bold = font_manager.FontProperties(family='arial', weight='bold', size=14)
 
         axes.set_ylabel(f'Cell {each}', fontproperties=arial_bold, rotation=0, va='center', ha='center')
@@ -68,7 +67,7 @@ def generate_cell_traces(cell_list, cell_data):
         offset = x[-1] * 0.01
         axes.set_xlim([-offset, (x[-1] + offset)])
         axes.set_ylim([-0.05, 1.05])
-        axes.set_yticks([0, 1], labels=[round(y_min), round(y_max)])  # Display max/min dF/F value
+        axes.set_yticks([0, 1], labels=[round(y_min_label, 4), round(y_max_label, 4)])  # Display max/min dF/F value
         axes.get_yaxis().set_label_coords(-.1, .5)  # Align all the things
         axes.yaxis.tick_right()  # Move max/min to other side
 
@@ -78,7 +77,7 @@ def generate_cell_traces(cell_list, cell_data):
 
 
 def populate_traces(gui, cell_trace_list: list[DewanManualCurationWidget.CellTrace]):
-    for i,each in enumerate(cell_trace_list):
+    for i, each in enumerate(cell_trace_list):
         each.setMinimumSize(QSize(0, each.get_width_height()[1]))
         each.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum))
         each.installEventFilter(each.installEventFilter(gui))
@@ -95,8 +94,8 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
 
 
 def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, save_image=False,
-                            save_directory=None, brightness=1.5, contrast=2,
-                            font_size=24, text_color='cyan', outline_color='yellow', outline_width=2):
+                            save_directory=None, brightness=1.5, contrast=1.5,
+                            font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
     from PIL import Image, ImageDraw, ImageFont, ImageQt, ImageEnhance
 

@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 
 
 class CellTrace(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width=10, height=1.1, dpi=100):
+    def __init__(self, parent=None, width=30, height=1.1, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
         super(CellTrace, self).__init__(fig)
@@ -181,7 +181,7 @@ class ManualCurationUI(QDialog):
         self.font = self.def_font()
 
         manual_curation_window.setObjectName(u"manual_curation_window")
-        manual_curation_window.resize(900, 500)
+        manual_curation_window.resize(900, 700)
         manual_curation_window.setWindowTitle("Manual Curation")
 
         manual_curation_window.setSizePolicy(self.size_policy)
