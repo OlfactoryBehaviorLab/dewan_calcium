@@ -3,17 +3,16 @@ Created on Sun Dec  4 19:59:13 2022
 
 @author: A. Pauley, Dewan Lab
 """
+import cycler
 import os
 import numpy as np
-
-import cycler
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from functools import partial
 from matplotlib.colors import ListedColormap
 from multiprocessing import Pool
-
+from pathlib import Path
 from .Helpers import DewanIOhandler
 from .Helpers import DewanDataStore
 from . import DewanAUROC
@@ -214,9 +213,9 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
 
     fig.tight_layout()
 
-    folders = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
+    folders = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
     filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.png'
-    plt.savefig(f'{folders}/{filename}', dpi=1200)
+    plt.savefig(folders.joinpath(filename), dpi=1200)
     plt.close()
 
 
@@ -234,9 +233,9 @@ def plotAuroc(fileHeader, auroc_shuffle, auroc, ub, lb, CellList, cellNum, uniqu
     else:
         sub_folder = 'OnTimeCells'
 
-    folder = DewanIOhandler.generateFolderPath(['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', f'{sub_folder}'])
+    folder = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', f'{sub_folder}'])
     filename = f'{fileHeader}Cell{cell_name}-{odor_name}.png'
-    plt.savefig(f'{folder}/{filename}')
+    plt.savefig(folder.joinpath(filename))
     plt.close()
 
 
@@ -294,8 +293,10 @@ def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStor
     plt.xlabel("Trial")
     ax.set_xticks(range(1, len(data2Plot) + 1))
 
-    folders_path = DewanIOhandler.generateFolderPath(folders)
-    path = os.path.join('./ImagingAnalysis/Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
-                        f'{dataInput.odor_name}-TrialTraces.png')
+    #folders_path = DewanIOhandler.generateFolderPath(folders)
+    #path = os.path.join('./ImagingAnalysis/Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
+    #                    f'{dataInput.odor_name}-TrialTraces.png')
+    path = Path(*['ImagingAnalysis', 'Figures', *[folders], f'Cell-{dataInput.current_cell_name}',
+                  f'{dataInput.odor_name}-TrialTraces.png'])
     plt.savefig(path, dpi=800)
     plt.close()
