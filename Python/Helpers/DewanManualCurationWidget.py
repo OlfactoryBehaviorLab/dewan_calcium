@@ -1,6 +1,6 @@
-from PySide6.QtCore import (QRect, QSize, Qt)
+from PySide6.QtCore import (QRect, QSize, Qt, QEvent, QObject, QCoreApplication,)
 from PySide6.QtGui import (QFont, QPixmap)
-from PySide6.QtWidgets import (QDialog, QFrame, QListWidgetItem, QGridLayout,
+from PySide6.QtWidgets import (QDialog, QFrame, QListWidgetItem,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea,
                                QSizePolicy, QVBoxLayout,
                                QWidget, QLabel)
@@ -135,9 +135,7 @@ class Confirmation(QWidget):
 
 
 class ManualCurationUI(QDialog):
-
     def __init__(self, max_projection_image):
-
         super().__init__()
         self.max_projection_image = max_projection_image
         self.export_selection_button = None
@@ -145,7 +143,7 @@ class ManualCurationUI(QDialog):
         self.scroll_area_contents = None
         self.cell_trace_scroll_area = None
         self.cell_traces_grid_layout = None
-        self.cell_traces_group = None
+        self.cell_traces_group_outline = None
         self.horizontal_div = None
         self.max_projection_view = None
         self.max_projection_vertical_layout = None
@@ -168,6 +166,13 @@ class ManualCurationUI(QDialog):
         self.confirmation = None
         self.setupUi(self)
 
+    def eventFilter(self, q_object: QObject, event: QEvent):
+        if "graph" in q_object.objectName() and event.type() == QEvent.Type.Wheel:
+            QCoreApplication.sendEvent(self.cell_trace_scroll_area.verticalScrollBar(), event)
+            return False
+        else:
+            return super().eventFilter(q_object, event)
+
     def setupUi(self, manual_curation_window):
         self.Error = Error(self)
         self.confirmation = Confirmation(self)
@@ -183,8 +188,10 @@ class ManualCurationUI(QDialog):
         manual_curation_window.setMinimumSize(QSize(600, 600))
         manual_curation_window.setFont(self.font)
 
-        self.gui = manual_curation_window
+        manual_curation_window.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        manual_curation_window.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
 
+        self.gui = manual_curation_window
         self.verticalLayout = QVBoxLayout(manual_curation_window)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.cell_layout_horizontal = QHBoxLayout()
@@ -241,13 +248,10 @@ class ManualCurationUI(QDialog):
         self.max_projection_group.setAlignment(Qt.AlignCenter)
         self.max_projection_vertical_layout = QVBoxLayout(self.max_projection_group)
         self.max_projection_vertical_layout.setObjectName(u"max_projection_vertical_layout")
-        # self.max_projection_view = QGraphicsView(self.max_projection_group)
-
         self.max_projection_view = QLabel(self)
-
+        self.max_projection_view.setScaledContents(True)
         pixmap = QPixmap(self.max_projection_image)
         self.max_projection_view.setPixmap(pixmap.scaled(pixmap.size(), Qt.KeepAspectRatio))
-
         self.max_projection_vertical_layout.addWidget(self.max_projection_view)
 
         self.cell_layout_horizontal.addWidget(self.max_projection_group)
@@ -259,30 +263,30 @@ class ManualCurationUI(QDialog):
 
         self.verticalLayout.addWidget(self.horizontal_div)
 
-        self.cell_traces_group = QGroupBox(manual_curation_window)
-        self.cell_traces_group.setObjectName(u"cell_traces_group")
-        self.cell_traces_group.setTitle(u"Cell Traces")
-        self.cell_traces_group.setMinimumSize(QSize(0, 110))
-        self.cell_traces_group.setAlignment(Qt.AlignCenter)
+        self.cell_traces_group_outline = QGroupBox(manual_curation_window)
+        self.cell_traces_group_outline.setObjectName(u"cell_traces_group")
+        self.cell_traces_group_outline.setTitle(u"Cell Traces")
+        self.cell_traces_group_outline.setMinimumSize(QSize(0, 400))
+        self.cell_traces_group_outline.setAlignment(Qt.AlignCenter)
 
-        self.cell_traces_grid_layout = QGridLayout(self.cell_traces_group)
+        self.cell_traces_grid_layout = QVBoxLayout(self.cell_traces_group_outline)
         self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
 
-        self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group)
+        self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group_outline)
         self.cell_trace_scroll_area.setObjectName(u"cell_trace_scroll_area")
         self.cell_trace_scroll_area.setMinimumSize(QSize(0, 110))
         self.cell_trace_scroll_area.setWidgetResizable(True)
+
         self.scroll_area_contents = QWidget()
         self.scroll_area_contents.setObjectName(u"scroll_area_contents")
         self.scroll_area_contents.setGeometry(QRect(0, 0, 858, 320))
         self.scroll_area_contents.setAutoFillBackground(True)
         self.scroll_area_vertical_layout = QVBoxLayout(self.scroll_area_contents)
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
-
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
-        self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area, 0, 0, 1, 1)
+        self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area)
 
-        self.verticalLayout.addWidget(self.cell_traces_group)
+        self.verticalLayout.addWidget(self.cell_traces_group_outline)
 
     def get_checked_items(self):
         cells_2_keep = []  # Indexes of checked cells
