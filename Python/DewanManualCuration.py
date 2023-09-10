@@ -93,7 +93,7 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionImage=None, save_image=False,
+def generate_max_projection(ImagePath, AllCellProps, CellKeys, CellOutlines, save_image=False,
                             save_directory=None, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
