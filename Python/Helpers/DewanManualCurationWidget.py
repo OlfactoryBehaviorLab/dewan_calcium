@@ -164,7 +164,7 @@ class ManualCurationUI(QDialog):
         self.cells_2_keep = None
         self.Error = None
         self.confirmation = None
-        self.setupUi(self)
+        self.setup_ui(self)
 
     def eventFilter(self, q_object: QObject, event: QEvent):
         if "graph" in q_object.objectName() and event.type() == QEvent.Type.Wheel:
@@ -173,7 +173,7 @@ class ManualCurationUI(QDialog):
         else:
             return super().eventFilter(q_object, event)
 
-    def setupUi(self, manual_curation_window):
+    def setup_ui(self, manual_curation_window):
         self.Error = Error(self)
         self.confirmation = Confirmation(self)
         self.size_policy = self.def_size_policy(manual_curation_window)
@@ -251,7 +251,7 @@ class ManualCurationUI(QDialog):
         self.max_projection_view = QLabel(self)
         self.max_projection_view.setScaledContents(True)
         pixmap = QPixmap(self.max_projection_image)
-        self.max_projection_view.setPixmap(pixmap.scaled(pixmap.size(), Qt.KeepAspectRatio))
+        self.max_projection_view.setPixmap(pixmap)
         self.max_projection_vertical_layout.addWidget(self.max_projection_view)
 
         self.cell_layout_horizontal.addWidget(self.max_projection_group)
