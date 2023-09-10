@@ -38,7 +38,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
     inputData.update_cell(cell)
     cell_name = inputData.current_cell_name
 
-    DewanIOhandler.makeCellFolder4Plot(str(cell_name), folders)
+    DewanIOhandler.make_cell_folder4_plot(str(cell_name), folders)
 
     for index, odor in enumerate(inputData.unique_odors):
         inputData.update_odor(index)
@@ -255,7 +255,7 @@ def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceT
         responsive_odor_indexes = np.nonzero(SignificanceTable[cell] > 0)[0]
 
         inputData.update_cell(cell)
-        DewanIOhandler.makeCellFolder4Plot(inputData.current_cell_name, folders)
+        DewanIOhandler.make_cell_folder4_plot(inputData.current_cell_name, folders)
 
         for odor in responsive_odor_indexes:
             inputData.update_odor(odor)
