@@ -1,9 +1,10 @@
 import pickle
+import os
 from pathlib import Path
 from isx import make_output_file_path, make_output_file_paths
 
 
-def createProjectFramework() -> None:
+def create_project_framework() -> None:
     paths = ['./ImagingAnalysis/RawData/',
              './ImagingAnalysis/PreProcessedData',
              './ImagingAnalysis/AUROCImports',
@@ -23,7 +24,7 @@ def createProjectFramework() -> None:
             path.mkdir(parents=True, exist_ok=True)
 
 
-def saveDataToDisk(data, name, fileHeader, folder) -> None:
+def save_data_to_disk(data, name, fileHeader, folder) -> None:
     pickle_out = f'./{folder}/{fileHeader}{name}.pickle'
     output_file = open(pickle_out, 'wb')
     pickle.dump(data, output_file, protocol=-1)
@@ -31,7 +32,7 @@ def saveDataToDisk(data, name, fileHeader, folder) -> None:
     print(f'{fileHeader}{name} has been saved!')
 
 
-def loadDataFromDisk(name, fileHeader, folder) -> object:
+def load_data_from_disk(name, fileHeader, folder) -> object:
     pickle_in = open(f'./{folder}/{fileHeader}{name}.pickle', 'rb')
     data_in = pickle.load(pickle_in)
     pickle_in.close()
@@ -39,7 +40,7 @@ def loadDataFromDisk(name, fileHeader, folder) -> object:
     return data_in
 
 
-def makeCellFolder4Plot(cell: str or int, *Folders: list) -> None:
+def make_cell_folder4_plot(cell: str or int, *Folders: list) -> None:
     base_path = Path('ImagingAnalysis', 'Figures')
     additional_folders = Path('').joinpath(*Folders)
     cell_name = f'Cell-{cell}'
@@ -68,7 +69,6 @@ def get_project_files(directory: str) -> (str, list, Path):
     """
     data_folder = Path(directory)
 
-    #gpio_file_path = glob.glob(os.path.join(directory, '*.gpio'))[0]
     try:
         gpio_file_path = Path(sorted(data_folder.glob('*.gpio'))[0])
         video_base = gpio_file_path.stem
@@ -76,7 +76,6 @@ def get_project_files(directory: str) -> (str, list, Path):
         print(f'GPIO File not found in {data_folder.absolute()}')
         return None, None, None
 
-    # video_files = glob.glob(os.path.join(directory, '*.isxd'))
     try:
         video_files = sorted(data_folder.glob('*.isxd'))
         video_files = [path for path in video_files if 'gpio' not in path]
@@ -87,6 +86,7 @@ def get_project_files(directory: str) -> (str, list, Path):
         return None, None, None
 
     return video_base, video_files, gpio_file_path
+
 
 def check_files(file_list: list) -> bool:
     from numpy import hstack
@@ -140,18 +140,12 @@ def make_isx_path(input_files: list[str], output_dir: str, addition: str = '', e
         return make_output_file_paths(input_files, output_dir, addition, ext=extension)
 
 
-def get_outline_coordinates(override_path=None):
+def get_outline_coordinates(path: os.PathLike):
     import json
     import numpy as np
-    from pathlib import Path
-    if override_path is None:
-        path = ['ImagingAnalysis', 'RawData', 'Cell_Contours.json']
-    else:
-        path = override_path
 
     try:
-        json_path = Path(*path)
-        json_file = open(json_path)
+        json_file = open(path)
     except (FileNotFoundError, IOError):
         print("Error loading Cell_Contours File!")
         return None
