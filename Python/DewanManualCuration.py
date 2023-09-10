@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from Python.Helpers import DewanManualCurationWidget
@@ -27,6 +26,7 @@ def manual_curation_gui(cell_list, cell_data, max_projection_image):
     #app.aboutToQuit.connect(app.deleteLater())
 
     gui.show()
+    gui.activateWindow()  # Bring window to front
 
     if gui.exec() == QDialog.Accepted:
         return_val = gui.cells_2_keep
@@ -101,12 +101,7 @@ def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionI
 
     font = ImageFont.truetype('arial.ttf', font_size)  # Font size defaults to 12 but can be changed
 
-    if MaxProjectionImage is None:
-        folders = ['ImagingAnalysis', 'RawData', 'Max_Projection.tiff']
-    else:
-        folders = MaxProjectionImage
-
-    max_projection_path = str(Path(*folders))
+    max_projection_path = str(ImagePath)
     image = cv2.imread(max_projection_path)
 
     if image is None:
@@ -116,6 +111,7 @@ def generate_max_projection(AllCellProps, CellKeys, CellOutlines, MaxProjectionI
     # For some reason PIL won't load the image, so we do a little trickery to make it work
     image = np.array(image)
     image = Image.fromarray(image)
+    # Computer, Enhance Image
     image = ImageEnhance.Brightness(image).enhance(brightness)
     image = ImageEnhance.Contrast(image).enhance(contrast)
     centroids = np.stack((AllCellProps['CentroidX'].values, AllCellProps['CentroidY'].values), axis=-1)
