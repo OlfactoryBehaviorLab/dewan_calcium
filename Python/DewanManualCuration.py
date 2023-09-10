@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from Python.Helpers import DewanManualCurationWidget
@@ -93,7 +94,7 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(ImagePath, AllCellProps, CellKeys, CellOutlines, save_image=False,
+def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, save_image,
                             save_directory=None, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
@@ -125,6 +126,10 @@ def generate_max_projection(ImagePath, AllCellProps, CellKeys, CellOutlines, sav
         drawer.polygon(points, outline=outline_color, width=outline_width)
         drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
         # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
+
+    if save_image:
+        save_path = Path('ImagingAnalysis', 'Figures').joinpath(ImagePath.stem + '_contours' + ImagePath.suffix)
+        image.save(save_path)
 
     q_image = ImageQt.ImageQt(image)
     # Some voodoo to change the image format so Qt likes it
