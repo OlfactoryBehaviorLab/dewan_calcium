@@ -45,7 +45,7 @@ def make_cell_folder4_plot(cell: str or int, *Folders: list) -> None:
     additional_folders = Path('').joinpath(*Folders)
     cell_name = f'Cell-{cell}'
 
-    path = Path(base_path, additional_folders, cell_name)
+    path = base_path.joinpath(additional_folders, cell_name)
 
     if not path.exists():
         path.mkdir(parents=True, exist_ok=True)
@@ -78,7 +78,7 @@ def get_project_files(directory: str) -> (str, list, Path):
 
     try:
         video_files = sorted(data_folder.glob('*.isxd'))
-        video_files = [path for path in video_files if 'gpio' not in path]
+        video_files = [path for path in video_files if 'gpio' not in path.name]
         # After processing is run once, an isxd file with gpio in the name is generated.
         # If processing is run again, this will ignore that file and only load the video files
     except IndexError:
@@ -105,7 +105,7 @@ def check_files(file_list: list) -> bool:
 
     file_list = hstack(file_list)  # To allow lists of lists, we condense everything down to 1D
     for file in file_list:
-        if not Path(file).exists():
+        if Path(file).exists():
             return False
     return True
 
