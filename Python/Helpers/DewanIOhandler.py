@@ -88,25 +88,36 @@ def get_project_files(directory: str) -> (str, list, Path):
     return video_base, video_files, gpio_file_path
 
 
-def check_files(file_list: list) -> bool:
+def check_files(input_files: list or None, output_files: list or None) -> bool:
     from numpy import hstack
     """
     Check whether each file in a list of files exists
 
     Args:
-        file_list (list of strings or list of lists):
-            Input list of files to check
+        input_files (list of strings or list of lists):
+            List of input files to check
+        output_files (list of strings or list of lists):
+            List of output files to check
 
     Returns:
         bool:
-            False if the file does not exist or is not larger than 2MB
-            True if the file exists and is larger than 2MB
+            False if an input file is missing, or an output already exists
+            True if all the input files are present and the output file does not exist
     """
+    if input_files is not None:
+        input_files = hstack(input_files)
+        for infile in input_files:
+            if not Path(infile).exists():
+                print(f'Input file {infile} is missing!')
+                return False
 
-    file_list = hstack(file_list)  # To allow lists of lists, we condense everything down to 1D
-    for file in file_list:
-        if Path(file).exists():
-            return False
+    if output_files is not None:
+        output_files = hstack(output_files)
+        for outfile in output_files:
+            if Path(outfile).exists():
+                print(f'Output file {outfile} already exists!')
+                return False
+
     return True
 
 
