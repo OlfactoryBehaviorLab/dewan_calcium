@@ -153,7 +153,7 @@ def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: 
         return_values.all_lower_bounds.append(lower_bound)
         return_values.all_upper_bounds.append(upper_bound)
         return_values.auroc_values.append(auroc_value)
-        return_values.percentiles.append(compute_percentile(auroc_value, auroc_shuffle))
+        return_values.percentiles.append(compute_percentile(auroc_value, auroc_shuffle))  # 0 - 1
 
         if auroc_value > upper_bound:
             return_values.response_chart.append(2)

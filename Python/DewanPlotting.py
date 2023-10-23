@@ -26,7 +26,7 @@ def generateColorMap(numColors: int):
     return cycler.cycler('color', color_map(indices))
 
 
-def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, cell: int) -> None:
+def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool, cell: int) -> None:
     if latentCellsOnly:
         folder = 'LatentCells'
     else:
@@ -38,7 +38,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
     inputData.update_cell(cell)
     cell_name = inputData.current_cell_name
 
-    DewanIOhandler.make_cell_folder4_plot(str(cell_name), folders)
+    DewanIOhandler.make_cell_folder4_plot(str(cell_name), *folders)
 
     for index, odor in enumerate(inputData.unique_odors):
         inputData.update_odor(index)
@@ -50,9 +50,17 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         auroc_percentile = np.around(inputData.percentiles[cell][index], 4)
 
-        lower_bound = 0.01  # Set upper and lower boundaries for the percentile of the AUROC value in the shuffled
-        # AUROC distribution.
-        upper_bound = 0.99
+        lower_bound = np.around(inputData.lower_bounds[cell][index], 4)
+        upper_bound = np.around(inputData.upper_bounds[cell][index], 4)
+
+        # lower_bound = 0.01  # Set upper and lower boundaries for the percentile of the AUROC value in the shuffled
+        # # AUROC distribution.
+        # upper_bound = 0.99
+
+        # Skip the hard work if the cell isn't significant
+        if not (auroc_percentile > upper_bound or auroc_percentile < lower_bound) and not plotAll:
+            continue
+
         fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
         plt.suptitle(f'Cell:{cell_name} Odor:{odor_name}', fontsize=14)
         ax1.set_title('Cell Traces', fontsize=10)
@@ -64,7 +72,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         x_vals = []
 
         for trial in inputData.current_odor_trials:
-            data2plot = inputData.CombinedDataArray[cell, trial, :]
+            data2plot = inputData.Data[cell, trial, :]
             data4average.append(data2plot)
             x_vals = inputData.FV_time_map[trial, :]
             min_val = np.min(data2plot)
@@ -119,13 +127,14 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         plotEvokedAndBaselineMeans(inputData, ax2, colormap)
 
-        path = DewanIOhandler.generateFolderPath(
-            ['.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}'])
-
         filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.png'
 
+        path = Path(
+            '.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}', filename)
+
         plt.subplots_adjust(bottom=0.15)
-        plt.savefig(f'{path}/{filename}', dpi=800)
+
+        plt.savefig(path, dpi=800)
         plt.close()
 
 
@@ -153,13 +162,13 @@ def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2:
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool) -> None:
+def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool=False) -> None:
     workers = Pool()
 
-    partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly)
+    partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly, plotAll)
 
     workers.map(partial_function, range(inputData.number_cells))
-    # workers.map(partial_function, range(0, 1))
+
     workers.close()
     workers.join()
 
@@ -211,11 +220,12 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
 
     plt.grid(which='major')
 
-    fig.tight_layout()
+    fig.tight_layout(pad=0.2)
 
     folders = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
     filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.png'
-    plt.savefig(folders.joinpath(filename), dpi=1200)
+    plt.savefig(folders.joinpath(filename), dpi=1200, bbox_inches= "tight")
+    plt.show()
     plt.close()
 
 

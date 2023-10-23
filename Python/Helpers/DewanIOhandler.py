@@ -41,11 +41,8 @@ def load_data_from_disk(name, fileHeader, folder) -> object:
 
 
 def make_cell_folder4_plot(cell: str or int, *Folders: list) -> None:
-    base_path = Path('ImagingAnalysis', 'Figures')
-    additional_folders = Path('').joinpath(*Folders)
     cell_name = f'Cell-{cell}'
-
-    path = base_path.joinpath(additional_folders, cell_name)
+    path = Path('ImagingAnalysis', 'Figures', *Folders, cell_name)
 
     if not path.exists():
         path.mkdir(parents=True, exist_ok=True)
