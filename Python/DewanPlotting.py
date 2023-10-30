@@ -4,7 +4,6 @@ Created on Sun Dec  4 19:59:13 2022
 @author: A. Pauley, Dewan Lab
 """
 import cycler
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -27,6 +26,7 @@ def generateColorMap(numColors: int):
 
 
 def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool, cell: int) -> None:
+
     if latentCellsOnly:
         folder = 'LatentCells'
     else:
@@ -38,9 +38,17 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
     inputData.update_cell(cell)
     cell_name = inputData.current_cell_name
 
+    if plotAll:
+        odor_indexes = np.arange(inputData.num_unique_odors)
+    else:
+        odor_indexes = np.nonzero(inputData.significance_table[cell])[0]
+
     DewanIOhandler.make_cell_folder4_plot(str(cell_name), *folders)
 
-    for index, odor in enumerate(inputData.unique_odors):
+    for index in odor_indexes:
+
+        odor = inputData.unique_odors[index]
+
         inputData.update_odor(index)
 
         colormap = generateColorMap(len(inputData.current_odor_trials))
@@ -162,25 +170,21 @@ def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2:
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool=False) -> None:
+def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool = False) -> None:
     workers = Pool()
 
     partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly, plotAll)
 
-    workers.map(partial_function, range(inputData.number_cells))
+    if plotAll:
+        cells = range(inputData.number_cells)
+    else:
+        cells = np.unique(np.nonzero(inputData.significance_table > 0)[0])
+
+    workers.map(partial_function, cells)
 
     workers.close()
     workers.join()
 
-
-def plotSignificantCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool,
-                         SignificantCells: np.array) -> None:
-    workers = Pool()
-
-    partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly)
-
-    workers.close()
-    workers.join()
 
 
 def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool) -> None:
@@ -224,7 +228,7 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
 
     folders = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
     filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.png'
-    plt.savefig(folders.joinpath(filename), dpi=1200, bbox_inches= "tight")
+    plt.savefig(folders.joinpath(filename), dpi=1200, bbox_inches="tight")
     plt.show()
     plt.close()
 
