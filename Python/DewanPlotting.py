@@ -186,7 +186,6 @@ def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: b
     workers.join()
 
 
-
 def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool) -> None:
     if latentCellsOnly:
         folder = 'LatentCells'
@@ -269,7 +268,7 @@ def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceT
         responsive_odor_indexes = np.nonzero(SignificanceTable[cell] > 0)[0]
 
         inputData.update_cell(cell)
-        DewanIOhandler.make_cell_folder4_plot(inputData.current_cell_name, folders)
+        DewanIOhandler.make_cell_folder4_plot(inputData.current_cell_name, *folders)
 
         for odor in responsive_odor_indexes:
             inputData.update_odor(odor)
@@ -282,7 +281,7 @@ def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceT
 
             baseline_corrected_evok_data = truncated_evok_data - baseline_mean
 
-            verticalScatterPlot(baseline_corrected_evok_data, inputData, folders)
+            verticalScatterPlot(baseline_corrected_evok_data, inputData, *folders)
 
 
 def truncateData(data):
@@ -294,7 +293,7 @@ def truncateData(data):
     return data
 
 
-def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStore, folders):
+def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStore, *folders):
     # x = len(data2Plot)
     width = 0.6
     dotSize = 10
@@ -310,7 +309,7 @@ def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStor
     #folders_path = DewanIOhandler.generateFolderPath(folders)
     #path = os.path.join('./ImagingAnalysis/Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
     #                    f'{dataInput.odor_name}-TrialTraces.png')
-    path = Path(*['ImagingAnalysis', 'Figures', *[folders], f'Cell-{dataInput.current_cell_name}',
-                  f'{dataInput.odor_name}-TrialTraces.png'])
+    path = Path('ImagingAnalysis', 'Figures', *folders, f'Cell-{dataInput.current_cell_name}',
+                  f'{dataInput.odor_name}-TrialTraces.png')
     plt.savefig(path, dpi=800)
     plt.close()
