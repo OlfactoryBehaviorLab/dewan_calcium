@@ -158,13 +158,13 @@ def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: 
         if auroc_value > upper_bound:
             return_values.response_chart.append(2)
             if data_input.do_plot:
-                DewanPlotting.plotAuroc(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
-                                        cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
+                DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
+                                                       cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
         elif auroc_value < lower_bound:
             return_values.response_chart.append(1)
             if data_input.do_plot:
-                DewanPlotting.plotAuroc(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
-                                        cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
+                DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
+                                                       cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
         else:
             return_values.response_chart.append(0)
 

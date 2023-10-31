@@ -19,13 +19,14 @@ from . import DewanAUROC
 
 # noinspection DuplicatedCode
 
-def generateColorMap(numColors: int):
+def generate_color_map(numColors: int):
     color_map = cm.get_cmap('rainbow')
     indices = (np.linspace(0, 1, numColors))  # % color_map.N
     return cycler.cycler('color', color_map(indices))
 
 
-def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool, cell: int) -> None:
+def plot_cell_odor_traces(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool,
+                          plotAll: bool, cell: int) -> None:
 
     if latentCellsOnly:
         folder = 'LatentCells'
@@ -51,7 +52,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         inputData.update_odor(index)
 
-        colormap = generateColorMap(len(inputData.current_odor_trials))
+        colormap = generate_color_map(len(inputData.current_odor_trials))
         plt.rcParams['axes.prop_cycle'] = colormap
 
         odor_name = odor
@@ -64,10 +65,6 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         # lower_bound = 0.01  # Set upper and lower boundaries for the percentile of the AUROC value in the shuffled
         # # AUROC distribution.
         # upper_bound = 0.99
-
-        # Skip the hard work if the cell isn't significant
-        if not (auroc_percentile > upper_bound or auroc_percentile < lower_bound) and not plotAll:
-            continue
 
         fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
         plt.suptitle(f'Cell:{cell_name} Odor:{odor_name}', fontsize=14)
@@ -133,7 +130,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         ax1.add_patch(baseline_rectangle)
         ax1.add_patch(evoked_rectangle)
 
-        plotEvokedAndBaselineMeans(inputData, ax2, colormap)
+        plot_evoked_baseline_means(inputData, ax2, colormap)
 
         filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.png'
 
@@ -146,7 +143,7 @@ def plotOdorTracesPerCell(inputData: DewanDataStore.PlottingDataStore, latentCel
         plt.close()
 
 
-def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
+def plot_evoked_baseline_means(inputData: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
     baseline_means, evoked_means = DewanAUROC.averageTrialData(*DewanAUROC.collect_trial_data(inputData))
 
     x_val = [[1], [2]]
@@ -170,23 +167,23 @@ def plotEvokedAndBaselineMeans(inputData: DewanDataStore.PlottingDataStore, ax2:
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def plotAllCells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool, plotAll: bool = False) -> None:
-    workers = Pool()
+def plot_cells(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool = False, plotAll: bool = False) -> None:
+    thread_pool = Pool()
 
-    partial_function = partial(plotOdorTracesPerCell, inputData, latentCellsOnly, plotAll)
+    partial_function = partial(plot_cell_odor_traces, inputData, latentCellsOnly, plotAll)
 
     if plotAll:
         cells = range(inputData.number_cells)
     else:
         cells = np.unique(np.nonzero(inputData.significance_table > 0)[0])
+        # Get only the cells that had some type of significant response
 
-    workers.map(partial_function, cells)
+    thread_pool.map(partial_function, cells)
+    thread_pool.close()
+    thread_pool.join()
 
-    workers.close()
-    workers.join()
 
-
-def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool) -> None:
+def plot_significance_matricies(inputData: DewanDataStore.PlottingDataStore, latentCellsOnly: bool = False) -> None:
     if latentCellsOnly:
         folder = 'LatentCells'
         title = 'Latent'
@@ -232,7 +229,8 @@ def plotCellvOdorMatricies(inputData: DewanDataStore.PlottingDataStore, latentCe
     plt.close()
 
 
-def plotAuroc(fileHeader, auroc_shuffle, auroc, ub, lb, CellList, cellNum, uniqueOdors, odori, latentCellsOnly) -> None:
+def plot_auroc_distributions(fileHeader, auroc_shuffle, auroc, ub, lb, CellList, cellNum, uniqueOdors, odori,
+                             latentCellsOnly: bool = False) -> None:
     cell_name = str(CellList[cellNum])
     odor_name = str(uniqueOdors[odori])
 
@@ -252,8 +250,8 @@ def plotAuroc(fileHeader, auroc_shuffle, auroc, ub, lb, CellList, cellNum, uniqu
     plt.close()
 
 
-def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceTable: np.array,
-                         latentCells: bool) -> None:
+def plot_trial_variances(inputData: DewanDataStore.AUROCdataStore, SignificanceTable: np.array,
+                         latentCells: bool = False) -> None:
     responsive_cells_truth_table = np.any(SignificanceTable, axis=1)  # Find all rows that are not all zeros
     responsive_cell_list_index = np.nonzero(responsive_cells_truth_table)[0]  # Only keep cells that are not
 
@@ -277,14 +275,14 @@ def plotTrialsPerPairing(inputData: DewanDataStore.AUROCdataStore, SignificanceT
 
             baseline_mean = np.mean(np.hstack(baseline_data))
 
-            truncated_evok_data = truncateData(evok_data)
+            truncated_evok_data = truncate_data(evok_data)
 
             baseline_corrected_evok_data = truncated_evok_data - baseline_mean
 
-            verticalScatterPlot(baseline_corrected_evok_data, inputData, *folders)
+            vertical_scatter_plot(baseline_corrected_evok_data, inputData, *folders)
 
 
-def truncateData(data):
+def truncate_data(data):
     row_len = np.min([len(row) for row in data])
     # print(row_len)
     for i, row in enumerate(data):
@@ -293,7 +291,7 @@ def truncateData(data):
     return data
 
 
-def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStore, *folders):
+def vertical_scatter_plot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStore, *folders):
     # x = len(data2Plot)
     width = 0.6
     dotSize = 10
@@ -306,10 +304,7 @@ def verticalScatterPlot(data2Plot: list, dataInput: DewanDataStore.AUROCdataStor
     plt.xlabel("Trial")
     ax.set_xticks(range(1, len(data2Plot) + 1))
 
-    #folders_path = DewanIOhandler.generateFolderPath(folders)
-    #path = os.path.join('./ImagingAnalysis/Figures', folders_path, f'Cell-{dataInput.current_cell_name}',
-    #                    f'{dataInput.odor_name}-TrialTraces.png')
     path = Path('ImagingAnalysis', 'Figures', *folders, f'Cell-{dataInput.current_cell_name}',
-                  f'{dataInput.odor_name}-TrialTraces.png')
+                f'{dataInput.odor_name}-TrialTraces.png')
     plt.savefig(path, dpi=800)
     plt.close()
