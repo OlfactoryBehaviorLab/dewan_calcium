@@ -57,10 +57,10 @@ def plot_cell_odor_traces(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         odor_name = odor
 
-        auroc_percentile = np.around(inputData.percentiles[cell][index], 4)
+        auroc_percentile = inputData.percentiles[cell][index]
 
-        lower_bound = np.around(inputData.lower_bounds[cell][index], 4)
-        upper_bound = np.around(inputData.upper_bounds[cell][index], 4)
+        lower_bound = inputData.lower_bounds[cell][index]
+        upper_bound = inputData.upper_bounds[cell][index]
 
         # lower_bound = 0.01  # Set upper and lower boundaries for the percentile of the AUROC value in the shuffled
         # # AUROC distribution.
@@ -89,7 +89,7 @@ def plot_cell_odor_traces(inputData: DewanDataStore.PlottingDataStore, latentCel
         data4average = np.mean(data4average, axis=0)
         ax1.plot(x_vals, data4average, "k", linewidth=1.5)
 
-        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(auroc_percentile)}',
+        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(auroc_percentile*100)}',
                  transform=ax1.transAxes, fontsize='x-small', style='italic',
                  bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
 
@@ -132,7 +132,7 @@ def plot_cell_odor_traces(inputData: DewanDataStore.PlottingDataStore, latentCel
 
         plot_evoked_baseline_means(inputData, ax2, colormap)
 
-        filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.png'
+        filename = f'{inputData.file_header}Cell{cell_name}-{odor_name}-CellTrace.pdf'
 
         path = Path(
             '.', 'ImagingAnalysis', 'Figures', 'AllCellTracePlots', folder, f'Cell-{cell_name}', filename)
@@ -223,7 +223,7 @@ def plot_significance_matricies(inputData: DewanDataStore.PlottingDataStore, lat
     fig.tight_layout(pad=0.2)
 
     folders = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
-    filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.png'
+    filename = f'{inputData.file_header}{title}AllCellsvOdorsAUROC.svg'
     plt.savefig(folders.joinpath(filename), dpi=1200, bbox_inches="tight")
     plt.show()
     plt.close()
@@ -245,7 +245,7 @@ def plot_auroc_distributions(fileHeader, auroc_shuffle, auroc, ub, lb, CellList,
         sub_folder = 'OnTimeCells'
 
     folder = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', f'{sub_folder}'])
-    filename = f'{fileHeader}Cell{cell_name}-{odor_name}.png'
+    filename = f'{fileHeader}Cell{cell_name}-{odor_name}.pdf'
     plt.savefig(folder.joinpath(filename))
     plt.close()
 
@@ -305,6 +305,6 @@ def vertical_scatter_plot(data2Plot: list, dataInput: DewanDataStore.AUROCdataSt
     ax.set_xticks(range(1, len(data2Plot) + 1))
 
     path = Path('ImagingAnalysis', 'Figures', *folders, f'Cell-{dataInput.current_cell_name}',
-                f'{dataInput.odor_name}-TrialTraces.png')
+                f'{dataInput.odor_name}-TrialTraces.pdf')
     plt.savefig(path, dpi=800)
     plt.close()
