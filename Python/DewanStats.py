@@ -121,20 +121,10 @@ def lifetimeSparseness(dataInput: DewanDataStore.AUROCdataStore, significanceTab
     return np.array(cells_lifetime_sparseness), np.array(non_mo_cells)
 
 
-def truncateData(data1, data2) -> tuple:
-    data1_minima = [np.min(len(row)) for row in data1]
-    data2_minima = [np.min(len(row)) for row in data2]
-    row_minimum = int(min(min(data1_minima), min(data2_minima)))
-    data1 = [row[:row_minimum] for row in data1]
-    data2 = [row[:row_minimum] for row in data2]
-
-    return data1, data2
-
-
 def returnDifferenceOfMeans(dataInput: DewanDataStore.AUROCdataStore) -> float:
     baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
 
-    baseline_data, evoked_data = truncateData(baseline_data, evoked_data)
+    baseline_data, evoked_data = truncate_data(baseline_data, evoked_data)
     # Sometimes the frame numbers don't line up between trials
     # We will find the shortest row in the evoked and baseline data, and set all rows to be that length
     # Occasionally will lose one datapoint from each row if min(row) == 39
@@ -147,14 +137,12 @@ def returnDifferenceOfMeans(dataInput: DewanDataStore.AUROCdataStore) -> float:
     return difference
 
 
-def crossTrialConsistency(dataInput: DewanDataStore.AUROCdataStore, significanceTable: np.array, latentCells: bool):
-    mineral_oil_index = np.nonzero(dataInput.unique_odors == 'MO')[0]
-    responsive_cell_list_index = np.nonzero(significanceTable[:, mineral_oil_index] == 0)[0]
-    # Only keep cells that are not responsive to MO
+def neural_activity_distance(dataInput: DewanDataStore.AUROCdataStore, significanceTable: np.array, latentCells: bool):
+    significant_ontime_cells = np.unique(np.nonzero(significanceTable > 0)[0])
 
     correlation_coefficient_matrix = []
 
-    for cell in responsive_cell_list_index:
+    for cell in significant_ontime_cells:
         odor_indexes = np.nonzero(dataInput.unique_odors != 'MO')[0]
         # Only keep odors that are not MO
 
@@ -165,13 +153,13 @@ def crossTrialConsistency(dataInput: DewanDataStore.AUROCdataStore, significance
         for odor in odor_indexes:
             dataInput.update_odor(odor)
             baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
-            baseline_mean, evoked_trials = truncateData(baseline_data, evoked_data)
+            baseline_mean, evoked_trials = truncate_data(baseline_data, evoked_data)
 
             baseline_mean = np.mean(baseline_mean)
 
             odor_trials = np.subtract(evoked_trials, baseline_mean)
 
-            mean_cc = spearmanCorrelation(odor_trials)
+            mean_cc = spearman_correlation(odor_trials)
 
             cell_correlation_coefficients.append(mean_cc)
 
@@ -180,13 +168,17 @@ def crossTrialConsistency(dataInput: DewanDataStore.AUROCdataStore, significance
     return correlation_coefficient_matrix
 
 
-def generateCorrelationPairs(numTrials):
-    return [pair for pair in itertools.combinations(range(numTrials), r=2)]
-    # We <3 list comprehension
+def truncate_data(data1, data2) -> tuple:
+    data1_minima = [np.min(len(row)) for row in data1]
+    data2_minima = [np.min(len(row)) for row in data2]
+    row_minimum = int(min(min(data1_minima), min(data2_minima)))
+    data1 = [row[:row_minimum] for row in data1]
+    data2 = [row[:row_minimum] for row in data2]
 
+    return data1, data2
 
-def spearmanCorrelation(trials):
-    pairs2correlate = generateCorrelationPairs(len(trials))
+def spearman_correlation(trials):
+    pairs2correlate = generate_correlation_pairs(len(trials))
     pairwise_correlation_coefficients = []
 
     for pair in pairs2correlate:
@@ -197,3 +189,11 @@ def spearmanCorrelation(trials):
 
     mean_cc = np.mean(pairwise_correlation_coefficients)
     return mean_cc
+
+
+def generate_correlation_pairs(numTrials):
+    return [pair for pair in itertools.combinations(range(numTrials), r=2)]
+    # We <3 list comprehension
+
+
+
