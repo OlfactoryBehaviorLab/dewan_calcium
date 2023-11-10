@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from functools import partial
-from matplotlib.colors import ListedColormap
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from multiprocessing import Pool
 from pathlib import Path
 from .Helpers import DewanIOhandler
@@ -308,3 +308,53 @@ def vertical_scatter_plot(data2Plot: list, dataInput: DewanDataStore.AUROCdataSt
                 f'{dataInput.odor_name}-TrialTraces.pdf')
     plt.savefig(path, dpi=800)
     plt.close()
+
+
+def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distances, unique_odors):
+    inferno = plt.colormaps['inferno']
+    new_cmap = LinearSegmentedColormap.from_list('new_magma', inferno(np.linspace(0.2, 1.2, 128)))
+
+    fig, ax = plt.subplots(1, 2)
+    fig.tight_layout()
+    fig.set_figwidth(15)
+    fig.suptitle('Pairwise Correlation Distance (1-r)')
+
+    odor_pdist = ax[0].matshow(odor_pairwise_distances, cmap=new_cmap)
+    ax[0].tick_params(axis='x', labelrotation=50, bottom=False)
+    ax[0].set_xticks(np.arange(len(unique_odors)))
+    ax[0].set_yticks(np.arange(len(unique_odors)))
+    ax[0].set_xticklabels(unique_odors, ha='left')
+    ax[0].set_yticklabels(unique_odors)
+
+    pdist = ax[1].matshow(cell_pairwise_distances, cmap=new_cmap)
+    ax[1].set_xticks(np.arange(len(cell_pairwise_distances[0])))
+    ax[1].set_yticks(np.arange(len(cell_pairwise_distances[0])))
+
+    ax[0].set_title("Odor v. Odor")
+    ax[1].set_title("Cell v. Cell")
+
+    fig.colorbar(odor_pdist, ax=ax[0], shrink=0.8)
+    fig.colorbar(pdist, ax=ax[1], shrink=0.8)
+
+    fig.tight_layout()
+    fig.savefig('correlations.pdf', dpi=800)
+
+
+def plot_distance_v_correlation(unique_distance_v_correlation):
+    x = unique_distance_v_correlation[:, 0]
+    y = unique_distance_v_correlation[:, 1]
+
+    # 8C.1: Quick linear regression
+    m, b = np.polyfit(x, y, deg=1)
+    reg_x = np.arange(np.max(x))
+    reg_y = np.add(np.multiply(m, reg_x), b)
+
+    # 8C.2: Plot regression line, formula, and data
+    fig, ax = plt.subplots()
+    ax.plot(reg_x, reg_y)
+    ax.scatter(x, y)
+    plt.xlabel("Pairwise Distance")
+    plt.ylabel("Pairwise Signal Correlation")
+    plt.title("Activity vs. Spatial Distance")
+    formula = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
+    pass

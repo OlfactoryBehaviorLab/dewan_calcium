@@ -1,8 +1,9 @@
-from typing import Tuple
-
 import numpy as np
 from numpy import ndarray
-from scipy import stats
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import pairwise_distances, pairwise
+
 import itertools
 
 from . import DewanAUROC
@@ -137,37 +138,6 @@ def returnDifferenceOfMeans(dataInput: DewanDataStore.AUROCdataStore) -> float:
     return difference
 
 
-def neural_activity_distance(dataInput: DewanDataStore.AUROCdataStore, significanceTable: np.array, latentCells: bool):
-    significant_ontime_cells = np.unique(np.nonzero(significanceTable > 0)[0])
-
-    correlation_coefficient_matrix = []
-
-    for cell in significant_ontime_cells:
-        odor_indexes = np.nonzero(dataInput.unique_odors != 'MO')[0]
-        # Only keep odors that are not MO
-
-        dataInput.update_cell(cell)
-
-        cell_correlation_coefficients = []
-
-        for odor in odor_indexes:
-            dataInput.update_odor(odor)
-            baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
-            baseline_mean, evoked_trials = truncate_data(baseline_data, evoked_data)
-
-            baseline_mean = np.mean(baseline_mean)
-
-            odor_trials = np.subtract(evoked_trials, baseline_mean)
-
-            mean_cc = spearman_correlation(odor_trials)
-
-            cell_correlation_coefficients.append(mean_cc)
-
-        correlation_coefficient_matrix.append(cell_correlation_coefficients)
-
-    return correlation_coefficient_matrix
-
-
 def truncate_data(data1, data2) -> tuple:
     data1_minima = [np.min(len(row)) for row in data1]
     data2_minima = [np.min(len(row)) for row in data2]
@@ -177,23 +147,70 @@ def truncate_data(data1, data2) -> tuple:
 
     return data1, data2
 
-def spearman_correlation(trials):
-    pairs2correlate = generate_correlation_pairs(len(trials))
-    pairwise_correlation_coefficients = []
-
-    for pair in pairs2correlate:
-        trialA = trials[pair[0]]
-        trialB = trials[pair[1]]
-        CC = stats.spearmanr(trialA, trialB)
-        pairwise_correlation_coefficients.append(CC)
-
-    mean_cc = np.mean(pairwise_correlation_coefficients)
-    return mean_cc
-
 
 def generate_correlation_pairs(numTrials):
     return [pair for pair in itertools.combinations(range(numTrials), r=2)]
     # We <3 list comprehension
 
 
+def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, significant_ontime_cells: list):
+    trial_averaged_responses_matrix = []
 
+    for cell in significant_ontime_cells:  # Loop through the significant cells
+        stats_data.update_cell(cell)  # Update the datastore to grab the correct data
+
+        trial_averaged_responses = []
+
+        for odor in range(len(stats_data.unique_odors)):  # Loop through all odors
+            stats_data.update_odor(odor)
+            baseline_data, evoked_data = DewanAUROC.collect_trial_data(stats_data, None, False)
+            # Get cell-odor data for all trials, no returns, on time cells only
+            baseline_data, evoked_data = truncate_data(baseline_data, evoked_data)  # Make all rows the same length
+
+            baseline_mean = np.mean(baseline_data)  # Get the average baseline for all trials
+            evoked_data = np.subtract(evoked_data, baseline_mean)  # Baseline shift all the evoked data
+            average_response = np.mean(evoked_data)  # Average the baseline-shifted responses for all trials
+
+            trial_averaged_responses.append(average_response)
+
+        trial_averaged_responses_matrix.append(trial_averaged_responses)
+    return trial_averaged_responses_matrix
+
+
+def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_odors: list):
+    scaler = StandardScaler()
+    scaled_trial_averaged_responses = scaler.fit_transform(trial_averaged_responses_matrix)
+
+    odor_trial_averaged_responses_matrix = pd.DataFrame(np.transpose(scaled_trial_averaged_responses))
+    odor_trial_averaged_responses_matrix.set_index(unique_odors, inplace=True)
+
+    # 8A.3: Calculate several different correlation coefficients
+    cell_pairwise_distances = pairwise_distances(scaled_trial_averaged_responses, metric='correlation')
+    odor_pairwise_distances = pairwise_distances(odor_trial_averaged_responses_matrix, metric='correlation')
+
+    return odor_pairwise_distances, cell_pairwise_distances
+
+
+def cell_v_correlation(Centroids, cell_pairwise_distances):
+    distance_matrix = calculate_spatial_distance(Centroids)
+
+    # 8B.2: Pair the spatial distance with its associated correlation coefficient
+    distance_v_correlation_pairs = np.stack((distance_matrix, cell_pairwise_distances), axis=-1)
+
+    unique_distance_v_correlation_pairs = []
+    for i, cell in enumerate(distance_v_correlation_pairs[:-1]):
+        #8B.3: Select half of the n x n matrix since the bottom half is just a reflection
+        unique_distance_v_correlation_pairs.extend(cell[i + 1:])
+
+    unique_distance_v_correlation_pairs = np.vstack(unique_distance_v_correlation_pairs)  # Combine individual rows into one large contiguous array
+
+    ## Alternative way to do the above that is vectorized instead of looped
+    # distance_v_correlation = np.vstack(distance_v_correlation)
+    # distance_v_correlation = pd.DataFrame(np.round(distance_v_correlation, 6))
+    # distance_v_correlation.drop_duplicates(inplace=True)
+    # distance_v_correlation = distance_v_correlation.iloc[1:]
+
+    return unique_distance_v_correlation_pairs
+
+def calculate_spatial_distance(Centroids):
+    return pairwise.euclidean_distances(Centroids.values, Centroids.values)
