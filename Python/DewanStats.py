@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import ndarray
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
@@ -48,94 +47,36 @@ def sparseness(iterable, means) -> float:
     return sparseness_val
 
 
-def popSparseness(dataInput: DewanDataStore.AUROCdataStore, significanceTable: ndarray) -> tuple:
-    population_sparseness = []
+def popSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list, unique_odors)\
+        -> pd.DataFrame:
+    num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
+    population_sparseness_values = []
 
-    mineral_oil_index = np.nonzero(dataInput.unique_odors == 'MO')[0]
-    odor_indexes = np.nonzero(dataInput.unique_odors != 'MO')[0]
-    non_mo_cells = np.nonzero(significanceTable[:, mineral_oil_index] == 0)[0]
-    odor_significance_table = np.transpose(significanceTable)
-    inhibitory_responses = [np.nonzero(row == 1)[0] for row in odor_significance_table[:, non_mo_cells]]
+    for i in range(num_odors):
+        population_sparseness = sparseness(len(significant_ontime_cells),
+                                           zeroed_trial_averaged_responses_matrix.iloc[:, i])
+        population_sparseness_values.append(population_sparseness)
 
-    for i, odor in enumerate(odor_indexes):
-        dataInput.update_odor(odor)
+    population_sparse_DF = pd.DataFrame(population_sparseness_values, columns=['Population Sparseness'],
+                                        index=unique_odors)
 
-        odor_data = []
-        inhibitory_response_list = inhibitory_responses[i]
-        for j, cell in enumerate(non_mo_cells):
-
-            if len(inhibitory_response_list) > 0 and j in inhibitory_response_list:
-                odor_data.append(0)
-                continue
-                # Inhibitory odor responses are set to zero
-
-            dataInput.update_cell(cell)
-
-            difference_of_means = returnDifferenceOfMeans(dataInput)
-
-            odor_data.append(difference_of_means)
-            # Add this odor's mean to the list of means
-
-        odor_data = np.array(odor_data)
-        sparseness_value = sparseness(len(non_mo_cells), odor_data)
-        population_sparseness.append(sparseness_value)
-
-    return np.array(population_sparseness), np.array(odor_indexes)
+    return population_sparse_DF
 
 
-def lifetimeSparseness(dataInput: DewanDataStore.AUROCdataStore, significanceTable: ndarray) -> tuple:
-    cells_lifetime_sparseness = []
+def lifetimeSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list) \
+        -> pd.DataFrame:
+    num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
 
-    mineral_oil_index = np.nonzero(dataInput.unique_odors == 'MO')[0]
-    odor_indexes = np.nonzero(dataInput.unique_odors != 'MO')[0]
+    lifetime_sparseness_values = []
+    cell_row_names = []
+    for i, cell in enumerate(significant_ontime_cells):
+        lifetime_sparseness = sparseness(num_odors, zeroed_trial_averaged_responses_matrix.iloc[i])
+        lifetime_sparseness_values.append(lifetime_sparseness)
+        cell_row_names.append(f'Cell {cell + 1}')
 
-    non_mo_cells = np.nonzero(significanceTable[:, mineral_oil_index] == 0)[0]
-    # Only keep cells that are not responsive to MO
-    # responsive_cells = non_mo_cells[np.any(significanceTable[non_mo_cells], axis=1)]
-    # single_response_cells = np.nonzero(np.sum(significanceTable[responsive_cells], axis=1) <= 2)[0]
-    inhibitory_responses = [np.nonzero(row == 1)[0] for row in significanceTable[non_mo_cells, :]]
-    # Find where the inhibitory responses are, we need to set them to zero
+    lifetime_sparse_DF = pd.DataFrame(lifetime_sparseness_values, columns=['Lifetime Sparseness'], index=cell_row_names)
 
-    for i, cell in enumerate(non_mo_cells):
-
-        dataInput.update_cell(cell)
-        inhibitory_response_list = inhibitory_responses[i]
-        cell_data = []
-        for j, odor in enumerate(odor_indexes):
-
-            if len(inhibitory_response_list) > 0 and j in inhibitory_response_list:
-                cell_data.append(0)
-                # Set all inhibitory responses to zero and skip to next odor
-                continue
-
-            dataInput.update_odor(odor)
-
-            difference_of_means = returnDifferenceOfMeans(dataInput)
-            cell_data.append(difference_of_means)
-            # Add this odor's mean to the list of means
-
-        cell_data = np.array(cell_data)
-
-        sparseness_value = sparseness((dataInput.num_unique_odors - 1), cell_data)
-        cells_lifetime_sparseness.append(sparseness_value)
-
-    return np.array(cells_lifetime_sparseness), np.array(non_mo_cells)
-
-
-def returnDifferenceOfMeans(dataInput: DewanDataStore.AUROCdataStore) -> float:
-    baseline_data, evoked_data = DewanAUROC.collect_trial_data(dataInput, None, False)
-
-    baseline_data, evoked_data = truncate_data(baseline_data, evoked_data)
-    # Sometimes the frame numbers don't line up between trials
-    # We will find the shortest row in the evoked and baseline data, and set all rows to be that length
-    # Occasionally will lose one datapoint from each row if min(row) == 39
-
-    evoke_mean = np.mean(np.hstack(evoked_data))
-    baseline_mean = np.mean(np.hstack(baseline_data))
-
-    difference = evoke_mean - baseline_mean
-
-    return difference
+    return lifetime_sparse_DF
 
 
 def truncate_data(data1, data2) -> tuple:
@@ -156,7 +97,8 @@ def generate_correlation_pairs(numTrials):
 def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, significant_ontime_cells: list):
     trial_averaged_responses_matrix = []
 
-    for cell in significant_ontime_cells:  # Loop through the significant cells
+    for cell in significant_ontime_cells:
+        # Loop through the significant cells
         stats_data.update_cell(cell)  # Update the datastore to grab the correct data
 
         trial_averaged_responses = []
