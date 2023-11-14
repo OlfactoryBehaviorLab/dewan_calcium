@@ -1,15 +1,13 @@
+import itertools
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
-
-import itertools
-
 from . import DewanAUROC
 from .Helpers import DewanDataStore
 
 
-def sparseness(iterable, means) -> float:
+def sparseness(iterable: int, means: np.array) -> float:
     """
 
     The actual calculations for lifetime and population sparseness are the same.
@@ -47,8 +45,9 @@ def sparseness(iterable, means) -> float:
     return sparseness_val
 
 
-def popSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list, unique_odors)\
-        -> pd.DataFrame:
+def population_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame,
+                          significant_ontime_cells: list[int], unique_odors: list[str]) -> pd.DataFrame:
+
     num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
     population_sparseness_values = []
 
@@ -57,14 +56,15 @@ def popSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, signific
                                            zeroed_trial_averaged_responses_matrix.iloc[:, i])
         population_sparseness_values.append(population_sparseness)
 
-    population_sparse_DF = pd.DataFrame(population_sparseness_values, columns=['Population Sparseness'],
-                                        index=unique_odors)
+    population_sparseness_DF = pd.DataFrame(population_sparseness_values, columns=['Population Sparseness'],
+                                            index=unique_odors)
 
-    return population_sparse_DF
+    return population_sparseness_DF
 
 
-def lifetimeSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list) \
-        -> pd.DataFrame:
+def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame,
+                        significant_ontime_cells: list) -> pd.DataFrame:
+
     num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
 
     lifetime_sparseness_values = []
@@ -74,12 +74,13 @@ def lifetimeSparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, sig
         lifetime_sparseness_values.append(lifetime_sparseness)
         cell_row_names.append(f'Cell {cell + 1}')
 
-    lifetime_sparse_DF = pd.DataFrame(lifetime_sparseness_values, columns=['Lifetime Sparseness'], index=cell_row_names)
+    lifetime_sparseness_DF = pd.DataFrame(lifetime_sparseness_values,
+                                          columns=['Lifetime Sparseness'], index=cell_row_names)
 
-    return lifetime_sparse_DF
+    return lifetime_sparseness_DF
 
 
-def truncate_data(data1, data2) -> tuple:
+def truncate_data(data1: list, data2: list) -> tuple:
     data1_minima = [np.min(len(row)) for row in data1]
     data2_minima = [np.min(len(row)) for row in data2]
     row_minimum = int(min(min(data1_minima), min(data2_minima)))
@@ -89,12 +90,12 @@ def truncate_data(data1, data2) -> tuple:
     return data1, data2
 
 
-def generate_correlation_pairs(numTrials):
+def generate_correlation_pairs(numTrials: int) -> list:
     return [pair for pair in itertools.combinations(range(numTrials), r=2)]
     # We <3 list comprehension
 
 
-def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, significant_ontime_cells: list):
+def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, significant_ontime_cells: list) -> list:
     trial_averaged_responses_matrix = []
 
     for cell in significant_ontime_cells:
@@ -119,7 +120,7 @@ def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, sig
     return trial_averaged_responses_matrix
 
 
-def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_odors: list):
+def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_odors: list) -> tuple:
     scaler = StandardScaler()
     scaled_trial_averaged_responses = scaler.fit_transform(trial_averaged_responses_matrix)
 
@@ -133,20 +134,21 @@ def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_o
     return odor_pairwise_distances, cell_pairwise_distances
 
 
-def cell_v_correlation(Centroids, cell_pairwise_distances):
+def cell_v_correlation(Centroids, cell_pairwise_distances) -> list:
     distance_matrix = calculate_spatial_distance(Centroids)
 
-    # 8B.2: Pair the spatial distance with its associated correlation coefficient
+    # Pair the spatial distance with its associated correlation coefficient
     distance_v_correlation_pairs = np.stack((distance_matrix, cell_pairwise_distances), axis=-1)
 
     unique_distance_v_correlation_pairs = []
     for i, cell in enumerate(distance_v_correlation_pairs[:-1]):
-        #8B.3: Select half of the n x n matrix since the bottom half is just a reflection
+        # Select half of the n x n matrix since the bottom half is just a reflection
         unique_distance_v_correlation_pairs.extend(cell[i + 1:])
 
-    unique_distance_v_correlation_pairs = np.vstack(unique_distance_v_correlation_pairs)  # Combine individual rows into one large contiguous array
+    unique_distance_v_correlation_pairs = np.vstack(unique_distance_v_correlation_pairs)
+    # Combine individual rows into one large contiguous array
 
-    ## Alternative way to do the above that is vectorized instead of looped
+    # Alternative way to do the above that is vectorized instead of looped
     # distance_v_correlation = np.vstack(distance_v_correlation)
     # distance_v_correlation = pd.DataFrame(np.round(distance_v_correlation, 6))
     # distance_v_correlation.drop_duplicates(inplace=True)
@@ -154,5 +156,6 @@ def cell_v_correlation(Centroids, cell_pairwise_distances):
 
     return unique_distance_v_correlation_pairs
 
-def calculate_spatial_distance(Centroids):
+
+def calculate_spatial_distance(Centroids: pd.DataFrame) -> list:
     return pairwise.euclidean_distances(Centroids.values, Centroids.values)
