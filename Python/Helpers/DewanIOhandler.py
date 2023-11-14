@@ -10,6 +10,8 @@ def create_project_framework() -> None:
              './ImagingAnalysis/AUROCImports',
              './ImagingAnalysis/AUROCData',
              './ImagingAnalysis/CombinedData',
+             './ImagingAnalysis/Statistics',
+             './ImagingAnalysis/Figures/Statistics',
              './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
              './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
              './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',

@@ -337,7 +337,9 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
     fig.colorbar(pdist, ax=ax[1], shrink=0.8)
 
     fig.tight_layout()
-    fig.savefig('correlations.pdf', dpi=800)
+
+    path = Path('ImagingAnalysis', 'Figures', 'Statistics', 'correlations.pdf')
+    fig.savefig(path, dpi=800)
 
 
 def plot_distance_v_correlation(unique_distance_v_correlation):
@@ -357,4 +359,4 @@ def plot_distance_v_correlation(unique_distance_v_correlation):
     plt.ylabel("Pairwise Signal Correlation")
     plt.title("Activity vs. Spatial Distance")
     formula = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
-    pass
+
