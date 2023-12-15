@@ -77,7 +77,7 @@ def get_project_files(directory: str) -> (str, list, Path):
 
     try:
         video_files = sorted(data_folder.glob('*.isxd'))
-        video_files = [path for path in video_files if 'gpio' not in path.name]
+        video_files = [str(path) for path in video_files if 'gpio' not in path.name]
         # After processing is run once, an isxd file with gpio in the name is generated.
         # If processing is run again, this will ignore that file and only load the video files
     except IndexError:
