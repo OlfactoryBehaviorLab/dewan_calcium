@@ -95,7 +95,7 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
 
 
 def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, save_image,
-                            save_directory=None, brightness=1.5, contrast=1.5,
+                            save_directory=None, is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
     from PIL import Image, ImageDraw, ImageFont, ImageQt, ImageEnhance
@@ -120,9 +120,14 @@ def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutline
     drawer = ImageDraw.Draw(image)  # Give the computer a crayon
 
     for i, each in enumerate(CellKeys):
-        points = np.multiply(CellOutlines[each][0], 4)
+        if is_downsampled:
+            points = CellOutlines[each][0]
+            centroid = (centroids[i][0], centroids[i][1])
+        else:  # If using full-frame image we need to scale our points up by the downsample factor
+            points = np.multiply(CellOutlines[each][0], 4)
+            centroid = np.multiply((centroids[i][0], centroids[i][1]), 4)
+
         points = [tuple(x) for x in points]
-        centroid = np.multiply((centroids[i][0], centroids[i][1]), 4)
         drawer.polygon(points, outline=outline_color, width=outline_width)
         drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
         # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
@@ -133,11 +138,6 @@ def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutline
 
     q_image = ImageQt.ImageQt(image)
     # Some voodoo to change the image format so Qt likes it
-
-    if save_image:
-        if save_directory is None:
-            save_directory = 'default'
-        # save the image
 
     return q_image
 
