@@ -12,8 +12,8 @@ from functools import partial
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from multiprocessing import Pool
 from pathlib import Path
-from .Helpers import DewanIOhandler
-from .Helpers import DewanDataStore
+from .helpers import DewanIOhandler
+from .helpers import DewanDataStore
 from . import DewanAUROC
 
 

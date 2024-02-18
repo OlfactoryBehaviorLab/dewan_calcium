@@ -1,0 +1,12 @@
+numpy
+pandas
+mathplotlib
+scikit-learn
+scipy
+jupyter
+openpyxl
+pyarrow
+pathlib
+tqdl
+PySide6
+qdarktheme

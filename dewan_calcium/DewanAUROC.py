@@ -14,8 +14,8 @@ from tqdm.contrib.concurrent import process_map
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from .Helpers import DewanDataStore
-from .Helpers import DewanSlidingProbability
+from .helpers import DewanDataStore
+from .helpers import DewanSlidingProbability
 from . import DewanPlotting
 
 
