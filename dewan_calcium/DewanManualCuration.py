@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
-from Python.Helpers import DewanManualCurationWidget
+from .helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 import qdarktheme
