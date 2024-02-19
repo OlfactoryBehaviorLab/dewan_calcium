@@ -23,6 +23,7 @@ setup(
 						'tqdl',
 						'PySide6',
 						'PyQtDarkTheme',
-						'isx_api>=1.9.4'
+						#'oasis-deconv'
+						#'isx>=1.9.4'
 						]
 	)
