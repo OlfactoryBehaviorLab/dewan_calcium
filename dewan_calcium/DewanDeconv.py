@@ -81,6 +81,12 @@ def smooth_data(trace: np.ndarray) -> np.ndarray:
     return smoothed_trace
 
 
-def multithread_smoothing():
-    # Placeholder
-    pass
+def multithread_smoothing(zscored_data, max_workers=8):
+    from concurrent.futures import ProcessPoolExecutor
+
+    results = []
+
+    with ProcessPoolExecutor(max_workers) as pool:
+        results = pool.map(smooth_data, zscored_data.T.values)
+
+    return results
