@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from sklearn import preprocessing
-from oasis.functions import deconvolve
+from oasis.functions import deconvolve # install using conda install to avoid having to build
 from pathlib import Path
 
 
@@ -41,17 +41,36 @@ def find_peaks(data: np.ndarray, framerate: int, peak_args: dict) -> np.ndarray:
 
 def load_transients(path: Path) -> pd.DataFrame:
     try:
-        data = pd.read_csv(path, header=0, index_col=0)
+        data = pd.read_csv(path, header=0, index_col=0, dtype=object)
         data = data[1:]  # Remove first row
+        
+        cols = [column[1:] for column in data.columns] # Remove leading space from each column name
+        data.columns = cols
+
+        data = data.astype(np.float32) # Cast all numbers from object -> np.float32
+
+        data.interpolate(inplace=True) # Fill all NaN with a linearly interpolated value
+
     except FileNotFoundError:
         raise f'Error, cannot find the data file: {path}'
     return data
 
 
 def z_score_data(data: pd.DataFrame) -> pd.DataFrame:
-    scaler = preprocessing.StandardScaler()
-    zscore_trace = scaler.fit_transform(data)
-    return zscore_trace
+    from scipy.stats import zscore
+
+    keys = data.keys() # Get each column name
+    z_scored_data = dict.fromkeys(keys)
+
+    for each in keys: # Loop through columns
+        col = data[each]
+        z_scored = zscore(col) # Zscore column and replace it
+        
+        z_scored_data[each] = z_scored
+        
+    z_scored_data = pd.DataFrame(z_scored_data, index=data.index)
+
+    return z_scored_data
 
 
 def smooth_data(trace: np.ndarray) -> np.ndarray:
