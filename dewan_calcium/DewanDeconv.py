@@ -73,20 +73,42 @@ def z_score_data(data: pd.DataFrame) -> pd.DataFrame:
     return z_scored_data
 
 
-def smooth_data(trace: np.ndarray) -> np.ndarray:
-    deconv_data = deconvolve(trace, g=(None, None), optimize_g=5, penalty=1, max_iter=5)
+def smooth_data(trace: tuple) -> np.ndarray:
+    import warnings
+    trace_name, trace_data = trace # Unpack tuple
+    trace_data = trace_data.values
+    print(f'Smoothing trace: {trace_name}')
+
+    
+    warnings.simplefilter("ignore", category=UserWarning)
+    deconv_data = deconvolve(trace_data, g=(None, None), optimize_g=5, penalty=1, max_iter=5)
 
     smoothed_trace = deconv_data[0]
+
+    print(f'Smoothing complete for: {trace_name}!')
+
 
     return smoothed_trace
 
 
-def multithread_smoothing(zscored_data, max_workers=8):
+def multithread_smoothing(zscored_data: pd.DataFrame, num_workers: int = 4) -> list[tuple]:
     from concurrent.futures import ProcessPoolExecutor
+    from contextlib import ExitStack
+    from tqdm.notebook import tqdm
 
-    results = []
+    iterator = zscored_data.items() # List of tuples
+    num_traces = zscored_data.shape[1] # Num of cells
+    traces = []
+    print("Begin smoothing of trace data...")
 
-    with ProcessPoolExecutor(max_workers) as pool:
-        results = pool.map(smooth_data, zscored_data.T.values)
+    with ExitStack() as stack:
+        pool = stack.enter_context(ProcessPoolExecutor(max_workers = num_workers))
+        progress_bar = stack.enter_context(tqdm(position=0, total=num_traces))
 
-    return results
+        for trace in pool.map(smooth_data, iterator):
+            progress_bar.update(1)
+            traces.append(trace)
+
+    print("Trace smoothing completed!")
+
+    return traces
