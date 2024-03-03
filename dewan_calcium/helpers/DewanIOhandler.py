@@ -72,14 +72,14 @@ def get_project_files(directory: str) -> (str, list, Path):
         session_json_path = Path(sorted(data_folder.glob('*.json'))[0])
     except IndexError:
         print(f'session.json not found in {data_folder.absolute()}')
-        return None, None, None, None
+        session_json_path = None
 
     try:
         gpio_file_path = Path(sorted(data_folder.glob('*.gpio'))[0])
         video_base = gpio_file_path.stem
     except IndexError:
         print(f'GPIO File not found in {data_folder.absolute()}')
-        return None, None, None, None
+        gpio_file_path = None
 
     try:
         video_files = sorted(data_folder.glob('*.isxd'))
@@ -87,8 +87,8 @@ def get_project_files(directory: str) -> (str, list, Path):
         # After processing is run once, an isxd file with gpio in the name is generated.
         # If processing is run again, this will ignore that file and only load the video files
     except IndexError:
-        print(f'No video files found in {data_folder.absolute()}')
-        return None, None, None, None
+        print(f'No video file(s) found in {data_folder.absolute()}')
+        video_files = None
 
     return video_base, video_files, gpio_file_path, session_json_path
 
