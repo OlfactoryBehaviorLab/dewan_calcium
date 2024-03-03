@@ -90,8 +90,8 @@ def truncate_data(data1: list, data2: list) -> tuple:
     return data1, data2
 
 
-def generate_correlation_pairs(numTrials: int) -> list:
-    return [pair for pair in itertools.combinations(range(numTrials), r=2)]
+def generate_correlation_pairs(number_trials: int) -> list:
+    return [pair for pair in itertools.combinations(range(number_trials), r=2)]
     # We <3 list comprehension
 
 
@@ -134,8 +134,8 @@ def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_o
     return odor_pairwise_distances, cell_pairwise_distances
 
 
-def cell_v_correlation(Centroids, cell_pairwise_distances) -> list:
-    distance_matrix = calculate_spatial_distance(Centroids)
+def cell_v_correlation(centroids, cell_pairwise_distances) -> list:
+    distance_matrix = calculate_spatial_distance(centroids)
 
     # Pair the spatial distance with its associated correlation coefficient
     distance_v_correlation_pairs = np.stack((distance_matrix, cell_pairwise_distances), axis=-1)
@@ -157,5 +157,5 @@ def cell_v_correlation(Centroids, cell_pairwise_distances) -> list:
     return unique_distance_v_correlation_pairs
 
 
-def calculate_spatial_distance(Centroids: pd.DataFrame) -> list:
-    return pairwise.euclidean_distances(Centroids.values, Centroids.values)
+def calculate_spatial_distance(centroids: pd.DataFrame) -> list:
+    return pairwise.euclidean_distances(centroids.values, centroids.values)

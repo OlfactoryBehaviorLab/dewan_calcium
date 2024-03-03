@@ -83,6 +83,7 @@ def get_project_files(directory: str) -> (str, list, Path):
     except IndexError:
         print(f'GPIO File not found in {data_folder.absolute()}')
         gpio_file_path = None
+        video_base = None
 
     try:
         video_files = sorted(data_folder.glob('*.isxd'))
