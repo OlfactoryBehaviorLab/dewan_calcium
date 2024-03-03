@@ -67,7 +67,7 @@ def run_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells: bool,
         data_input.update_odor(odor_iterator) # Update the current odor that we are computing significance for
 
         baseline_data, evoked_data = DewanTraceTools.collect_trial_data(data_input, return_values, latent_cells) # Get the raw df/F values for this cell-odor combination
-        baseline_means, evoked_means = DewanTraceTools.averageTrialData(baseline_data, evoked_data) # average the baseline and trial data
+        baseline_means, evoked_means = DewanTraceTools.average_trial_data(baseline_data, evoked_data) # average the baseline and trial data
         max_baseline_val = max(baseline_means)
         min_baseline_val = min(baseline_means)
 

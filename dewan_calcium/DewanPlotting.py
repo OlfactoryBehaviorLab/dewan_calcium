@@ -148,7 +148,7 @@ def plot_cell_odor_traces(input_data: DewanDataStore.PlottingDataStore, latent_c
 
 def plot_evoked_baseline_means(input_data: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
     baseline_data, evoked_data = DewanTraceTools.collect_trial_data(input_data) # Get the baseline and evoked df/F data
-    baseline_means, evoked_means = DewanTraceTools.averageTrialData(baseline_data, evoked_data) # Get means of the baseline/evoked data
+    baseline_means, evoked_means = DewanTraceTools.average_trial_data(baseline_data, evoked_data) # Get means of the baseline/evoked data
 
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
