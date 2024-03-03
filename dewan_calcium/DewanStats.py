@@ -3,9 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
-from . import DewanAUROC
 from .helpers import DewanDataStore
-
+from .helpers import DewanTraceTools
 
 def sparseness(iterable: int, means: np.array) -> float:
     """
@@ -107,7 +106,7 @@ def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, sig
 
         for odor in range(len(stats_data.unique_odors)):  # Loop through all odors
             stats_data.update_odor(odor)
-            baseline_data, evoked_data = DewanAUROC.collect_trial_data(stats_data, None, False)
+            baseline_data, evoked_data = DewanTraceTools.collect_trial_data(stats_data, None, False)
             # Get cell-odor data for all trials, no returns, on time cells only
             baseline_data, evoked_data = truncate_data(baseline_data, evoked_data)  # Make all rows the same length
 
