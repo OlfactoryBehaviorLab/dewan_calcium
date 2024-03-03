@@ -14,8 +14,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from .helpers import DewanIOhandler
 from .helpers import DewanDataStore
-from . import DewanAUROC
-
+from .helpers import DewanTraceTools
 
 # noinspection DuplicatedCode
 
@@ -144,7 +143,7 @@ def plot_cell_odor_traces(inputData: DewanDataStore.PlottingDataStore, latentCel
 
 
 def plot_evoked_baseline_means(inputData: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
-    baseline_means, evoked_means = DewanAUROC.averageTrialData(*DewanAUROC.collect_trial_data(inputData))
+    baseline_means, evoked_means = DewanTraceTools.averageTrialData(*DewanTraceTools.collect_trial_data(inputData))
 
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
@@ -271,7 +270,7 @@ def plot_trial_variances(inputData: DewanDataStore.AUROCdataStore, SignificanceT
         for odor in responsive_odor_indexes:
             inputData.update_odor(odor)
 
-            baseline_data, evok_data = DewanAUROC.collect_trial_data(inputData, None, latentCells)
+            baseline_data, evok_data = DewanTraceTools.collect_trial_data(inputData, None, latentCells)
 
             baseline_mean = np.mean(np.hstack(baseline_data))
 
