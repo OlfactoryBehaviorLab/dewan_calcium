@@ -8,14 +8,15 @@ December, 2022
 """
 
 import itertools
+import numpy as np
+
 from multiprocessing import Pool
 from functools import partial
 from tqdm.contrib.concurrent import process_map
-import numpy as np
 from sklearn.model_selection import train_test_split
 
-from .helpers import DewanDataStore
-from .helpers import DewanSlidingProbability
+# Import from local modules
+from .helpers import DewanDataStore, DewanSlidingProbability, DewanTraceTools
 from . import DewanPlotting
 
 
@@ -23,168 +24,99 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
-def collect_trial_data(dataInput: DewanDataStore.AUROCdataStore, returnValues: DewanDataStore.AUROCReturn = None,
-                       latentCellsOnly: bool = False) -> tuple:
-    baseline_data = []
-    evoked_data = []
-    baseline_start_indexes = []
-    baseline_end_indexes = []
-    evoked_start_indexes = []
-    evoked_end_indexes = []
-
-    for trial in dataInput.current_odor_trials:
-        time_array = dataInput.unix_time_array[trial, :]
-        trial_data = dataInput.Data[dataInput.cell_index, trial, :]
-        fv_on_time = float(dataInput.FV_Data[dataInput.FV_on_index[trial], 0])
-        fv_on_index = len(np.nonzero(time_array < fv_on_time)[0])
-        baseline_start_index = len(np.nonzero(time_array < (fv_on_time - dataInput.baseline_duration))[0])
-        baseline_end_index = fv_on_index - 1
-
-        baseline_trial_data = trial_data[baseline_start_index: baseline_end_index]
-        baseline_data.append(baseline_trial_data)
-
-        if latentCellsOnly:
-            evoked_start_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
-            evoked_end_index = len(np.nonzero(time_array < (time_array[evoked_start_index]
-                                                              + dataInput.response_duration))[0])
-        else:
-            evoked_start_index = fv_on_index
-            evoked_end_index = len(np.nonzero(time_array < (fv_on_time + dataInput.response_duration))[0])
-
-        evoked_trial_data = trial_data[evoked_start_index: evoked_end_index]
-        evoked_data.append(evoked_trial_data)
-
-        baseline_start_indexes.append(baseline_start_index)
-        baseline_end_indexes.append(baseline_end_index)
-        evoked_start_indexes.append(evoked_start_index)
-        evoked_end_indexes.append(evoked_end_index)
-
-    if returnValues is not None:
-        returnValues.baseline_start_indexes.append(baseline_start_indexes)
-        returnValues.baseline_end_indexes.append(baseline_end_indexes)
-        returnValues.evoked_start_indexes.append(evoked_start_indexes)
-        returnValues.evoked_end_indexes.append(evoked_end_indexes)
-
-    return baseline_data, evoked_data
-
-
-def averageTrialData(baselineData: list, responseData: list) -> tuple:
-    baseline_vector = []
-    evoked_vector = []
-
-    for trial in range(len(baselineData)):
-        response_mean = np.mean(responseData[trial])
-        evoked_vector = np.append(evoked_vector, response_mean)
-        baselineMean = np.mean(baselineData[trial])
-        baseline_vector = np.append(baseline_vector, baselineMean)
-
-    return baseline_vector, evoked_vector
-
-
-def generateShuffledDistribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.ndarray:
+def shuffled_distribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.ndarray:
     shuffled_auroc = []
 
     for _ in itertools.repeat(None, 1000):  # Repeat 1000 times, faster than range()
 
-        split_1, split_2 = train_test_split(all_vector, test_size=len(vect_base1))
+        split_1, split_2 = train_test_split(all_vector, test_size=len(vect_base1)) # Split the data into two randomized pools
 
         shuffle_max = max(split_1)
         shuffle_min = min(split_1)
         increments = 100
 
-        baseline_shuffle = DewanSlidingProbability.sliding_probability(
-            split_1, shuffle_min, shuffle_max, increments)
+        baseline_shuffle = DewanSlidingProbability.sliding_probability(split_1, shuffle_min, shuffle_max, increments)
 
         baseline_shuffle.reverse()
         baseline_shuffle.insert(0, 0.0)
         baseline_shuffle.insert(len(split_1) + 1, 1.0)
 
-        evoked_shuffle = DewanSlidingProbability.sliding_probability(
-            split_2, shuffle_min, shuffle_max, increments)
+        evoked_shuffle = DewanSlidingProbability.sliding_probability(split_2, shuffle_min, shuffle_max, increments)
 
         evoked_shuffle.reverse()
         evoked_shuffle.insert(0, 0.0)
         evoked_shuffle.insert(len(evoked_shuffle) + 1, 1.0)
 
-        shuffled_auroc.append(np.trapz(evoked_shuffle, baseline_shuffle, axis=-1))
+        shuffled_auroc_values = np.trapz(evoked_shuffle, baseline_shuffle, axis=-1) # Calculate AUROC values of this iteration of the shuffled distribution
+
+        shuffled_auroc.append(shuffled_auroc_values)
+
     return np.array(shuffled_auroc)
 
 
-def allOdorsPerCell(data_input: DewanDataStore.AUROCdataStore, latentCellsOnly: bool,
-                    cellNum: int) -> DewanDataStore.AUROCReturn:
+def run_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells: bool,
+                    cell_number: int) -> DewanDataStore.AUROCReturn:
 
-    data_input = data_input.makeCopy()
-    data_input.update_cell(cellNum)
-    return_values = DewanDataStore.AUROCReturn()
+    significant = False; # Does this particular cell-odor pair show a significant response
 
-    for odor_iterator in range(data_input.num_unique_odors):
-        data_input.update_odor(odor_iterator)
+    data_input = data_input.makeCopy() # Get a local copy of the data for this process
+    data_input.update_cell(cell_number) # Update the local copy with which cell we're computing significance for
+    return_values = DewanDataStore.AUROCReturn() # Create an empty AUROCReturn object to store the return values in
 
-        baseline_data, evoked_data = collect_trial_data(data_input, return_values, latentCellsOnly)
-        baseline_means, evoked_means = averageTrialData(baseline_data, evoked_data)
+    for odor_iterator in range(data_input.num_unique_odors): # Iterate over each odor
+        data_input.update_odor(odor_iterator) # Update the current odor that we are computing significance for
+
+        baseline_data, evoked_data = DewanTraceTools.collect_trial_data(data_input, return_values, latent_cells) # Get the raw df/F values for this cell-odor combination
+        baseline_means, evoked_means = DewanTraceTools.averageTrialData(baseline_data, evoked_data) # average the baseline and trial data
         max_baseline_val = max(baseline_means)
         min_baseline_val = min(baseline_means)
 
         increments = 100
 
-        baseline_prob = DewanSlidingProbability.sliding_probability(
-            baseline_means, min_baseline_val, max_baseline_val, increments)
+        baseline_prob = DewanSlidingProbability.sliding_probability(baseline_means, min_baseline_val, max_baseline_val, increments)
 
         baseline_prob.reverse()
-        baseline_prob.insert(0, 0.0)
-        baseline_prob.insert(len(baseline_prob) + 1, 1.0)
+        baseline_prob.insert(0, 0.0) # Insert 0 at the beginning of the probabilities as the lowest possible value
+        baseline_prob.insert(len(baseline_prob) + 1, 1.0)  # Insert 1 at the end of the probabilities as the highest possible value
 
-        evoked_prob = DewanSlidingProbability.sliding_probability(
-            evoked_means, min_baseline_val, max_baseline_val, increments)
+        evoked_prob = DewanSlidingProbability.sliding_probability(evoked_means, min_baseline_val, max_baseline_val, increments)
 
         evoked_prob.reverse()
         evoked_prob.insert(0, 0.0)
         evoked_prob.insert(len(baseline_prob) + 1, 1.0)
 
-        auroc_value = np.trapz(evoked_prob, baseline_prob, axis=-1)
+        auroc_value = np.trapz(evoked_prob, baseline_prob, axis=-1) # Calculate AUROC values using the trapezoid method
 
-        all_means_vector = np.concatenate((baseline_means, evoked_means))
+        all_means_vector = np.concatenate((baseline_means, evoked_means)) # Put the baseline and evoked means together and create a shuffled distribution
+        auroc_shuffle = shuffled_distribution(all_means_vector, baseline_means)
 
-        auroc_shuffle = generateShuffledDistribution(all_means_vector, baseline_means)
-
-        lower_bound = np.percentile(auroc_shuffle, [1])
+        lower_bound = np.percentile(auroc_shuffle, [1]) # Get the 1st and 99th percentile values of the 'random' shuffled data
         upper_bound = np.percentile(auroc_shuffle, [99])
 
         return_values.all_lower_bounds.append(lower_bound)
         return_values.all_upper_bounds.append(upper_bound)
         return_values.auroc_values.append(auroc_value)
-        return_values.percentiles.append(compute_percentile(auroc_value, auroc_shuffle))  # 0 - 1
+        return_values.percentiles.append(compute_percentile(auroc_value, auroc_shuffle))  # 0 - 1; Calculate where each auroc value falls on the shuffled distribution
 
+        
         if auroc_value > upper_bound:
-            return_values.response_chart.append(2)
-            if data_input.do_plot:
-                DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
-                                                       cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
+            return_values.response_chart.append(2) # Positive evoked response
         elif auroc_value < lower_bound:
-            return_values.response_chart.append(1)
-            if data_input.do_plot:
-                DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
-                                                       cellNum, data_input.unique_odors, odor_iterator, latentCellsOnly)
+            return_values.response_chart.append(1) # Negative evoked response
         else:
-            return_values.response_chart.append(0)
+            return_values.response_chart.append(0) # No response
+
+        if significant and data_input.do_plot: # Check that both the response was significant and we want to plot the distributions
+            DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
+                                                       cell_number, data_input.unique_odors, odor_iterator, latent_cells)
 
     return return_values
 
 
-def multithread_AUROC(data_input: DewanDataStore.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
-
-    auroc_type = []
-    
-    if not latent_cells_only:
-        auroc_type = 'On Time'
-    else:
-        auroc_type = 'Latent'
-
-    print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
-
+def pooled_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells_only: bool) -> list:
     workers = Pool()
-    partial_function = partial(allOdorsPerCell, data_input, latent_cells_only)
-    return_values = process_map(partial_function, range(data_input.number_cells), max_workers = num_workers, desc='AUROC Progress: ')
+    partial_function = partial(run_auroc, data_input, latent_cells_only)
+    return_values = process_map(partial_function, range(data_input.number_cells), desc='AUROC Progress: ')
     workers.close()
     workers.join()
 
