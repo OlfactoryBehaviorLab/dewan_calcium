@@ -27,15 +27,18 @@ def create_project_framework() -> None:
 
 
 def save_data_to_disk(data, name, fileHeader, folder) -> None:
-    pickle_out = f'./{folder}/{fileHeader}{name}.pickle'
-    output_file = open(pickle_out, 'wb')
+    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
+
+    output_file = open(file_path, 'wb')
     pickle.dump(data, output_file, protocol=-1)
     output_file.close()
     print(f'{fileHeader}{name} has been saved!')
 
 
 def load_data_from_disk(name, fileHeader, folder) -> object:
-    pickle_in = open(f'./{folder}/{fileHeader}{name}.pickle', 'rb')
+    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
+
+    pickle_in = open(file_path, 'rb')
     data_in = pickle.load(pickle_in)
     pickle_in.close()
     print(f'{fileHeader}{name} has loaded successfully!')
