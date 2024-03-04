@@ -32,15 +32,17 @@ def sparseness(iterable: int, means: np.array) -> float:
 
     upper_value = np.sum(means / iterable) ** 2
     lower_value = np.sum((means ** 2) / iterable)
-
-    # if lower_value == 0:
-    #     return 0
-    #     # If all the means are zero, then it was clearly inhibitory and "didn't respond" should fix this elsewhere
+    if lower_value <= 0:
+        return np.nan
+    # If all the means are zero, then it was only inhibitory and "didn't respond" in context of lifetime/population sparseness
+    # return nan where division by zero would occur
+        
 
     sparseness_val = (1 - (upper_value / lower_value))
     denominator = (1 - (1 / iterable))
 
     sparseness_val = sparseness_val / denominator
+
 
     return sparseness_val
 
@@ -62,17 +64,16 @@ def population_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame,
     return population_sparseness_DF
 
 
-def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame,
-                        significant_ontime_cells: list) -> pd.DataFrame:
+def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list, cell_list: list) -> pd.DataFrame:
 
     num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
 
     lifetime_sparseness_values = []
     cell_row_names = []
-    for i, cell in enumerate(significant_ontime_cells):
-        lifetime_sparseness = sparseness(num_odors, zeroed_trial_averaged_responses_matrix.iloc[i])
+    for cell in significant_ontime_cells:
+        lifetime_sparseness = sparseness(num_odors, zeroed_trial_averaged_responses_matrix.loc[cell])
         lifetime_sparseness_values.append(lifetime_sparseness)
-        cell_row_names.append(f'Cell {cell + 1}')
+        cell_row_names.append(f'Cell {cell_list[cell]}')
 
     lifetime_sparseness_DF = pd.DataFrame(lifetime_sparseness_values,
                                           columns=['Lifetime Sparseness'], index=cell_row_names)
