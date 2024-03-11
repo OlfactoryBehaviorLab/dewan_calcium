@@ -96,8 +96,7 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, return_raw_image,
-                            save_directory=None, is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
+def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, return_raw_image, is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
     from PIL import ImageDraw, ImageFont, ImageQt, ImageEnhance
