@@ -126,6 +126,7 @@ def pooled_auroc(data_input: DewanDataStore.AUROCdataStore, num_workers: int=8, 
     workers = Pool()
     partial_function = partial(run_auroc, data_input, latent_cells_only)
     return_values = process_map(partial_function, range(data_input.number_cells), max_workers = num_workers, desc='AUROC Progress: ')
+    # TQDM wrapper for concurrent features
     workers.close()
     workers.join()
 

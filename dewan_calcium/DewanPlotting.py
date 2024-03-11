@@ -191,6 +191,7 @@ def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore, num_worke
 
 
     process_map(partial_function, cells, max_workers = num_workers, desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
+    # TQDM wrapper for concurrent features
 
 
 def plot_significance_matricies(input_data: DewanDataStore.PlottingDataStore, latent_cells_only: bool = False) -> None:
