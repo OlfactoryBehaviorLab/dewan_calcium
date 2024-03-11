@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from DewanDataStore import AUROCdataStore, AUROCReturn # Import for typedef
+from .DewanDataStore import AUROCdataStore, AUROCReturn # Import for typedef
 
 
 def collect_trial_data(data_input: AUROCdataStore, return_values: AUROCReturn = None,
