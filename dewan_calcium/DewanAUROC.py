@@ -113,10 +113,19 @@ def run_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells: bool,
     return return_values
 
 
-def pooled_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells_only: bool) -> list:
+def pooled_auroc(data_input: DewanDataStore.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
+    auroc_type = []
+    
+    if not latent_cells_only:
+        auroc_type = 'On Time'
+    else:
+        auroc_type = 'Latent'
+
+    print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
+
     workers = Pool()
     partial_function = partial(run_auroc, data_input, latent_cells_only)
-    return_values = process_map(partial_function, range(data_input.number_cells), desc='AUROC Progress: ')
+    return_values = process_map(partial_function, range(data_input.number_cells), max_workers = num_workers, desc='AUROC Progress: ')
     workers.close()
     workers.join()
 
