@@ -3,6 +3,7 @@ import numpy as np
 import multiprocessing
 
 from functools import partial
+from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -171,8 +172,14 @@ def plot_evoked_baseline_means(input_data: DewanDataStore.PlottingDataStore, ax2
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore, latent_cells_only: bool = False, plot_all_cells: bool = False) -> None:
-    thread_pool = multiprocessing.Pool()
+def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore, num_workers: int = 8, latent_cells_only: bool = False, plot_all_cells: bool = False) -> None:
+
+    plot_type = []
+
+    if latent_cells_only:
+        plot_type = 'Latent'
+    else:
+        plot_type = 'On Time'
 
     partial_function = partial(plot_cell_odor_traces, input_data, latent_cells_only, plot_all_cells)
 
@@ -182,9 +189,8 @@ def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore, latent_ce
         cells = np.unique(np.nonzero(input_data.significance_table > 0)[0])
         # Get only the cells that had some type of significant response
 
-    thread_pool.map(partial_function, cells)
-    thread_pool.close()
-    thread_pool.join()
+
+    process_map(partial_function, cells, max_workers = num_workers, desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
 
 
 def plot_significance_matricies(input_data: DewanDataStore.PlottingDataStore, latent_cells_only: bool = False) -> None:
