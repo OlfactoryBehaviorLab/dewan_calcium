@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import qdarktheme
 from pathlib import Path
+from PIL import Image
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from .helpers import DewanManualCurationWidget
@@ -95,11 +96,11 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, save_image,
+def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, return_raw_image,
                             save_directory=None, is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
-    from PIL import Image, ImageDraw, ImageFont, ImageQt, ImageEnhance
+    from PIL import ImageDraw, ImageFont, ImageQt, ImageEnhance
 
     font = ImageFont.truetype('arial.ttf', font_size)  # Font size defaults to 12 but can be changed
 
@@ -133,14 +134,16 @@ def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutline
         drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
         # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
 
-    if save_image:
-        save_path = Path('ImagingAnalysis', 'Figures').joinpath(ImagePath.stem + '_contours' + ImagePath.suffix)
-        image.save(save_path)
-
-    q_image = ImageQt.ImageQt(image)
-    # Some voodoo to change the image format so Qt likes it
-
-    return q_image
+    if return_raw_image:
+        return image
+    else:
+        q_image = ImageQt.ImageQt(image)
+        # Some voodoo to change the image format so Qt likes it
+        return q_image
 
 
+def save_image(image: Image, folder: list) -> None:
+    folder = Path(*folder)
+    save_path = folder.joinpath('Max_Projection_contours.tiff')
+    image.save(save_path)
 
