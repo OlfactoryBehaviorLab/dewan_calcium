@@ -58,7 +58,16 @@ def average_trial_data(baseline_data: list, response_data: list) -> tuple:
     for trial in range(len(baseline_data)):
         response_mean = np.mean(response_data[trial])
         evoked_vector = np.append(evoked_vector, response_mean)
-        baselineMean = np.mean(baseline_data[trial])
-        baseline_vector = np.append(baseline_vector, baselineMean)
+        baseline_mean = np.mean(baseline_data[trial])
+        baseline_vector = np.append(baseline_vector, baseline_mean)
 
     return baseline_vector, evoked_vector
+
+def truncate_data(data1: list, data2: list) -> tuple:
+    data1_minima = [np.min(len(row)) for row in data1]
+    data2_minima = [np.min(len(row)) for row in data2]
+    row_minimum = int(min(min(data1_minima), min(data2_minima)))
+    data1 = [row[:row_minimum] for row in data1]
+    data2 = [row[:row_minimum] for row in data2]
+
+    return data1, data2

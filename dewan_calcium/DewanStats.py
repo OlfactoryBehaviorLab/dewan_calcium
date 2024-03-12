@@ -80,15 +80,6 @@ def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, si
     return lifetime_sparseness_DF
 
 
-def truncate_data(data1: list, data2: list) -> tuple:
-    data1_minima = [np.min(len(row)) for row in data1]
-    data2_minima = [np.min(len(row)) for row in data2]
-    row_minimum = int(min(min(data1_minima), min(data2_minima)))
-    data1 = [row[:row_minimum] for row in data1]
-    data2 = [row[:row_minimum] for row in data2]
-
-    return data1, data2
-
 
 def generate_correlation_pairs(number_trials: int) -> list:
     return [pair for pair in itertools.combinations(range(number_trials), r=2)]
@@ -108,7 +99,7 @@ def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, sig
             stats_data.update_odor(odor)
             baseline_data, evoked_data = DewanTraceTools.collect_trial_data(stats_data, None, False)
             # Get cell-odor data for all trials, no returns, on time cells only
-            baseline_data, evoked_data = truncate_data(baseline_data, evoked_data)  # Make all rows the same length
+            baseline_data, evoked_data = DewanTraceTools.truncate_data(baseline_data, evoked_data)  # Make all rows the same length
 
             baseline_mean = np.mean(baseline_data)  # Get the average baseline for all trials
             evoked_data = np.subtract(evoked_data, baseline_mean)  # Baseline shift all the evoked data
