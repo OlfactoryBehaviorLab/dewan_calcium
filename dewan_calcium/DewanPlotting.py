@@ -6,6 +6,7 @@ from functools import partial
 from tqdm.contrib.concurrent import process_map
 from pathlib import Path
 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
@@ -13,7 +14,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 from .helpers import DewanDataStore, DewanIOhandler, DewanTraceTools
 
-
+mpl.rcParams['font.family'] = 'Arial'
 
 def generate_color_map(numColors: int):
     color_map = cm.get_cmap('rainbow')
@@ -312,33 +313,44 @@ def vertical_scatter_plot(data_2_plot: list, data_input: DewanDataStore.AUROCdat
     plt.close()
 
 
-def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distances, unique_odors):
+def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distances, cells, unique_odors):
+
+    fontdict = {
+    'weight': 'bold'
+    }
+
     inferno = plt.colormaps['inferno']
     new_cmap = LinearSegmentedColormap.from_list('new_magma', inferno(np.linspace(0.2, 1.2, 128)))
-
-    fig, ax = plt.subplots(1, 2)
-    fig.tight_layout()
-    fig.set_figwidth(15)
-    fig.suptitle('Pairwise Correlation Distance (1-r)')
+    height = len(cell_pairwise_distances[0]) * 0.4
+    fig, ax = plt.subplots(1, 2, figsize=(7, height))
+    plt.subplots_adjust(bottom=0.1, top=0.9)
 
     odor_pdist = ax[0].matshow(odor_pairwise_distances, cmap=new_cmap)
-    ax[0].tick_params(axis='x', labelrotation=50, bottom=False)
+    ax[0].tick_params(axis='x', labelrotation=50)
     ax[0].set_xticks(np.arange(len(unique_odors)))
     ax[0].set_yticks(np.arange(len(unique_odors)))
-    ax[0].set_xticklabels(unique_odors, ha='left')
-    ax[0].set_yticklabels(unique_odors)
+    ax[0].set_xticklabels(unique_odors, fontdict=fontdict, fontsize=5.5, ha='left')
+    ax[0].set_yticklabels(unique_odors, fontdict=fontdict, fontsize=6)
 
     pdist = ax[1].matshow(cell_pairwise_distances, cmap=new_cmap)
+    ax[1].tick_params(axis='x', labelrotation=50)
+
     ax[1].set_xticks(np.arange(len(cell_pairwise_distances[0])))
     ax[1].set_yticks(np.arange(len(cell_pairwise_distances[0])))
+    ax[1].set_xticklabels(cells, fontdict=fontdict, fontsize=8, ha='left')
+    ax[1].set_yticklabels(cells, fontdict=fontdict, fontsize=8)
 
-    ax[0].set_title("Odor v. Odor")
-    ax[1].set_title("Cell v. Cell")
 
-    fig.colorbar(odor_pdist, ax=ax[0], shrink=0.8)
-    fig.colorbar(pdist, ax=ax[1], shrink=0.8)
+    
+    ax[0].set_title("Odor v. Odor", y=-0.25)
+    ax[1].set_title("Cell v. Cell", y=-0.25)
+
+    fig.colorbar(odor_pdist, ax=ax[0], shrink=0.4)
+    fig.colorbar(pdist, ax=ax[1], shrink=0.4)
 
     fig.tight_layout()
+    fig.suptitle('Pairwise Correlation Distance (1-r)', fontweight='bold', fontsize=18)
+
 
     path = Path('ImagingAnalysis', 'Figures', 'Statistics', 'correlations.pdf')
     fig.savefig(path, dpi=800)
