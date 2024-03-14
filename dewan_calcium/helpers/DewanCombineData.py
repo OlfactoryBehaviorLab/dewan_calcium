@@ -126,3 +126,62 @@ def sort_by_sum(dataset: list):
         sorted_dataset.append(sorted_cell_types)
 
     return sorted_dataset
+
+
+def get_new_odor_indexes(odor_data):
+    new_odor_indexes = []
+
+    for each in odor_data:
+        unique_odors = np.unique(each)
+
+        buzzer_index = np.where(unique_odors == 'Buzzer')[0]  # Get indexes for buzzer and MO for later
+        MO_index = np.where(unique_odors == 'MO')[0]
+
+        odors = np.delete(unique_odors, [buzzer_index, MO_index])  # Remove MO and Buzzer
+        odor_components = [odor.split('-') for odor in odors]  # Split odors into components (modifier and ID)
+
+        odor_components = np.reshape(odor_components, (-1, 2))  # Reshape into matrix of N x 2
+
+        odor_indexes = np.argsort(odor_components[:, 1])  # Sort by the ID column and return indexes
+        odor_indexes = np.append(odor_indexes, [MO_index, buzzer_index]) # Lets put our MO and Buzzer back on the end
+
+        new_odor_indexes.append(odor_indexes)
+
+    return new_odor_indexes
+
+
+def plot_matrix(data, odor_data, experiment_names):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib.colors import ListedColormap
+
+    mpl.rcParams['font.family'] = 'Arial'
+    colormap = ListedColormap(['yellow', 'red', 'green'])
+
+    for i, data in enumerate(data):
+        plot_names = ['Concentration', 'Identity']
+        time = 'Latent'
+
+        collapsed_data = np.vstack(data)
+        odors = odor_data[i]
+        unique_odors = np.unique(odors)
+        num_unique_odors = len(unique_odors)
+        num_cells = len(collapsed_data)
+
+        fig, ax = plt.subplots(figsize=(10, 10))
+
+        ax.imshow(collapsed_data, cmap=colormap, extent=(0, num_unique_odors, num_cells, 0))
+
+        ax.set_yticks(np.arange(num_cells), labels=[])  # Set major ticks but leave them unlabeled
+        ax.set_xticks(np.arange(num_unique_odors), labels=[])
+        ax.set_yticks(np.arange(0.5, num_cells + 0.5, 1), labels=[], minor=True,
+                      fontsize=6)  # Set minor ticks (offset by 0.5) and label them
+
+        ax.set_xticks(np.arange(0.5, num_unique_odors + 0.5, 1), rotation=90, ha='center', labels=unique_odors,
+                      minor=True, fontsize=6, fontweight='bold')  # Label the x-axis with the odors
+        ax.grid(which='major')  # Show the major grid to make nice little squares
+
+        plt.suptitle(f'{time}, {experiment_names[i]}\n Cell v. Odor Significance Matrix', fontsize=16,
+                     fontweight='bold')  # Set the main tit
+        plt.tight_layout()
+        fig.savefig(f'{time}-{experiment_names[i]}.pdf', dpi=900)
