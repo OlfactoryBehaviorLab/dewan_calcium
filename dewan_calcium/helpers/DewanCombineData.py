@@ -98,10 +98,31 @@ def sort_by_responses(dataset: list):
         excititory_rows_mask = np.logical_and(excititory_rows, removal_mask)  # Remove any rows that appear in both
         inhibitory_rows_mask = np.logical_and(inhibitory_rows, removal_mask)  # Remove any rows that appear in both
 
-        excititory_cells = np.where(excititory_rows_mask)[0]
-        inhibitory_cells = np.where(inhibitory_rows_mask)[0]
-        excit_inhib_cells = np.where(excit_inhib_row_mask)[0]
+        excititory_cell_indexes = np.where(excititory_rows_mask)[0]
+        inhibitory_cells_indexes = np.where(inhibitory_rows_mask)[0]
+        excit_inhib_cells_indexes = np.where(excit_inhib_row_mask)[0]
+
+        excititory_cells = experiment[excititory_cell_indexes]
+        inhibitory_cells = experiment[inhibitory_cells_indexes]
+        excit_inhib_cells = experiment[excit_inhib_cells_indexes]
 
         sorted_dataset.append([excititory_cells, excit_inhib_cells, inhibitory_cells])
+
+    return sorted_dataset
+
+
+def sort_by_sum(dataset: list):
+
+    sorted_dataset = []
+
+    for experiment in dataset:
+        sorted_cell_types = []
+        for cell_type in experiment:
+            sum_of_rows = np.sum(cell_type, 1)
+            new_indexes = np.flip(np.argsort(sum_of_rows, kind='mergesort'))
+            sorted_cells = cell_type[new_indexes]
+            sorted_cell_types.append(sorted_cells)
+
+        sorted_dataset.append(sorted_cell_types)
 
     return sorted_dataset
