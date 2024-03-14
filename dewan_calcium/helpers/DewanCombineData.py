@@ -180,18 +180,31 @@ def sort_data_by_odor_indexes(odor_data, new_odor_indexes):
 
     return new_data
 
-def plot_matrix(data, unique_odors, experiment_names):
+
+def relabel_latent_data(dataset: list):
+    latent_data = []
+
+    for experiment in dataset:
+        experiment_data = []
+        for cell_type in experiment:
+            cell_type_data = np.array(cell_type)
+            cell_type_data[cell_type_data == 1] = 3
+            cell_type_data[cell_type_data == 2] = 4
+            experiment_data.append(cell_type_data)
+        latent_data.append(experiment_data)
+
+    return latent_data
+
+
+def plot_matrix(data, unique_odors, experiment_names, time):
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
 
     mpl.rcParams['font.family'] = 'Arial'
-    colormap = ListedColormap(['yellow', 'red', 'green'])
+    colormap = ListedColormap(['yellow', 'red', 'green', 'orange', 'cyan'])
 
     for i, data in enumerate(data):
-        plot_names = ['Concentration', 'Identity']
-        time = 'Latent'
-
         collapsed_data = np.vstack(data)
         exp_unique_odors = unique_odors[i]
         num_unique_odors = len(exp_unique_odors)
@@ -213,4 +226,4 @@ def plot_matrix(data, unique_odors, experiment_names):
         plt.suptitle(f'{time}, {experiment_names[i]}\n Cell v. Odor Significance Matrix', fontsize=16,
                      fontweight='bold')  # Set the main tit
         plt.tight_layout()
-        fig.savefig(f'{time}-{experiment_names[i]}.eps', dpi=200) # Save as vector image
+        fig.savefig(f'{time}-{experiment_names[i]}.eps', dpi=200)  # Save as vector image
