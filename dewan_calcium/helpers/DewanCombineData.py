@@ -62,7 +62,7 @@ def get_data_file_paths(auroc_data_paths: list[list[Path]]):
 def load_raw_data(ontime_auroc_paths: list[list[Path]], latent_auroc_paths: list[list[Path]], odor_data_paths: list[Path]):
     on_time_data = [[load_data(file) for file in files] for files in ontime_auroc_paths]
     latent_data = [[load_data(file) for file in files] for files in latent_auroc_paths]
-    odor_data = [load_data(file) for file in odor_data_paths]
+    odor_data = [np.ravel(load_data(file)) for file in odor_data_paths]   # Flatten Odor Data
 
     return on_time_data, latent_data, odor_data
 
