@@ -68,10 +68,10 @@ def load_raw_data(ontime_auroc_paths: list[list[Path]], latent_auroc_paths: list
 
 
 def coalesce_cells(dataset: list):
+    stacked_data = []
     for i in range(len(dataset)):
-        dataset[i] = np.vstack(dataset[i])
-
-    return dataset
+        stacked_data.append(np.vstack(dataset[i]))
+    return stacked_data
 
 
 def remove_nonzero_cells(dataset: list):
@@ -83,3 +83,25 @@ def remove_nonzero_cells(dataset: list):
         filtered_dataset.append(experiment[nonzero_row_index])
 
     return filtered_dataset
+
+
+def sort_by_responses(dataset: list):
+    # Hey this computer science concept actually helped here
+    sorted_dataset = []  # 0: Excititory, 1: Both, 2:Inhibitory
+
+    for experiment in dataset:  # Each dataset will contain at least two experiments 'CONC' and 'ID'
+        excititory_rows = [np.isin(2, row) for row in experiment]  # Rows that contain at least one 2
+        inhibitory_rows = [np.isin(1, row) for row in experiment]  # Rows that contain at least one 1
+        excit_inhib_row_mask = np.logical_and(excititory_rows, inhibitory_rows)  # Rows that contain at least one 1 AND 2
+
+        removal_mask = np.logical_not(excit_inhib_row_mask)  # Invert the rows that contain both so they can be removed
+        excititory_rows_mask = np.logical_and(excititory_rows, removal_mask)  # Remove any rows that appear in both
+        inhibitory_rows_mask = np.logical_and(inhibitory_rows, removal_mask)  # Remove any rows that appear in both
+
+        excititory_cells = np.where(excititory_rows_mask)[0]
+        inhibitory_cells = np.where(inhibitory_rows_mask)[0]
+        excit_inhib_cells = np.where(excit_inhib_row_mask)[0]
+
+        sorted_dataset.append([excititory_cells, excit_inhib_cells, inhibitory_cells])
+
+    return sorted_dataset
