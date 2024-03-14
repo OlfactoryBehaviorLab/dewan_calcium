@@ -196,6 +196,19 @@ def relabel_latent_data(dataset: list):
     return latent_data
 
 
+def combine_data(on_time_data: list, latent_data: list):
+    combined_data = []
+
+    for i, experiment in enumerate(on_time_data):
+        stacked_cells = []
+        for j, cell_type in enumerate(experiment):
+            cells = np.vstack((cell_type, latent_data[i][j]))
+            stacked_cells.append(cells)
+        combined_data.append(stacked_cells)
+
+    return combined_data
+
+
 def plot_matrix(data, unique_odors, experiment_names, time):
     import matplotlib as mpl
     import matplotlib.pyplot as plt
