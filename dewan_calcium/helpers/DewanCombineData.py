@@ -193,9 +193,8 @@ def plot_matrix(data, unique_odors, experiment_names):
         time = 'Latent'
 
         collapsed_data = np.vstack(data)
-        odors = odor_data[i]
-        unique_odors = np.unique(odors)
-        num_unique_odors = len(unique_odors)
+        exp_unique_odors = unique_odors[i]
+        num_unique_odors = len(exp_unique_odors)
         num_cells = len(collapsed_data)
 
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -207,11 +206,11 @@ def plot_matrix(data, unique_odors, experiment_names):
         ax.set_yticks(np.arange(0.5, num_cells + 0.5, 1), labels=[], minor=True,
                       fontsize=6)  # Set minor ticks (offset by 0.5) and label them
 
-        ax.set_xticks(np.arange(0.5, num_unique_odors + 0.5, 1), rotation=90, ha='center', labels=unique_odors,
+        ax.set_xticks(np.arange(0.5, num_unique_odors + 0.5, 1), rotation=90, ha='center', labels=exp_unique_odors,
                       minor=True, fontsize=6, fontweight='bold')  # Label the x-axis with the odors
         ax.grid(which='major')  # Show the major grid to make nice little squares
 
         plt.suptitle(f'{time}, {experiment_names[i]}\n Cell v. Odor Significance Matrix', fontsize=16,
                      fontweight='bold')  # Set the main tit
         plt.tight_layout()
-        fig.savefig(f'{time}-{experiment_names[i]}.pdf', dpi=900)
+        fig.savefig(f'{time}-{experiment_names[i]}.eps', dpi=200) # Save as vector image
