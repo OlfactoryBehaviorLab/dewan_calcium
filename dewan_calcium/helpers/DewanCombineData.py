@@ -17,7 +17,9 @@ def load_paths(root_path: Path):
 
     experiment_folders = [each for each in contents if each.is_dir()]
     # Get folders for each experiment type
-    animal_folders = [list(folder.iterdir()) for folder in experiment_folders]
+    animal_folders = [[animal for animal in folder.iterdir() if '4' not in str(animal)] for folder in experiment_folders]
+    # For now, we need to exclude VGAT-4 until it gets fixed
+
     preprocess_paths = [[path.joinpath('ImagingAnalysis/PreProcessedData') for path in animal_folder] for animal_folder
                         in animal_folders]
     auroc_data_paths = [[path.joinpath('ImagingAnalysis/AUROCData') for path in animal_folder] for animal_folder in
