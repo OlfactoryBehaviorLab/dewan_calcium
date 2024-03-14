@@ -130,7 +130,7 @@ def sort_by_sum(dataset: list):
 
 def get_new_odor_indexes(odor_data):
     new_odor_indexes = []
-
+    new_unique_odors = []
     for each in odor_data:
         unique_odors = np.unique(each)
 
@@ -142,15 +142,43 @@ def get_new_odor_indexes(odor_data):
 
         odor_components = np.reshape(odor_components, (-1, 2))  # Reshape into matrix of N x 2
 
-        odor_indexes = np.argsort(odor_components[:, 1])  # Sort by the ID column and return indexes
-        odor_indexes = np.append(odor_indexes, [MO_index, buzzer_index]) # Lets put our MO and Buzzer back on the end
+        unique_IDs = np.unique(odor_components[:, 1])  # Get the unique odor IDs
+        sorted_unique_IDs = np.sort(unique_IDs)
+        # Sort the odor IDs here so the data_indexes is already in the preferred ID order
+
+        data_indexes = []
+        for ID in unique_IDs:
+            data_indexes.append(np.where(odor_components[:, 1] == ID)[0])  # Get the indexes binned by ID
+
+        odor_indexes = []
+        for indexes in data_indexes:  # Loop through each odor ID
+            modifiers = odor_components[indexes, 0]  # Get the modifiers for this specific bin (carbons or ppm)
+            new_indexes = np.argsort(modifiers)  # Sort the modifiers in ascending order
+            odor_indexes.extend(indexes[new_indexes])  # Reindex the bins by the modifier
+            # Since we sorted the bins, and then sorted the odors within each bin, the whole list should be sorted
+
+        odor_indexes = np.append(odor_indexes, [MO_index, buzzer_index])  # Let's put our MO and Buzzer back on the end
 
         new_odor_indexes.append(odor_indexes)
+        new_unique_odors.append(unique_odors[odor_indexes])
 
-    return new_odor_indexes
+    return new_odor_indexes, new_unique_odors
 
 
-def plot_matrix(data, odor_data, experiment_names):
+def sort_data_by_odor_indexes(odor_data, new_odor_indexes):
+    new_data = []
+
+    for i, experiment in enumerate(odor_data):
+        new_indexes = new_odor_indexes[i]
+        sorted_rows = []
+        for each in experiment:
+            row = each[new_indexes]
+            sorted_rows.append(row)
+        new_data.append(sorted_rows)
+
+    return new_data
+
+def plot_matrix(data, unique_odors, experiment_names):
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap
