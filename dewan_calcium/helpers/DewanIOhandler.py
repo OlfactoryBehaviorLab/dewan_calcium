@@ -1,26 +1,32 @@
 import pickle
 import os
 from pathlib import Path
-
-import pandas as pd
 from isx import make_output_file_path, make_output_file_paths
 
 
-def create_project_framework() -> None:
-    paths = ['./ImagingAnalysis/RawData/',
-             './ImagingAnalysis/PreProcessedData',
-             './ImagingAnalysis/AUROCImports',
-             './ImagingAnalysis/AUROCData',
-             './ImagingAnalysis/CombinedData',
-             './ImagingAnalysis/Statistics',
-             './ImagingAnalysis/Figures/Statistics',
-             './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
-             './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
-             './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
-             './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
-             './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
-             './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
-             ]
+def create_project_framework(project = None) -> None:
+    
+    match project:
+        case None | 'Odor':
+            paths = ['./ImagingAnalysis/RawData/',
+                    './ImagingAnalysis/PreProcessedData',
+                    './ImagingAnalysis/AUROCImports',
+                    './ImagingAnalysis/AUROCData',
+                    './ImagingAnalysis/CombinedData',
+                    './ImagingAnalysis/Statistics',
+                    './ImagingAnalysis/Figures/Statistics',
+                    './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
+                    './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
+                    './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
+                    ]
+        case 'HF-FM':
+            paths = ['./HF_FM_Analysis/RawData/',
+                    './HF_FM_Analysis/PreProcessedData'
+            ]
+    
     paths = [Path(path) for path in paths]
 
     for path in paths:
@@ -28,31 +34,23 @@ def create_project_framework() -> None:
             path.mkdir(parents=True, exist_ok=True)
 
 
-def save_data_to_disk(data, name, fileHeader, folder, is_dataframe=False) -> None:
 
+
+def save_data_to_disk(data, name, fileHeader, folder) -> None:
     file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
 
-    if is_dataframe:
-        pd.to_pickle(data, file_path, protocol=-1)
-    else:
-        output_file = open(file_path, 'wb')
-        pickle.dump(data, output_file, protocol=-1)
-        output_file.close()
-
+    output_file = open(file_path, 'wb')
+    pickle.dump(data, output_file, protocol=-1)
+    output_file.close()
     print(f'{fileHeader}{name} has been saved!')
 
 
-def load_data_from_disk(name, fileHeader, folder, is_dataframe=False) -> object:
-
+def load_data_from_disk(name, fileHeader, folder) -> object:
     file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
-    
-    if is_dataframe:
-        data_in = pd.read_pickle(file_path)
-    else:
-        pickle_in = open(file_path, 'rb')
-        data_in = pickle.load(pickle_in)
-        pickle_in.close()
 
+    pickle_in = open(file_path, 'rb')
+    data_in = pickle.load(pickle_in)
+    pickle_in.close()
     print(f'{fileHeader}{name} has loaded successfully!')
     return data_in
 
@@ -171,6 +169,23 @@ def make_isx_path(input_files: list[str], output_dir: str, addition: str = '', e
     else:
         return make_output_file_paths(input_files, output_dir, addition, ext=extension)
 
+
+def get_outline_coordinates(path: os.PathLike):
+    import json
+    import numpy as np
+
+    try:
+        json_file = open(path)
+    except (FileNotFoundError, IOError):
+        print("Error loading Cell_Contours File!")
+        return None
+
+    json_data = json.load(json_file)
+    keys = np.array(list(json_data.keys()))
+
+    json_file.close()
+
+    return keys, json_data
 
 
 def generate_deinterleaved_video_paths(video_files: list[str], output_directory: str, efocus_vals: list[int]) -> list:
