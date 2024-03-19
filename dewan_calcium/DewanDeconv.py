@@ -67,9 +67,11 @@ def z_score_data(data: pd.DataFrame) -> pd.DataFrame:
 
     for cell in data:
         z_scored_cell = []
-        for trial in cell:
-            z_scored_trial = zscore(trial)
-            z_scored_cell.append(z_scored_trial)
+        num_trials = len(cell)
+        combined_data = np.hstack(cell)
+        z_score_combined = zscore(combined_data)
+
+        z_scored_cell = np.split(z_score_combined, num_trials)
 
         z_scored_data.append(z_scored_cell)
 
@@ -87,7 +89,7 @@ def smooth_data(trace: tuple) -> np.ndarray:
 
     
     warnings.simplefilter("ignore", category=UserWarning)
-    deconv_data = deconvolve(trace, g=(None, None),penalty=1)
+    deconv_data = deconvolve(trace, g=(None,None), penalty=1, max_iter=5)
 
     smoothed_trace = deconv_data[0]
 
