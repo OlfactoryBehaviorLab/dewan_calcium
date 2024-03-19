@@ -6,21 +6,29 @@ import pandas as pd
 from isx import make_output_file_path, make_output_file_paths
 
 
-def create_project_framework() -> None:
-    paths = ['./ImagingAnalysis/RawData/',
-             './ImagingAnalysis/PreProcessedData',
-             './ImagingAnalysis/AUROCImports',
-             './ImagingAnalysis/AUROCData',
-             './ImagingAnalysis/CombinedData',
-             './ImagingAnalysis/Statistics',
-             './ImagingAnalysis/Figures/Statistics',
-             './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
-             './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
-             './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
-             './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
-             './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
-             './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
-             ]
+def create_project_framework(project=None) -> None:
+
+    match project:
+        case None | 'Odor':
+            paths = ['./ImagingAnalysis/RawData/',
+                    './ImagingAnalysis/PreProcessedData',
+                    './ImagingAnalysis/AUROCImports',
+                    './ImagingAnalysis/AUROCData',
+                    './ImagingAnalysis/CombinedData',
+                    './ImagingAnalysis/Statistics',
+                    './ImagingAnalysis/Figures/Statistics',
+                    './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
+                    './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
+                    './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
+                    './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
+                    ]
+        case 'HF-FM':
+            paths = ['./HF_FM_Analysis/RawData/',
+                    './HF_FM_Analysis/PreProcessedData'
+            ]
+
     paths = [Path(path) for path in paths]
 
     for path in paths:
@@ -29,7 +37,6 @@ def create_project_framework() -> None:
 
 
 def save_data_to_disk(data, name, fileHeader, folder, is_dataframe=False) -> None:
-
     file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
 
     if is_dataframe:
@@ -45,7 +52,7 @@ def save_data_to_disk(data, name, fileHeader, folder, is_dataframe=False) -> Non
 def load_data_from_disk(name, fileHeader, folder, is_dataframe=False) -> object:
 
     file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
-    
+
     if is_dataframe:
         data_in = pd.read_pickle(file_path)
     else:
