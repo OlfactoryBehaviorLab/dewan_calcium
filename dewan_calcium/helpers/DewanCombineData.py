@@ -130,6 +130,24 @@ def sort_by_sum(dataset: list):
     return sorted_dataset
 
 
+def sort_by_length(dataset: list):
+    cells_by_experiment = []
+    for i, experiment in enumerate(dataset):  # 0: Conc, 1: ID
+        cells_by_type = []
+        for j, cell_type in enumerate(experiment):  # 0: Excitatory, 1: Inhibitory, 2: Combo
+            cells_by_time = []
+            for k, time in enumerate(cell_type):  # 0: On Time, 1: Latent
+                responses = np.where(time != 0)[0]
+                values, counts = np.unique(responses, return_counts=True)
+                new_indexes = np.flip(np.argsort(counts))
+                sorted_cells = list(time[new_indexes])
+                cells_by_time.append(sorted_cells)
+            cells_by_type.append(cells_by_time)
+        cells_by_experiment.append(cells_by_type)
+
+    return cells_by_experiment
+
+
 def get_new_odor_indexes(odor_data):
     new_odor_indexes = []
     new_unique_odors = []
@@ -202,7 +220,7 @@ def combine_data(on_time_data: list, latent_data: list):
     for i, experiment in enumerate(on_time_data):
         stacked_cells = []
         for j, cell_type in enumerate(experiment):
-            cells = np.vstack((cell_type, latent_data[i][j]))
+            cells = [cell_type, latent_data[i][j]]
             stacked_cells.append(cells)
         combined_data.append(stacked_cells)
 
