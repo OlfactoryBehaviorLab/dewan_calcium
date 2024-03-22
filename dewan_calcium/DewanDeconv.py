@@ -6,7 +6,7 @@ from oasis.functions import deconvolve  # install using conda install to avoid h
 from pathlib import Path
 
 
-def deconvolve_traces(trace_data: list, framerate: int, peak_args: dict) -> tuple[pd.DataFrame, np.ndarray]:
+def deconvolve_traces(trace_data: list, framerate: int, peak_args: dict):
     #data = load_transients(trace_file)
     scaled_data = z_score_data(trace_data)
 
@@ -15,12 +15,17 @@ def deconvolve_traces(trace_data: list, framerate: int, peak_args: dict) -> tupl
     for cell in scaled_data:
         new_cell_traces = []
         cell_peaks = []
-        for trial in cell:
-            new_trace = smooth_data(trial)
-            new_cell_traces.append(new_trace)
-            found_peaks = find_peaks(new_trace, framerate, peak_args)
-            cell_peaks.append(found_peaks)
-        denoised_data.append(new_cell_traces)
+
+        cell_data = np.hstack(cell)
+
+        try:
+            new_trace = smooth_data(cell_data)
+            cell_peaks = find_peaks(new_trace, framerate, peak_args)
+        except UnboundLocalError:
+            new_trace = np.NAN
+            cell_peaks = np.NAN
+
+        denoised_data.append(new_trace)
         peaks.append(cell_peaks)
 
     return denoised_data, peaks
@@ -35,7 +40,7 @@ def find_peaks(data: np.ndarray, framerate: int, peak_args: dict) -> np.ndarray:
     peak_distance = (framerate * distance_time) / 1000
 
     peaks = signal.find_peaks(data, height=peak_height, width=peak_width, distance=peak_distance)
-
+    peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
     return peaks
 
 
@@ -87,9 +92,12 @@ def smooth_data(trace: tuple) -> np.ndarray:
     trace_data = trace_data.values
     print(f'Smoothing trace: {trace_name}')
 
+
+    g1 = round(np.exp(-1/(.4*20)) + np.exp(-1/(.08*20)), 5)
+    g2 = round(-np.exp(-1/(.4*20)) * np.exp(-1/(.08*20)), 5)
     
     warnings.simplefilter("ignore", category=UserWarning)
-    deconv_data = deconvolve(trace, g=(None,None), penalty=1, max_iter=5)
+    deconv_data = deconvolve(trace, (g1, g2))
 
     smoothed_trace = deconv_data[0]
 
