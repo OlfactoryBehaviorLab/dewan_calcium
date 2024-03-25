@@ -7,6 +7,6 @@ jupyter
 openpyxl
 pyarrow
 pathlib
-tqdl
+tqdm
 PySide6
 qdarktheme
