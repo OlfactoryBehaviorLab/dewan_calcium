@@ -1,6 +1,8 @@
 import pickle
 import os
 from pathlib import Path
+
+import pandas as pd
 from isx import make_output_file_path, make_output_file_paths
 
 
@@ -26,21 +28,31 @@ def create_project_framework() -> None:
             path.mkdir(parents=True, exist_ok=True)
 
 
-def save_data_to_disk(data, name, fileHeader, folder) -> None:
+def save_data_to_disk(data, name, fileHeader, folder, is_dataframe=False) -> None:
+
     file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
 
-    output_file = open(file_path, 'wb')
-    pickle.dump(data, output_file, protocol=-1)
-    output_file.close()
+    if is_dataframe:
+        pd.to_pickle(data, file_path, protocol=-1)
+    else:
+        output_file = open(file_path, 'wb')
+        pickle.dump(data, output_file, protocol=-1)
+        output_file.close()
+
     print(f'{fileHeader}{name} has been saved!')
 
 
-def load_data_from_disk(name, fileHeader, folder) -> object:
-    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
+def load_data_from_disk(name, fileHeader, folder, is_dataframe=False) -> object:
 
-    pickle_in = open(file_path, 'rb')
-    data_in = pickle.load(pickle_in)
-    pickle_in.close()
+    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
+    
+    if is_dataframe:
+        data_in = pd.read_pickle(file_path)
+    else:
+        pickle_in = open(file_path, 'rb')
+        data_in = pickle.load(pickle_in)
+        pickle_in.close()
+
     print(f'{fileHeader}{name} has loaded successfully!')
     return data_in
 
