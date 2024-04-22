@@ -85,9 +85,9 @@ def plot_cell_odor_traces(input_data: DewanDataStore.PlottingDataStore, latent_c
             x_vals = input_data.FV_time_map[trial, :]
 
             min_y_val = np.min(data_2_plot)
-            min_y_val = np.max(data_2_plot)
+            max_y_val = np.max(data_2_plot)
             y_min.append(min_y_val)
-            y_max.append(min_y_val)
+            y_max.append(max_y_val)
 
             ax1.plot(x_vals, data_2_plot, linewidth=0.5)
 
