@@ -16,6 +16,7 @@ from .helpers import DewanDataStore, DewanIOhandler, DewanTraceTools
 
 mpl.rcParams['font.family'] = 'Arial'
 
+
 def generate_color_map(numColors: int):
     color_map = cm.get_cmap('rainbow')
     indices = (np.linspace(0, 1, numColors))  # % color_map.N
@@ -173,7 +174,8 @@ def plot_evoked_baseline_means(input_data: DewanDataStore.PlottingDataStore, ax2
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore, num_workers: int = 8, latent_cells_only: bool = False, plot_all_cells: bool = False) -> None:
+def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore,
+                         latent_cells_only: bool = False, plot_all_cells: bool = False, num_workers: int = 8) -> None:
 
     plot_type = []
 
