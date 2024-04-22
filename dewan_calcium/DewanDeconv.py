@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from sklearn import preprocessing
-from oasis.functions import deconvolve # install using conda install to avoid having to build
+from oasis.functions import deconvolve  # install using conda install to avoid having to build
 from pathlib import Path
 
 
@@ -44,20 +44,21 @@ def find_peaks(data: np.ndarray, framerate: int, peak_args: dict) -> np.ndarray:
     return peaks
 
 
+
 def load_transients(path: Path) -> pd.DataFrame:
     try:
         data = pd.read_csv(path, header=0, index_col=0, dtype=object)
         data = data[1:]  # Remove first row
         
-        cols = [column[1:] for column in data.columns] # Remove leading space from each column name
+        cols = [column[1:] for column in data.columns]  # Remove leading space from each column name
         data.columns = cols
 
-        data = data.astype(np.float32) # Cast all numbers from object -> np.float32
+        data = data.astype(np.float32)  # Cast all numbers from object -> np.float32
 
-        data.interpolate(inplace=True) # Fill all NaN with a linearly interpolated value
+        data.interpolate(inplace=True)  # Fill all NaN with a linearly interpolated value
 
     except FileNotFoundError:
-        raise f'Error, cannot find the data file: {path}'
+        raise FileNotFoundError(f'Error, cannot find the data file: {path}')
     return data
 
 
@@ -87,6 +88,9 @@ def smooth_data(trace: tuple) -> np.ndarray:
     #trace_name, trace_data = trace # Unpack tuple
     #trace_data = trace_data.values
     #print(f'Smoothing trace: {trace_name}')
+    trace_name, trace_data = trace  # Unpack tuple
+    trace_data = trace_data.values
+    print(f'Smoothing trace: {trace_name}')
 
 
     g1 = round(np.exp(-1/(.4*20)) + np.exp(-1/(.08*20)), 5)
