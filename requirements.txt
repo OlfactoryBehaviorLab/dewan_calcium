@@ -9,4 +9,6 @@ pyarrow
 pathlib
 tqdm
 PySide6
-qdarktheme
+pyqtdarktheme
+opencv-python
+pypex
