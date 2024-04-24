@@ -15,6 +15,7 @@ def plot_epm_roi(polygons: tuple, image):
     ax.legend([open_poly, closed_poly, center_poly], ['Open', 'Closed', 'Center'], loc='lower center', framealpha=1)
     _ = ax.imshow(image)
 
+    return fig, ax
 
 def get_polygon_coordinates(polygons):
     coordinates = []

@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from roipoly import MultiRoi
+# Must be installed from GitHub as the PyPi version is obsolete; pip install git+https://github.com/jdoepfert/roipoly.py
 import pandas as pd
 import numpy as np
 
@@ -101,5 +102,3 @@ def get_region_polygons(arm_coordinates):
         prepare(polygon)
 
     return individual_polygons, original_polygons
-
-
