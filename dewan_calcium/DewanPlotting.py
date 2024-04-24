@@ -1,5 +1,5 @@
 
-def plot_epm_roi(polygons: tuple, image):
+def plot_epm_roi(polygons: dict, image):
     fig, ax = plt.subplots()  # New Graph
     ax.set_axis_off()
 
@@ -17,10 +17,11 @@ def plot_epm_roi(polygons: tuple, image):
 
     return fig, ax
 
-def get_polygon_coordinates(polygons):
+
+def get_polygon_coordinates(polygons: dict):
     coordinates = []
 
-    for polygon in polygons:
+    for polygon in polygons['Polygon']:
         coordinates.append(list(polygon.exterior.coords)[:-1])  # Drop last point as it is a duplicate of the first
 
     return coordinates

@@ -95,10 +95,16 @@ def get_region_polygons(arm_coordinates):
 
     # Starting in the top left and going clockwise, O1, C1, O2, C2
 
-    individual_polygons = [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
-    original_polygons = [open_arm_polygon, closed_arm_polygon, center_polygon]
+    individual_polygons = {
+        'Name': ['open1', 'open2', 'closed1', 'closed2', 'center'],
+        'Polygon': [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
+    }
+    original_polygons = {
+        'Name': ['open_arm', 'closed_arm', 'center'],
+        'Polygon': [open_arm_polygon, closed_arm_polygon, center_polygon]
+    }
 
-    for polygon in individual_polygons:
+    for polygon in individual_polygons['Polygon']:
         prepare(polygon)
 
     return individual_polygons, original_polygons
