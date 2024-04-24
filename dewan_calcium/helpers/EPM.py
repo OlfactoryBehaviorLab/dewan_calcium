@@ -89,8 +89,10 @@ def get_region_polygons(arm_coordinates):
     # The center area is the intersection of the two regions
 
     # Split the entire open (or closed) arm into its two constituent arms ignoring the center
-    open_arm_1, open_arm_2 = symmetric_difference_all([open_arm_polygon, center_polygon]).geoms
-    closed_arm_1, closed_arm_2 = symmetric_difference_all([closed_arm_polygon, center_polygon]).geoms
+    open_arm_1, closed_arm_1, open_arm_2, closed_arm_2 = (
+        symmetric_difference_all([open_arm_polygon, closed_arm_polygon]).geoms)
+
+    # Starting in the top left and going clockwise, O1, C1, O2, C2
 
     individual_polygons = [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
     original_polygons = [open_arm_polygon, closed_arm_polygon, center_polygon]
