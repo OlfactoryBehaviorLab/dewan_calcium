@@ -4,6 +4,8 @@ from roipoly import MultiRoi
 import pandas as pd
 import numpy as np
 
+from shapely import Polygon, Point, prepare, intersection, symmetric_difference_all
+
 
 def find_led_start(points: pd.DataFrame) -> list:
     indexes = points.index[points['led_p'] > 0.98].values
@@ -79,7 +81,6 @@ def display_roi_instructions():
 
 
 def get_region_polygons(arm_coordinates):
-    from shapely import Polygon, prepare, intersection, symmetric_difference_all
 
     open_arm_coordinates = [tuple(each) for each in arm_coordinates[0]]  # Convert the coordinates into tuples
     closed_arm_coordinates = [tuple(each) for each in arm_coordinates[1]]
@@ -108,3 +109,63 @@ def get_region_polygons(arm_coordinates):
         prepare(polygon)
 
     return individual_polygons, original_polygons
+
+
+def get_coordinate_region(animal_coordinates: pd.Series, individual_regions: dict):
+    location_name = []
+    location_index = []
+    names = individual_regions['Name']
+    polygons = individual_regions['Polygon']
+
+    for coordinate in animal_coordinates.values:
+        point = Point(coordinate)
+        temp_name = []
+        temp_index = []
+        for index in range(len(individual_regions['Name'])):
+            name = names[index]
+            polygon = polygons[index]
+
+            if point.within(polygon):
+                temp_name = name
+                temp_index = index
+                break
+
+        if not temp_name:
+            temp_name = 'The_Void'
+            temp_index = -1
+
+        location_name.append(temp_name)
+        location_index.append(temp_index)
+
+    return location_name, location_index
+
+
+def get_distances(individual_regions: dict, coordinate_pairs:list):
+    distances = []
+
+    for pair in coordinate_pairs:
+        coordinate, region_index = pair
+
+        current_polygon = individual_regions['Polygon'][region_index]
+        open_arm_1_polygon = individual_regions['Polygon'][0] # O1 is always first
+        center_polygon = individual_regions['Polygon'][-1]  # Center is always last
+        current_point = Point(coordinate)
+
+        if region_index == -1:  # If point is in 'the_void'
+            distances.append(-1)
+            continue
+        elif region_index == 4:  # If point is in the center
+            shared_border_center = intersection(open_arm_1_polygon, center_polygon).centroid
+            # Since the center is part of the open region, we're just going to measure distance from arm 1
+            distance = current_point.distance(shared_border_center)
+            distances.append(distance)
+        else:  # If point is in a closed arm
+            shared_border_center = intersection(current_polygon, center_polygon).centroid
+            # Find the shared border between the center and the current arm
+            distance = current_point.distance(shared_border_center)
+            # Distance between the current coordinate and center of our shared border
+            distances.append(distance)
+
+
+
+    return distances
