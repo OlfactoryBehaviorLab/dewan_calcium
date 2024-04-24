@@ -56,9 +56,11 @@ def display_roi_instructions():
         Read the following instructions and then run the next cell!</br>
         </br>
         
-        To mark the region, left click on one corner to start the region. </br>
-        Left click on two more corners to mark the other two corners of the region. </br>
-        To close the region, right click on the original point.
+        To mark the region, click on all the corners of the ROI. After marking the last corner,
+         right-click anywhere to confirm!
+         
+        </br></br>
+        <h4> Instructions </h4>
         <ol>
         <li> Click 'New ROI' and outline the open arm</li>
         <li> Click 'New ROI' again and now outline the closed arm </li>
