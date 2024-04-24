@@ -43,9 +43,7 @@ def get_arm_rois(image):
 
     arm_coordinates = np.round(arm_coordinates, 2)
 
-    arms = np.array(arm_coordinates)
-
-    return arms
+    return arm_coordinates
 
 
 def display_roi_instructions():
