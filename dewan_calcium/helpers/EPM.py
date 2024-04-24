@@ -76,12 +76,26 @@ def display_roi_instructions():
 
 
 def get_region_polygons(arm_coordinates):
-    import collections.abc
-    collections.Iterable = collections.abc.Iterable  # Fix for python 3.10 depreciation of collections.Iterable
-    from pypex import Polygon
+    from shapely import Polygon, prepare, intersection, symmetric_difference_all
 
-    open_polygon = Polygon(arm_coordinates[0])
-    closed_polygon = Polygon(arm_coordinates[1])
-    center_polygon = open_polygon.intersection(closed_polygon)
+    open_arm_coordinates = [tuple(each) for each in arm_coordinates[0]]  # Convert the coordinates into tuples
+    closed_arm_coordinates = [tuple(each) for each in arm_coordinates[1]]
 
-    return open_polygon, closed_polygon, center_polygon
+    open_arm_polygon = Polygon(open_arm_coordinates)
+    closed_arm_polygon = Polygon(closed_arm_coordinates)
+    center_polygon = intersection(open_arm_polygon, closed_arm_polygon)
+    # The center area is the intersection of the two regions
+
+    # Split the entire open (or closed) arm into its two constituent arms ignoring the center
+    open_arm_1, open_arm_2 = symmetric_difference_all([open_arm_polygon, center_polygon]).geoms
+    closed_arm_1, closed_arm_2 = symmetric_difference_all([closed_arm_polygon, center_polygon]).geoms
+
+    individual_polygons = [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
+    original_polygons = [open_arm_polygon, closed_arm_polygon, center_polygon]
+
+    for polygon in individual_polygons:
+        prepare(polygon)
+
+    return individual_polygons, original_polygons
+
+
