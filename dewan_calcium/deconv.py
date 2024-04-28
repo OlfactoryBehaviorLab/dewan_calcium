@@ -1,20 +1,22 @@
 import numpy as np
 import pandas as pd
 from scipy import signal
-from sklearn import preprocessing
 from oasis.functions import deconvolve  # install using conda install to avoid having to build
 from pathlib import Path
 
 
-def deconvolve_traces(trace_data: list, framerate: int, peak_args: dict):
-    #data = load_transients(trace_file)
-    scaled_data = z_score_data(trace_data)
-
+def deconvolve_traces(trace_data: pd.DataFrame, framerate: int, peak_args: dict):
     denoised_data = []
     peaks = []
+
+    scaled_data = z_score_data(trace_data)
+
+    try:
+        denoised_data = multithread_smoothing(scaled_data, num_workers=8)
+    except Exception as e:
+        denoised_data.append(np.NaN)
+
     for cell in scaled_data:
-        new_cell_traces = []
-        cell_peaks = []
 
         cell_data = np.hstack(cell)
 
@@ -45,24 +47,7 @@ def find_peaks(data: np.ndarray, framerate: int, peak_args: dict) -> np.ndarray:
 
 
 
-def load_transients(path: Path) -> pd.DataFrame:
-    try:
-        data = pd.read_csv(path, header=0, index_col=0, dtype=object)
-        data = data[1:]  # Remove first row
-        
-        cols = [column[1:] for column in data.columns]  # Remove leading space from each column name
-        data.columns = cols
-
-        data = data.astype(np.float32)  # Cast all numbers from object -> np.float32
-
-        data.interpolate(inplace=True)  # Fill all NaN with a linearly interpolated value
-
-    except FileNotFoundError:
-        raise FileNotFoundError(f'Error, cannot find the data file: {path}')
-    return data
-
-
-def z_score_data(data: pd.DataFrame) -> pd.DataFrame:
+def z_score_data(data: pd.DataFrame) -> list:
     # Function is given a Cells x Trials array
     # Zscores each trial and then returns the array
 
@@ -70,58 +55,74 @@ def z_score_data(data: pd.DataFrame) -> pd.DataFrame:
 
     z_scored_data = []
 
-    for cell in data:
-        z_scored_cell = []
-        num_trials = len(cell)
-        combined_data = np.hstack(cell)
+    for cell in data.columns:
+
+        fluorescence_values = data[cell].values
+
+        combined_data = np.hstack(fluorescence_values)
         z_score_combined = zscore(combined_data)
 
-        z_scored_cell = np.split(z_score_combined, num_trials)
+        # z_scored_cell = np.split(z_score_combined, num_trials)
 
-        z_scored_data.append(z_scored_cell)
+        z_scored_data.append(z_score_combined)
 
     return z_scored_data
 
 
-def smooth_data(trace: tuple) -> np.ndarray:
+def calc_smoothing_params(framerate, decay_time, rise_time):
+
+    decay_param = np.exp(-1 / (decay_time * framerate))
+    rise_param = np.exp(-1 / (rise_time * framerate))
+
+    g1 = round(decay_param + rise_param, 5)
+    g2 = round(-decay_time * rise_param, 5)
+
+    return g1, g2
+
+
+def smooth_data(trace, calc_kernel) -> np.ndarray:
     import warnings
-    #trace_name, trace_data = trace # Unpack tuple
-    #trace_data = trace_data.values
-    #print(f'Smoothing trace: {trace_name}')
-    trace_name, trace_data = trace  # Unpack tuple
-    trace_data = trace_data.values
-    print(f'Smoothing trace: {trace_name}')
 
+    #g1, g2 = calc_smoothing_params(10, .4, 0.08)
+    g1, g2 = calc_kernel
 
-    g1 = round(np.exp(-1/(.4*20)) + np.exp(-1/(.08*20)), 5)
-    g2 = round(-np.exp(-1/(.4*20)) * np.exp(-1/(.08*20)), 5)
-    
     warnings.simplefilter("ignore", category=UserWarning)
+    warnings.simplefilter("ignore", category=RuntimeWarning)
+
     deconv_data = deconvolve(trace, (g1, g2))
 
     smoothed_trace = deconv_data[0]
 
-    #print(f'Smoothing complete for: {trace_name}!')
-
-
     return smoothed_trace
 
 
-def multithread_smoothing(zscored_data: pd.DataFrame, num_workers: int = 4) -> list[tuple]:
+def multithread_smoothing(zscored_data: list, framerate: int, peak_args: dict, num_workers: int = 4) -> list[tuple]:
     from concurrent.futures import ProcessPoolExecutor
     from contextlib import ExitStack
+    from functools import partial
     from tqdm.notebook import tqdm
 
-    iterator = zscored_data.items() # List of tuples
-    num_traces = zscored_data.shape[1] # Num of cells
+    iterator = zscored_data
+
+    rise_time = peak_args['rise'] / 1000
+    decay_time = peak_args['decay'] / 1000
+
+    calc_kernel = calc_smoothing_params(framerate, decay_time, rise_time)
+
+    num_traces = len(iterator)
+
     traces = []
+
     print("Begin smoothing of trace data...")
 
+
     with ExitStack() as stack:
-        pool = stack.enter_context(ProcessPoolExecutor(max_workers = num_workers))
+        pool = stack.enter_context(ProcessPoolExecutor(max_workers=num_workers))
         progress_bar = stack.enter_context(tqdm(position=0, total=num_traces))
 
-        for trace in pool.map(smooth_data, iterator):
+        smooth_func = partial(smooth_data, calc_kernel=calc_kernel)
+
+        for trace in pool.map(smooth_func, iterator):
             progress_bar.update(1)
             traces.append(trace)
 
