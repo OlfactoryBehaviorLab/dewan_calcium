@@ -29,10 +29,9 @@ def load_json_file(json_file_path: Path) -> dict:
 
 def get_focal_planes(session_file: Path) -> list:
 
-    with open(session_file,'r') as j:
-        inscopix_json = json.loads(j.read())
+    session_settings = load_json_file(session_file)
 
-    microscope = inscopix_json['microscope']
+    microscope = session_settings['microscope']
     focal_plane = microscope['focus']
 
     multiplane_enabled = microscope['multiplane']['enabled']
