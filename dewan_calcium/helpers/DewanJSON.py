@@ -5,17 +5,12 @@ from pathlib import Path
 import os
 
 
-def get_json_settings(json_file_path: Path) -> list:
-
-    session_settings = load_json_file(json_file_path)
-
-
 def load_json_file(json_file_path: Path) -> dict:
-    session_settings = {}
+    json_contents = {}
 
-    try:  # Try to open the session.json file, if successful read the raw data into a dict
+    try:  # Try to open the json file, if successful read the raw data into a dict
         with open(json_file_path, "r") as json_file:
-            session_settings = json.loads(json_file.read())
+            json_contents = json.loads(json_file.read())
 
     except FileNotFoundError as fnf_error:
         print("JSON session file not found!")
@@ -24,7 +19,12 @@ def load_json_file(json_file_path: Path) -> dict:
         print("JSON session file is corrupt!")
         raise json_error
 
-    return session_settings
+    return json_contents
+
+
+def get_json_settings(json_file_path: Path) -> list:
+
+    session_settings = load_json_file(json_file_path)
 
 
 def get_focal_planes(session_file: Path) -> list:
