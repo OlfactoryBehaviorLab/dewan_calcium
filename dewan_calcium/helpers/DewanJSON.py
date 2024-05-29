@@ -6,10 +6,14 @@ import os
 
 
 def get_json_settings(json_file_path: Path) -> list:
-    #json_file_path_str = str(json_file_path)
-    session_settings = []
 
-    try:
+    session_settings = load_json_file(json_file_path)
+
+
+def load_json_file(json_file_path: Path) -> dict:
+    session_settings = {}
+
+    try:  # Try to open the session.json file, if successful read the raw data into a dict
         with open(json_file_path, "r") as json_file:
             session_settings = json.loads(json_file.read())
 
@@ -20,6 +24,7 @@ def get_json_settings(json_file_path: Path) -> list:
         print("JSON session file is corrupt!")
         raise json_error
 
+    return session_settings
 
 
 def get_focal_planes(session_file: Path) -> list:
