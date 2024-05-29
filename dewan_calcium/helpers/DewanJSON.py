@@ -51,17 +51,8 @@ def get_focal_planes(session_file: Path) -> list:
         return focal_plane
 
 
-def get_outline_coordinates(path: os.PathLike):
+def get_outline_coordinates(path: Path):
+    outline_data = load_json_file(path)
+    keys = list(outline_data.keys())
 
-    try:
-        json_file = open(path)
-    except (FileNotFoundError, IOError):
-        print("Error loading Cell_Contours File!")
-        return None
-
-    json_data = json.load(json_file)
-    keys = np.array(list(json_data.keys()))
-
-    json_file.close()
-
-    return keys, json_data
+    return keys, outline_data
