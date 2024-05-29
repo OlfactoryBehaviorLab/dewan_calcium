@@ -22,16 +22,21 @@ def load_json_file(json_file_path: Path) -> dict:
     return json_contents
 
 
-def get_json_settings(json_file_path: Path) -> list:
+def get_session_settings(json_file_path: Path) -> tuple:
 
     session_settings = load_json_file(json_file_path)
 
+    microscope = session_settings['microscope']  # Get config values for the actual miniscope
 
-def get_focal_planes(session_file: Path) -> list:
+    gain = microscope['gain']  # Recording Gain
+    led_power = microscope['led']['exPower']  # LED Power
+    focal_planes = get_focal_planes(microscope)  # Get the one, or multiple, focal planes
 
-    session_settings = load_json_file(session_file)
+    return gain, led_power, focal_planes
 
-    microscope = session_settings['microscope']
+
+def get_focal_planes(microscope: dict) -> list:
+
     focal_plane = microscope['focus']
 
     multiplane_enabled = microscope['multiplane']['enabled']
