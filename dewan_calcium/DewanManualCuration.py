@@ -96,14 +96,15 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutlines, return_raw_image, is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
+def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image= False,
+                            is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
                             font_size=24, text_color='red', outline_color='yellow', outline_width=2):
     import cv2
     from PIL import ImageDraw, ImageFont, ImageQt, ImageEnhance
 
     font = ImageFont.truetype('arial.ttf', font_size)  # Font size defaults to 12 but can be changed
 
-    max_projection_path = str(ImagePath)
+    max_projection_path = str(image_path)
     image = cv2.imread(max_projection_path)
 
     if image is None:
@@ -116,16 +117,18 @@ def generate_max_projection(ImagePath: Path, AllCellProps, CellKeys, CellOutline
     # Computer, Enhance Image
     image = ImageEnhance.Brightness(image).enhance(brightness)
     image = ImageEnhance.Contrast(image).enhance(contrast)
-    centroids = np.stack((AllCellProps['CentroidX'].values, AllCellProps['CentroidY'].values), axis=-1)
+    centroids = np.stack((all_cell_props['CentroidX'].values, all_cell_props['CentroidY'].values), axis=-1)
 
     drawer = ImageDraw.Draw(image)  # Give the computer a crayon
 
-    for i, each in enumerate(CellKeys):
+    cell_keys = all_cell_props['Name']  # Cell Keys are the cell Names
+
+    for i, each in enumerate(cell_keys):
         if is_downsampled:
-            points = CellOutlines[each][0]
+            points = cell_outlines[each][0]
             centroid = (centroids[i][0], centroids[i][1])
         else:  # If using full-frame image we need to scale our points up by the downsample factor
-            points = np.multiply(CellOutlines[each][0], 4)
+            points = np.multiply(cell_outlines[each][0], 4)
             centroid = np.multiply((centroids[i][0], centroids[i][1]), 4)
 
         points = [tuple(x) for x in points]
