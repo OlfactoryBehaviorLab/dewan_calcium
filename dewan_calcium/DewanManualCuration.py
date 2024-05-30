@@ -96,9 +96,9 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         gui.cell_list.addItem(item)
 
 
-def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image= False,
+def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image=False,
                             is_downsampled=False, downsample_factor=4, brightness=1.5, contrast=1.5,
-                            font_size=24, text_color='red', outline_color='yellow', outline_width=2):
+                            font_size=20, text_color='magenta', outline_color='gold', outline_width=2):
     import cv2
     from PIL import ImageDraw, ImageFont, ImageQt, ImageEnhance
 
@@ -128,12 +128,12 @@ def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, ret
             points = cell_outlines[each][0]
             centroid = (centroids[i][0], centroids[i][1])
         else:  # If using full-frame image we need to scale our points up by the downsample factor
-            points = np.multiply(cell_outlines[each][0], 4)
-            centroid = np.multiply((centroids[i][0], centroids[i][1]), 4)
+            points = np.multiply(cell_outlines[each][0], downsample_factor)
+            centroid = np.multiply((centroids[i][0], centroids[i][1]), downsample_factor)
 
         points = [tuple(x) for x in points]
         drawer.polygon(points, outline=outline_color, width=outline_width)
-        drawer.text(centroid, str(int(each[1:])), fill=text_color, font=font)
+        drawer.text(centroid, str(int(each[1:])), anchor='mm', fill=text_color, font=font)
         # Drop the C from CXX, convert to an INT to drop any leading zeros, convert back to string for drawing function
 
     if return_raw_image:
