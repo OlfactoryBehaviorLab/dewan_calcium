@@ -1,16 +1,17 @@
 import sys
 import numpy as np
 import qdarktheme
+
 from pathlib import Path
 from PIL import Image
 from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
 from PySide6.QtCore import Qt, QSize, QCoreApplication
-from .helpers import DewanManualCurationWidget
 from sklearn.preprocessing import MinMaxScaler
 
+from dewan_calcium.helpers import DewanManualCurationWidget
 
 
-def manual_curation_gui(cell_list, cell_data, max_projection_image):
+def manual_curation_gui(all_cell_props, cell_data, max_projection_image):
     qdarktheme.enable_hi_dpi()
 
     app = QCoreApplication.instance()
@@ -20,8 +21,13 @@ def manual_curation_gui(cell_list, cell_data, max_projection_image):
     qdarktheme.setup_theme('dark')
 
     gui = DewanManualCurationWidget.ManualCurationUI(max_projection_image)
+
+    cell_keys = all_cell_props['Name']
+    cell_list = [int(cell[1:]) for cell in cell_keys]
+
     populate_cell_selection_list(gui, cell_list)
-    cell_traces = generate_cell_traces(cell_list, cell_data)  # ignore column one since its just time
+
+    cell_traces = generate_cell_traces(cell_keys, cell_list, cell_data)  # ignore column one since its just time
     populate_traces(gui, cell_traces)
     gui.cell_labels = cell_list
 
@@ -44,11 +50,14 @@ def cleanup(gui):
     gui.close()
 
 
-def generate_cell_traces(cell_list, cell_data):
+def generate_cell_traces(cell_keys, cell_list, cell_data):
     from matplotlib import font_manager
     traces = []
-    for each in cell_list:
-        data = np.array(cell_data.iloc[:, each])
+
+    for i, key in enumerate(cell_keys):
+        cell_name = cell_list[i]
+
+        data = cell_data[key].values
         y_max_label = max(data)
         y_min_label = min(data)
 
@@ -61,7 +70,7 @@ def generate_cell_traces(cell_list, cell_data):
         axes = trace.axes
         arial_bold = font_manager.FontProperties(family='arial', weight='bold', size=14)
 
-        axes.set_ylabel(f'Cell {each}', fontproperties=arial_bold, rotation=0, va='center', ha='center')
+        axes.set_ylabel(f'Cell {cell_name}', fontproperties=arial_bold, rotation=0, va='center', ha='center')
         axes.plot(x, data, color='k')
 
         axes.tick_params(axis='both', which='both', left=False, bottom=False)

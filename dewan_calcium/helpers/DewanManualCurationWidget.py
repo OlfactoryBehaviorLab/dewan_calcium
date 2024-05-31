@@ -110,6 +110,7 @@ class Confirmation(QWidget):
         self.cancel.setText("Cancel")
         self.cancel.setLayout(self.button_layout)
         self.cancel.clicked.connect(self.gui.close)
+
         # self.button_layout.addWidget(self.cancel)
 
         self.v_layout.addWidget(self.accept)
