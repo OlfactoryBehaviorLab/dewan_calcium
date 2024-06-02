@@ -102,7 +102,9 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked)
-        gui.cell_list.addItem(item)
+        item2 = item.clone()
+        gui.cell_view_selector.addItem(item)
+        gui.cell_list.addItem(item2)
 
 
 def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image=False,

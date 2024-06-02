@@ -3,7 +3,7 @@ from PySide6.QtGui import (QFont, QPixmap)
 from PySide6.QtWidgets import (QDialog, QFrame, QListWidgetItem,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea,
                                QSizePolicy, QVBoxLayout,
-                               QWidget, QLabel)
+                               QWidget, QLabel, QLineEdit)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
@@ -137,6 +137,7 @@ class Confirmation(QWidget):
 class ManualCurationUI(QDialog):
     def __init__(self, max_projection_image):
         super().__init__()
+        self.cell_view_selector = None
         self.max_projection_image = max_projection_image
         self.export_selection_button = None
         self.scroll_area_vertical_layout = None
@@ -182,7 +183,7 @@ class ManualCurationUI(QDialog):
 
         # Setup main window
         manual_curation_window.setObjectName(u"manual_curation_window")
-        manual_curation_window.resize(900, 700)
+        manual_curation_window.resize(200, 400)
         manual_curation_window.setWindowTitle("Manual Curation")
 
         manual_curation_window.setSizePolicy(self.size_policy)
@@ -272,9 +273,15 @@ class ManualCurationUI(QDialog):
         self.cell_traces_group_outline.setMinimumSize(QSize(0, 400))
         self.cell_traces_group_outline.setAlignment(Qt.AlignCenter)
 
-        self.cell_traces_grid_layout = QVBoxLayout(self.cell_traces_group_outline)
+        self.cell_traces_grid_layout = QHBoxLayout(self.cell_traces_group_outline)
         self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
 
+        self.cell_view_selector = QListWidget()
+        self.cell_view_selector.setObjectName(u"cell_list")
+        self.cell_view_selector.setMaximumSize(QSize(250, 16777215))
+        self.cell_traces_grid_layout.addWidget(self.cell_view_selector)
+
+        # Scroll area with cell traces
         self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group_outline)
         self.cell_trace_scroll_area.setObjectName(u"cell_trace_scroll_area")
         self.cell_trace_scroll_area.setMinimumSize(QSize(0, 110))
@@ -287,6 +294,7 @@ class ManualCurationUI(QDialog):
         self.scroll_area_vertical_layout = QVBoxLayout(self.scroll_area_contents)
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
+
         self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area)
 
         self.verticalLayout.addWidget(self.cell_traces_group_outline)
@@ -320,7 +328,7 @@ class ManualCurationUI(QDialog):
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(manual_curation_window.sizePolicy().hasHeightForWidth())
+        #  sizePolicy.setHeightForWidth(manual_curation_window.sizePolicy().hasHeightForWidth())
         return sizePolicy
 
     @staticmethod
