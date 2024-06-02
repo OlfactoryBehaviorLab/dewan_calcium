@@ -12,7 +12,7 @@ class CellTrace(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=30, height=1.1, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
-        super(CellTrace, self).__init__(fig)
+        super().__init__(fig)
 
 
 class Error(QWidget):
@@ -39,10 +39,10 @@ class Error(QWidget):
         return font
 
     def setup(self):
-        self.error_gui = QWidget()
-        self.error_gui.setWindowTitle('You sure about that?')
-        self.v_layout = QVBoxLayout(self.error_gui)
-        self.error_gui.setLayout(self.v_layout)
+        #self.error_gui = QWidget()
+        self.setWindowTitle('You sure about that?')
+        self.v_layout = QVBoxLayout(self)
+        self.setLayout(self.v_layout)
         self.bruh_image = QLabel()
         self.pixmap = QPixmap('.\\Python\\Resources\\bruh.png')
         self.bruh_image.setPixmap(self.pixmap)
@@ -81,10 +81,9 @@ class Confirmation(QWidget):
         self.setup()
 
     def setup(self):
-        self.gui = QWidget()
-        self.gui.setWindowTitle("Confirm Cell Selection")
+        self.setWindowTitle("Confirm Cell Selection")
         self.v_layout = QVBoxLayout(self.gui)
-        self.gui.setLayout(self.v_layout)
+        self.setLayout(self.v_layout)
 
         self.label = QLabel()
         self.font = Error.def_font(self)
@@ -109,7 +108,7 @@ class Confirmation(QWidget):
         self.cancel = QPushButton()
         self.cancel.setText("Cancel")
         self.cancel.setLayout(self.button_layout)
-        self.cancel.clicked.connect(self.gui.close)
+        self.cancel.clicked.connect(self.close)
 
         # self.button_layout.addWidget(self.cancel)
 
@@ -181,6 +180,7 @@ class ManualCurationUI(QDialog):
         self.font1 = self.def_font_1(self)
         self.font = self.def_font()
 
+        # Setup main window
         manual_curation_window.setObjectName(u"manual_curation_window")
         manual_curation_window.resize(900, 700)
         manual_curation_window.setWindowTitle("Manual Curation")
@@ -191,8 +191,9 @@ class ManualCurationUI(QDialog):
 
         manual_curation_window.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         manual_curation_window.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-
         self.gui = manual_curation_window
+
+        # Create cell checkbox list and associated layouts
         self.verticalLayout = QVBoxLayout(manual_curation_window)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.cell_layout_horizontal = QHBoxLayout()
@@ -213,6 +214,7 @@ class ManualCurationUI(QDialog):
 
         self.cell_list_vertical_layout.addWidget(self.cell_list)
 
+        # Create and organize controls for the cell list
         self.cell_list_control_horizontal = QHBoxLayout()
         self.cell_list_control_horizontal.setObjectName(u"cell_list_control_horizontal")
         self.select_all_button = QPushButton(self.cell_list_group)
