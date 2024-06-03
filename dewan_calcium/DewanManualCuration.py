@@ -4,7 +4,7 @@ import qdarktheme
 
 from pathlib import Path
 from PIL import Image
-from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy
+from PySide6.QtWidgets import QDialog, QApplication, QListWidgetItem, QSizePolicy, QCheckBox
 from PySide6.QtCore import Qt, QSize, QCoreApplication
 from sklearn.preprocessing import MinMaxScaler
 
@@ -102,8 +102,9 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked)
-        item2 = item.clone()
         gui.cell_view_selector.addItem(item)
+
+        item2 = item.clone()
         gui.cell_list.addItem(item2)
 
 

@@ -3,7 +3,7 @@ from PySide6.QtGui import (QFont, QPixmap)
 from PySide6.QtWidgets import (QDialog, QFrame, QListWidgetItem,
                                QGroupBox, QHBoxLayout, QListWidget, QPushButton, QScrollArea,
                                QSizePolicy, QVBoxLayout,
-                               QWidget, QLabel, QLineEdit)
+                               QWidget, QLabel, QLineEdit, QCheckBox)
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 
@@ -132,6 +132,21 @@ class Confirmation(QWidget):
         self.gui.close()
         self.parent().close()
         self.parent().accept()
+
+
+class CheckBox(QListWidgetItem):
+    def __init__(self):
+        super().__init__()
+        self.checkBox = None
+
+    def setup(self):
+        self.checkBox = QCheckBox()
+        self.checkBox.setChecked(True)
+        self.checkBox.stateChanged.connect()
+
+    def view_checkbox_state_change(self):
+        
+        pass
 
 
 class ManualCurationUI(QDialog):
@@ -276,10 +291,13 @@ class ManualCurationUI(QDialog):
         self.cell_traces_grid_layout = QHBoxLayout(self.cell_traces_group_outline)
         self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
 
+        # Cell view selector
         self.cell_view_selector = QListWidget()
         self.cell_view_selector.setObjectName(u"cell_list")
         self.cell_view_selector.setMaximumSize(QSize(250, 16777215))
         self.cell_traces_grid_layout.addWidget(self.cell_view_selector)
+        self.cell_view_selector.itemSelectionChanged.connect(self.view_checkbox_state_change)
+
 
         # Scroll area with cell traces
         self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group_outline)
