@@ -11,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from dewan_calcium.helpers import DewanManualCurationWidget
 
 
-def manual_curation_gui(all_cell_props, cell_data, max_projection_image):
+def manual_curation_gui(cell_traces, max_projection_image, cell_selection_list, cell_view_list):
     qdarktheme.enable_hi_dpi()
 
     app = QCoreApplication.instance()
@@ -20,21 +20,17 @@ def manual_curation_gui(all_cell_props, cell_data, max_projection_image):
 
     qdarktheme.setup_theme('dark')
 
-    gui = DewanManualCurationWidget.ManualCurationUI(max_projection_image)
+    gui = DewanManualCurationWidget.ManualCurationUI(max_projection_image,
+                                                     cell_traces, cell_selection_list, cell_view_list)
+   # populate_traces(gui, cell_traces)
 
-    cell_keys = all_cell_props['Name']
-    cell_list = [int(cell[1:]) for cell in cell_keys]
+    #cell_keys = all_cell_props['Name']
+    #cell_list = [int(cell[1:]) for cell in cell_keys]
+    #populate_cell_selection_list(gui, cell_list)
+    #populate_cell_view_list(gui, cell_list)
+    #gui.cell_labels = cell_list
 
-    populate_cell_selection_list(gui, cell_list)
-    populate_cell_view_list(gui, cell_list)
-
-
-    cell_traces = generate_cell_traces(cell_keys, cell_list, cell_data)  # ignore column one since its just time
-    populate_traces(gui, cell_traces)
-
-    gui.cell_labels = cell_list
-
-    app.aboutToQuit.connect(lambda: cleanup(gui))
+    #app.aboutToQuit.connect(lambda: cleanup(gui))
     #app.aboutToQuit.connect(app.deleteLater())
 
     gui.show()
@@ -86,37 +82,40 @@ def generate_cell_traces(cell_keys, cell_list, cell_data):
         axes.get_yaxis().set_label_coords(-.1, .5)  # Align all the things
         axes.yaxis.tick_right()  # Move max/min to other side
 
+        trace.setMinimumSize(QSize(0, trace.get_width_height()[1]))
+        trace.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum))
+        trace.setObjectName(f'graph{i}')
+
         traces.append(trace)
 
     return traces
 
 
-def populate_traces(gui, cell_trace_list: list[DewanManualCurationWidget.CellTrace]):
-    for i, each in enumerate(cell_trace_list):
-        each.setMinimumSize(QSize(0, each.get_width_height()[1]))
-        each.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Maximum))
-        each.installEventFilter(each.installEventFilter(gui))
-        each.setObjectName(f'graph{i}')
-        gui.scroll_area_vertical_layout.addWidget(each)
+def generate_cell_selection_list(cell_list):
 
+    cell_selection_list = []
 
-def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_list):
     for each in cell_list:
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked)
-        # gui.cell_view_selector.addItem(item)
 
-        item2 = item.clone()
-        gui.cell_list.addItem(item2)
+        cell_selection_list.append(item)
+
+    return cell_selection_list
 
 
-def populate_cell_view_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_list):
+def generate_cell_view_list(cell_list):
+
+    cell_view_list = []
+
     for each in cell_list:
         item = QCheckBox(str(each))
         item.setCheckState(Qt.CheckState.Checked)
-        gui.cell_view_list_vertical_layout.addWidget(item)
 
+        cell_view_list.append(item)
+
+    return cell_view_list
 
 
 def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image=False,

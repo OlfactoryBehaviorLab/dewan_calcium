@@ -135,18 +135,22 @@ class Confirmation(QWidget):
 
 
 class ManualCurationUI(QDialog):
-    def __init__(self, max_projection_image):
+    def __init__(self, max_projection_image, cell_traces, cell_selection_list, cell_view_list):
         super().__init__()
+        self.max_projection_image = max_projection_image
+        self.cell_traces = cell_traces
+        self.cell_selection_list_contents = cell_selection_list
+        self.cell_view_list_contents = cell_view_list
+
         self.cell_view_list_vertical_layout = None
         self.cell_view_list = None
         self.cell_view_scroll_area = None
         self.cell_view_button = None
-        self.max_projection_image = max_projection_image
         self.export_selection_button = None
         self.scroll_area_vertical_layout = None
         self.scroll_area_contents = None
         self.cell_trace_scroll_area = None
-        self.cell_traces_grid_layout = None
+        self.cell_trace_H_layout = None
         self.cell_traces_group_outline = None
         self.horizontal_div = None
         self.max_projection_view = None
@@ -169,6 +173,15 @@ class ManualCurationUI(QDialog):
         self.Error = None
         self.confirmation = None
         self.setup_ui(self)
+        self.populate_gui()
+
+    def populate_gui(self):
+        for i, each in enumerate(self.cell_traces):
+
+            self.scroll_area_vertical_layout.addWidget(each)
+
+            self.cell_list.addItem(self.cell_selection_list_contents[i])
+            self.cell_view_list_vertical_layout.addWidget(self.cell_view_list_contents[i])
 
     def eventFilter(self, q_object: QObject, event: QEvent):
         if "graph" in q_object.objectName() and event.type() == QEvent.Type.Wheel:
@@ -276,14 +289,19 @@ class ManualCurationUI(QDialog):
         self.cell_traces_group_outline.setMinimumSize(QSize(0, 400))
         self.cell_traces_group_outline.setAlignment(Qt.AlignCenter)
 
-        self.cell_traces_grid_layout = QHBoxLayout(self.cell_traces_group_outline)
-        self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
+        self.cell_trace_H_layout = QHBoxLayout(self.cell_traces_group_outline)
+        self.cell_trace_H_layout.setObjectName(u"cell_traces_grid_layout")
 
         # Cell view selector
+        self.view_control_area = QWidget()
+        self.view_control_area.setMaximumSize(QSize(150, 999999))
+
+        self.cell_view_v_layout = QVBoxLayout(self.view_control_area)
+
         self.cell_view_scroll_area = QScrollArea()
         self.cell_view_scroll_area.setObjectName(u"cell_list+scroll_area")
         self.cell_view_scroll_area.setWidgetResizable(True)
-        self.cell_view_scroll_area.setMaximumSize(QSize(100, 16777215))
+        #self.cell_view_scroll_area.setMaximumSize(QSize(100, 16777215))
 
         self.cell_view_list = QWidget()
         self.cell_view_list.setObjectName(u"cell_view_list")
@@ -292,7 +310,15 @@ class ManualCurationUI(QDialog):
         self.cell_view_list.setObjectName(u"scroll_area_vertical_layout")
         self.cell_view_scroll_area.setWidget(self.cell_view_list)  # Contents of view scroll area
 
-        self.cell_traces_grid_layout.addWidget(self.cell_view_scroll_area)
+        self.cell_view_v_layout.addWidget(self.cell_view_scroll_area)
+
+        self.view_all_button = QPushButton('View All')
+        self.view_none_button = QPushButton('View None')
+
+        self.cell_view_v_layout.addWidget(self.view_all_button)
+        self.cell_view_v_layout.addWidget(self.view_none_button)
+
+        self.cell_trace_H_layout.addWidget(self.view_control_area)
         
         # Scroll area with cell traces
         self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group_outline)
@@ -308,7 +334,7 @@ class ManualCurationUI(QDialog):
         self.scroll_area_vertical_layout.setObjectName(u"scroll_area_vertical_layout")
         self.cell_trace_scroll_area.setWidget(self.scroll_area_contents)
 
-        self.cell_traces_grid_layout.addWidget(self.cell_trace_scroll_area)
+        self.cell_trace_H_layout.addWidget(self.cell_trace_scroll_area)
 
         self.verticalLayout.addWidget(self.cell_traces_group_outline)
 
