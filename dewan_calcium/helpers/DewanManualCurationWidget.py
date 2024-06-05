@@ -134,25 +134,13 @@ class Confirmation(QWidget):
         self.parent().accept()
 
 
-class CheckBox(QListWidgetItem):
-    def __init__(self):
-        super().__init__()
-        self.checkBox = None
-
-    def setup(self):
-        self.checkBox = QCheckBox()
-        self.checkBox.setChecked(True)
-        self.checkBox.stateChanged.connect()
-
-    def view_checkbox_state_change(self):
-        
-        pass
-
-
 class ManualCurationUI(QDialog):
     def __init__(self, max_projection_image):
         super().__init__()
-        self.cell_view_selector = None
+        self.cell_view_list_vertical_layout = None
+        self.cell_view_list = None
+        self.cell_view_scroll_area = None
+        self.cell_view_button = None
         self.max_projection_image = max_projection_image
         self.export_selection_button = None
         self.scroll_area_vertical_layout = None
@@ -226,7 +214,7 @@ class ManualCurationUI(QDialog):
         self.cell_list_vertical_layout.setObjectName(u"cell_list_vertical_layout")
         self.cell_list = QListWidget(self.cell_list_group)
         self.cell_list.setObjectName(u"cell_list")
-        self.cell_list.setMaximumSize(QSize(250, 16777215))
+        #self.cell_list.setMaximumSize(QSize(100, 16777215))
 
         self.cell_list_vertical_layout.addWidget(self.cell_list)
 
@@ -292,13 +280,20 @@ class ManualCurationUI(QDialog):
         self.cell_traces_grid_layout.setObjectName(u"cell_traces_grid_layout")
 
         # Cell view selector
-        self.cell_view_selector = QListWidget()
-        self.cell_view_selector.setObjectName(u"cell_list")
-        self.cell_view_selector.setMaximumSize(QSize(250, 16777215))
-        self.cell_traces_grid_layout.addWidget(self.cell_view_selector)
-        self.cell_view_selector.itemSelectionChanged.connect(self.view_checkbox_state_change)
+        self.cell_view_scroll_area = QScrollArea()
+        self.cell_view_scroll_area.setObjectName(u"cell_list+scroll_area")
+        self.cell_view_scroll_area.setWidgetResizable(True)
+        self.cell_view_scroll_area.setMaximumSize(QSize(100, 16777215))
 
+        self.cell_view_list = QWidget()
+        self.cell_view_list.setObjectName(u"cell_view_list")
+        self.cell_view_list.setAutoFillBackground(True)
+        self.cell_view_list_vertical_layout = QVBoxLayout(self.cell_view_list)
+        self.cell_view_list.setObjectName(u"scroll_area_vertical_layout")
+        self.cell_view_scroll_area.setWidget(self.cell_view_list)  # Contents of view scroll area
 
+        self.cell_traces_grid_layout.addWidget(self.cell_view_scroll_area)
+        
         # Scroll area with cell traces
         self.cell_trace_scroll_area = QScrollArea(self.cell_traces_group_outline)
         self.cell_trace_scroll_area.setObjectName(u"cell_trace_scroll_area")

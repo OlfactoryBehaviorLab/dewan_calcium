@@ -26,9 +26,12 @@ def manual_curation_gui(all_cell_props, cell_data, max_projection_image):
     cell_list = [int(cell[1:]) for cell in cell_keys]
 
     populate_cell_selection_list(gui, cell_list)
+    populate_cell_view_list(gui, cell_list)
+
 
     cell_traces = generate_cell_traces(cell_keys, cell_list, cell_data)  # ignore column one since its just time
     populate_traces(gui, cell_traces)
+
     gui.cell_labels = cell_list
 
     app.aboutToQuit.connect(lambda: cleanup(gui))
@@ -102,10 +105,18 @@ def populate_cell_selection_list(gui: DewanManualCurationWidget.ManualCurationUI
         item = QListWidgetItem(str(each))
         item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
         item.setCheckState(Qt.CheckState.Checked)
-        gui.cell_view_selector.addItem(item)
+        # gui.cell_view_selector.addItem(item)
 
         item2 = item.clone()
         gui.cell_list.addItem(item2)
+
+
+def populate_cell_view_list(gui: DewanManualCurationWidget.ManualCurationUI, cell_list):
+    for each in cell_list:
+        item = QCheckBox(str(each))
+        item.setCheckState(Qt.CheckState.Checked)
+        gui.cell_view_list_vertical_layout.addWidget(item)
+
 
 
 def generate_max_projection(image_path: Path, all_cell_props, cell_outlines, return_raw_image=False,
