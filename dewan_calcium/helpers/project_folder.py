@@ -5,22 +5,32 @@ from pathlib import Path
 
 class ProjectFolder:
     def __init__(self, root_dir=None, project_dir=None, select_dir=False):
-
-        self._set_root_dir(root_dir)
-
+        self.root_dir = None
         self.project_dir = None
         self.project_folder = None
 
         self.raw_data_dir = None
         self.inscopix_dir = None
         self.analysis_dir = None
-        self._create_subfolders()  # Create folders if they do not exist
+
+        self._set_root_dir(root_dir)
+        self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
+        self._create_subfolders()  # Create or aquire folders
+        self._get_dir()
 
 
         #  Empty file/folder paths
 
         #self.setup_folder()
         #self.get_project_files()
+    def _get_data(self):
+        if not self.raw_data_dir.new_dir:
+            self.raw_data_dir._get_files()
+        if not self.inscopix_dir.new_dir:
+            self.inscopix_dir._get_files()
+        if not self.analysis_dir.net_dir:
+            self.inscopix_dir._get_files()
+
 
     def _set_root_dir(self, root_dir):
         cwd = Path(os.getcwd())
