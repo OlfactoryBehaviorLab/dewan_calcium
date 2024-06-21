@@ -121,6 +121,8 @@ class RawDataDir:
     def __init__(self, project_folder: ProjectFolder):
         self.root_dir: Path = project_folder.root_dir
         self.path = self.root_dir.joinpath('Raw_Data')
+        self.new_dir = False
+
         # Raw inscopix files
         self.session_json_path = None
         self.raw_GPIO_path = None
@@ -169,7 +171,7 @@ class InscopixDir:
     def __init__(self, project_folder: ProjectFolder):
         self.root_dir = project_folder.root_dir
         self.path = self.root_dir.joinpath('Inscopix')
-        self.new_folder = False
+        self.new_dir = False
         # Processed Inscopix Files
         self.image_dir = None
         self.interim_file_dir = None
@@ -185,12 +187,14 @@ class InscopixDir:
     def _create(self):
         if not self.path.exists():
             self.path.mkdir(exist_ok=True)
+            self.new_dir = True
 
 
 class AnalysisDir:
     def __init__(self, project_folder: ProjectFolder):
         self.root_dir = project_folder.root_dir
         self.path = self.root_dir.joinpath('Analysis')
+        self.new_dir = False
         self.figures_dir = None
         self.preprocess_dir = None
 
@@ -200,6 +204,7 @@ class AnalysisDir:
     def _create(self):
         if not self.path.exists():
             self.path.mkdir(exist_ok=True)
+            self.new_dir = True
 
     def _get_files(self):
         pass
