@@ -2,18 +2,25 @@ from PySide6.QtWidgets import QFileDialog
 from pathlib import Path
 
 
+
 class ProjectFolder:
     def __init__(self, root_dir=".", project_dir=None):
         self.root_dir = root_dir
         self.project_dir = project_dir
+        self.project_folder = None
+
+        self.raw_data_dir = None
+        self.inscopix_dir = None
+        self.analysis_dir = None
+
+        # Processed Inscopix Files
+        self.cell_trace_data_path = None
+        self.GPIO_path = None
+        self.cell_props_path = None
+        self.max_projection_path = None
+        self.cell_contours_path = None
 
         #  Empty file/folder paths
-        self.project_folder = None
-        self.max_projection_path = None
-        self.cell_trace_data_path = None
-        self.cell_props_path = None
-        self.cell_contours_path = None
-        self.inscopix_path = None
 
         self.setup_folder()
         self.get_project_files()
@@ -100,3 +107,54 @@ class ProjectFolder:
                 cell_props_path={self.cell_props_path}, \n \
                 cell_contours_path={self.cell_contours_path})'
         return description
+
+
+class RawDataDir:
+    def __init__(self, root_dir):
+        self.root_dir = None
+
+        # Raw inscopix files
+        self.session_json_path = None
+        self.raw_GPIO_path = None
+        self.raw_recordings = []
+
+        # Raw experiment files
+        self.exp_h5_path = None
+        self.odorlist_path = None
+
+    def _create(self):
+        pass
+
+    def _get_files(self):
+        pass
+
+class InscopixAnalysisDir:
+    def __init__(self, root_dir):
+        self.root_dir = None
+
+        self.image_dir = None
+        self.interim_files = None
+        self.cell_trace_path = None
+        self.GPIO_path = None
+        self.max_projection_path = None
+        self.contours_path = None
+        self.props_path = None
+
+    def _create(self):
+        pass
+
+    def _get_files(self):
+        pass
+
+class AnalysisDir:
+    def __init__(self, root_dir):
+        self.root_dir = None
+
+        self.figures_dir = None
+        self.preprocess_dir = None
+
+    def _create(self):
+        pass
+
+    def _get_files(self):
+        pass
