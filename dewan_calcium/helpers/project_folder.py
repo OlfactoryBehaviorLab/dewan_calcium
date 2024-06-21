@@ -16,7 +16,7 @@ class ProjectFolder:
         self._set_root_dir(root_dir)
         self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._create_subfolders()  # Create or aquire folders
-        self._get_dir()
+        self._get_data()
 
 
         #  Empty file/folder paths
@@ -131,6 +131,8 @@ class RawDataDir:
         # Raw experiment files
         self.exp_h5_path = None
         self.odorlist_path = None
+
+        self._create()
 
 
     def _create(self):
