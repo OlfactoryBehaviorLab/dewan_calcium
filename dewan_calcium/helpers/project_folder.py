@@ -1,29 +1,35 @@
+import os
 from PySide6.QtWidgets import QFileDialog
 from pathlib import Path
 
 
-
 class ProjectFolder:
-    def __init__(self, root_dir=".", project_dir=None):
-        self.root_dir = root_dir
-        self.project_dir = project_dir
+    def __init__(self, root_dir=None, project_dir=None):
+
+        if root_dir is None or root_dir == '.':
+            self.root_dir = Path(os.getcwd())
+        else:
+            self.root_dir = Path(root_dir)
+
+        self.project_dir = None
         self.project_folder = None
 
         self.raw_data_dir = None
         self.inscopix_dir = None
         self.analysis_dir = None
+        self._create_subfolders()
 
-        # Processed Inscopix Files
-        self.cell_trace_data_path = None
-        self.GPIO_path = None
-        self.cell_props_path = None
-        self.max_projection_path = None
-        self.cell_contours_path = None
 
         #  Empty file/folder paths
 
-        self.setup_folder()
-        self.get_project_files()
+        #self.setup_folder()
+        #self.get_project_files()
+
+    def _create_subfolders(self):
+        self.raw_data_dir = RawDataDir(self)
+        self.inscopix_dir = InscopixDir(self)
+        self.analysis_dir = AnalysisDir(self)
+
 
     def setup_folder(self):
 
@@ -110,9 +116,9 @@ class ProjectFolder:
 
 
 class RawDataDir:
-    def __init__(self, root_dir):
-        self.root_dir = None
-
+    def __init__(self, project_folder: ProjectFolder):
+        self.root_dir: Path = project_folder.root_dir
+        self.path = self.root_dir.joinpath('Raw_Data')
         # Raw inscopix files
         self.session_json_path = None
         self.raw_GPIO_path = None
@@ -122,39 +128,48 @@ class RawDataDir:
         self.exp_h5_path = None
         self.odorlist_path = None
 
+        self._create()
+
     def _create(self):
-        pass
+        if not self.path.exists():
+            self.path.mkdir(exist_ok=True)
 
-    def _get_files(self):
-        pass
 
-class InscopixAnalysisDir:
-    def __init__(self, root_dir):
-        self.root_dir = None
 
+class InscopixDir:
+    def __init__(self, project_folder: ProjectFolder):
+        self.root_dir = project_folder.root_dir
+        self.path = self.root_dir.joinpath('Inscopix')
+        # Processed Inscopix Files
         self.image_dir = None
-        self.interim_files = None
+        self.interim_file_dir = None
         self.cell_trace_path = None
         self.GPIO_path = None
         self.max_projection_path = None
         self.contours_path = None
         self.props_path = None
 
-    def _create(self):
-        pass
+        self._create()
 
-    def _get_files(self):
-        pass
+
+    def _create(self):
+        if not self.path.exists():
+            self.path.mkdir(exist_ok=True)
+
 
 class AnalysisDir:
-    def __init__(self, root_dir):
-        self.root_dir = None
-
+    def __init__(self, project_folder: ProjectFolder):
+        self.root_dir = project_folder.root_dir
+        self.path = self.root_dir.joinpath('Analysis')
         self.figures_dir = None
         self.preprocess_dir = None
 
+        self._create()
+
+
     def _create(self):
-        pass
+        if not self.path.exists():
+            self.path.mkdir(exist_ok=True)
 
     def _get_files(self):
         pass
