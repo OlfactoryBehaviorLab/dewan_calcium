@@ -120,29 +120,46 @@ class RawDataDir:
         self.exp_h5_path = None
         self.odorlist_path = None
 
-        exists = self._create()
-
-        if exists:
-            self._get_files()
 
     def _create(self):
         if not self.path.exists():
             self.path.mkdir(exist_ok=True)
-            return False
-        else:
-            return True
+            self.new_dir = True
+
 
     def _get_files(self):
+        json_file = list(self.path.glob('*session*.json'))
+        raw_GPIO = list(self.path.glob('*GPIO*.csv'))
+        raw_recordings = list(self.path.glob('*.isxd'))
+        h5_file = list(self.path.glob('*.h5'))
+        odor_list = list(self.path.glob('*odor*'))
 
-
-
-        pass
-
+        if len(json_file) > 0:
+            self.session_json_path = json_file[0]
+        else:
+            print("session.json file not found!")
+        if len(raw_GPIO) > 0:
+            self.raw_GPIO_path = raw_GPIO[0]
+        else:
+            print("GPIO file not found!")
+        if len(raw_recordings) > 0:
+            self.raw_recordings = raw_recordings
+        else:
+            print("raw recordings not found!")
+        if len(h5_file) > 0:
+            self.exp_h5_path = h5_file[0]
+        else:
+            print('H5 file not found!')
+        if len(odor_list) > 0:
+            self.odorlist_path = odor_list[0]
+        else:
+            print('Odor List not found!')
 
 class InscopixDir:
     def __init__(self, project_folder: ProjectFolder):
         self.root_dir = project_folder.root_dir
         self.path = self.root_dir.joinpath('Inscopix')
+        self.new_folder = False
         # Processed Inscopix Files
         self.image_dir = None
         self.interim_file_dir = None
