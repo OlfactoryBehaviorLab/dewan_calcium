@@ -4,12 +4,9 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, root_dir=None, project_dir=None):
+    def __init__(self, root_dir=None, project_dir=None, select_dir=False):
 
-        if root_dir is None or root_dir == '.':
-            self.root_dir = Path(os.getcwd())
-        else:
-            self.root_dir = Path(root_dir)
+        self._set_root_dir(root_dir)
 
         self.project_dir = None
         self.project_folder = None
@@ -17,13 +14,28 @@ class ProjectFolder:
         self.raw_data_dir = None
         self.inscopix_dir = None
         self.analysis_dir = None
-        self._create_subfolders()
+        self._create_subfolders()  # Create folders if they do not exist
 
 
         #  Empty file/folder paths
 
         #self.setup_folder()
         #self.get_project_files()
+
+    def _set_root_dir(self, root_dir):
+        cwd = Path(os.getcwd())
+        if root_dir is None or root_dir == '.':
+            self.root_dir = cwd
+        else:
+            user_root_dir = Path(root_dir)
+
+            if not user_root_dir.exists():
+                print(f"User-supplied root path \'{str(user_root_dir)}\' does not exist! Setting root path to CWD {str(cwd)}!")
+                self.root_dir = cwd
+            else:
+                self.root_dir = user_root_dir
+
+
 
     def _create_subfolders(self):
         self.raw_data_dir = RawDataDir(self)
@@ -36,11 +48,7 @@ class ProjectFolder:
         #  Check if the root directory exists  #
         root_directory = Path(self.root_dir)
 
-        if not root_directory.exists():
-            print(f"User-supplied root path {str(root_directory)} does not exist! Setting root path to default!")
-            self.root_dir = "."
-        else:
-            self.root_dir = str(root_directory)
+
 
         #  Check if the user-supplied path exists  #
         if self.project_dir is not None:
@@ -128,12 +136,23 @@ class RawDataDir:
         self.exp_h5_path = None
         self.odorlist_path = None
 
-        self._create()
+        exists = self._create()
+
+        if exists:
+            self._get_files()
 
     def _create(self):
         if not self.path.exists():
             self.path.mkdir(exist_ok=True)
+            return False
+        else:
+            return True
 
+    def _get_files(self):
+
+
+
+        pass
 
 
 class InscopixDir:
