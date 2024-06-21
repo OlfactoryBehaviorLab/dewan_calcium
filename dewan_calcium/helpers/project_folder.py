@@ -35,45 +35,29 @@ class ProjectFolder:
             else:
                 self.root_dir = user_root_dir
 
+    def _set_project_dir(self, project_dir, select_dir):
 
+        if project_dir is None and select_dir == True:
+            selected_dir = self.select_project_folder()  # For backwards compatability with manual curation
+            if len(selected_dir) > 0:
+                self.project_dir = Path(returned_folder[0])
+            else:
+                raise FileNotFoundError(f'No project folder selected!')
+
+        elif project_dir is None or project_dir == '.':
+            self.project_dir = self.root_dir
+        else:
+            user_project_dir = Path(project_dir)
+            if not user_project_dir.exists():
+                raise FileNotFoundError(f'User-supplied project folder \'{str(user_project_dir)}\' does not exist')
+            else:
+                self.project_dir = user_project_dir
 
     def _create_subfolders(self):
         self.raw_data_dir = RawDataDir(self)
         self.inscopix_dir = InscopixDir(self)
         self.analysis_dir = AnalysisDir(self)
 
-
-    def setup_folder(self):
-
-        #  Check if the root directory exists  #
-        root_directory = Path(self.root_dir)
-
-
-
-        #  Check if the user-supplied path exists  #
-        if self.project_dir is not None:
-            temp_folder = Path(self.project_dir)
-
-            if not temp_folder.exists():
-                raise FileNotFoundError(f'User-supplied project folder {str(temp_folder)} does not exist')
-            else:
-                self.project_folder = temp_folder
-        else:
-            #  Get Project Folder from Selector  #
-            returned_folder = self.select_project_folder()
-            if len(returned_folder) > 0:
-                project_folder = returned_folder[0]
-                self.project_folder = Path(project_folder)
-            else:
-                raise FileNotFoundError(f'No project folder selected!')
-
-        inscopix_path = self.project_folder.joinpath(*['InscopixProcessing', 'DataAnalysis'])
-
-        if not inscopix_path.exists():
-            raise FileNotFoundError(f'Inscopix data folder {str(inscopix_path)} does not exist!\n'
-                                    f' Has data processing been run?')
-        else:
-            self.inscopix_path = inscopix_path
 
     def get_project_files(self):
         max_projection_path = list(self.inscopix_path.glob('*HD*MAX_PROJ*.tiff'))
