@@ -216,8 +216,9 @@ class AnalysisDir(Dir):
     def __init__(self, project_folder: ProjectFolder, name='Analysis'):
         super().__init__(project_folder, name)
 
-        self.figures_dir = None
-        self.preprocess_dir = None
+        self.figures_dir = self.path.joinpath('Figures')
+        self.preprocess_dir = self.path.joinpath('Preprocessed')
+        self.output_dir = self.path.joinpath('Output')
 
         self._create()
 
