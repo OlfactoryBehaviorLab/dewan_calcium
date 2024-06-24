@@ -152,11 +152,8 @@ class RawDataDir(Dir):
 
         self._create()
 
-
-    def _create(self):
-        if not self.path.exists():
-            self.path.mkdir(exist_ok=True)
-            self.new_dir = True
+        if not self.new_dir:
+            self._get_files()
 
 
     def _get_files(self):
@@ -193,6 +190,9 @@ class InscopixDir(Dir):
 
         self._create()
 
+        if not self.new_dir:
+            self._get_files()
+
     def _get_files(self):
         cell_trace_file = list(self.path.glob('*TRACES*.csv'))
         GPIO_file = list(self.path.glob('*GPIO*.csv'))
@@ -222,6 +222,8 @@ class AnalysisDir(Dir):
 
         self._create()
 
+        if not self.new_dir:
+            self._get_files()
 
     def _get_files(self):
         pass
