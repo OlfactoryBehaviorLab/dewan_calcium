@@ -26,8 +26,8 @@ class ProjectFolder:
     def _get_data(self):
         if not self.raw_data_dir.new_dir:
             self.raw_data_dir._get_files()
-        # if not self.inscopix_dir.new_dir:
-        #     self.inscopix_dir._get_files()
+        if not self.inscopix_dir.new_dir:
+            self.inscopix_dir._get_files()
         # if not self.analysis_dir.net_dir:
         #     self.inscopix_dir._get_files()
 
@@ -183,8 +183,8 @@ class InscopixDir(Dir):
     def __init__(self, project_folder: ProjectFolder, name='Inscopix'):
         super().__init__(project_folder, name)
         # Processed Inscopix Files
-        self.image_dir = None
-        self.interim_file_dir = None
+        self.cell_images_dir = self.path.joinpath('Cell_Images')
+        self.interim_file_dir = self.path.joinpath('Interim_Files')
         self.cell_trace_path = None
         self.GPIO_path = None
         self.max_projection_path = None
@@ -193,6 +193,23 @@ class InscopixDir(Dir):
 
         self._create()
 
+    def _get_files(self):
+        cell_trace_file = list(self.path.glob('*TRACES*.csv'))
+        GPIO_file = list(self.path.glob('*GPIO*.csv'))
+        max_projection_file = list(self.path.glob('*HD*MAX*.tiff'))
+        cell_contours = list(self.path.glob('*CONTOURS*.json'))
+        cell_props = list(self.path.glob('*PROPS*.csv'))
+
+        if self._check_file_not_found(cell_trace_file, 'Cell Traces'):
+            self.cell_trace_path = cell_trace_file[0]
+        if self._check_file_not_found(GPIO_file, 'GPIO File'):
+            self.GPIO_path = GPIO_file[0]
+        if self._check_file_not_found(max_projection_file, 'HD Max Projection'):
+            self.max_projection_path = max_projection_file[0]
+        if self._check_file_not_found(cell_contours, 'Cell Contours'):
+            self.contours_path = cell_contours[0]
+        if self._check_file_not_found(cell_props, 'Cell Props'):
+            self.props_path = cell_props[0]
 
 
 class AnalysisDir(Dir):
