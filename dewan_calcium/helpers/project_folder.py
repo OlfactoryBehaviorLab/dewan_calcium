@@ -26,10 +26,10 @@ class ProjectFolder:
     def _get_data(self):
         if not self.raw_data_dir.new_dir:
             self.raw_data_dir._get_files()
-        if not self.inscopix_dir.new_dir:
-            self.inscopix_dir._get_files()
-        if not self.analysis_dir.net_dir:
-            self.inscopix_dir._get_files()
+        # if not self.inscopix_dir.new_dir:
+        #     self.inscopix_dir._get_files()
+        # if not self.analysis_dir.net_dir:
+        #     self.inscopix_dir._get_files()
 
 
     def _set_root_dir(self, root_dir):
@@ -48,7 +48,8 @@ class ProjectFolder:
     def _set_project_dir(self, project_dir, select_dir):
 
         if project_dir is None and select_dir == True:
-            selected_dir = self.select_project_folder()  # For backwards compatability with manual curation
+            # For backwards compatability with manual curation
+            selected_dir = self.select_project_folder()
             if len(selected_dir) > 0:
                 self.project_dir = Path(returned_folder[0])
             else:
@@ -119,7 +120,7 @@ class ProjectFolder:
 
 class Dir:
     def __init__(self, project_folder, name):
-        self.root_dir = project_folder
+        self.root_dir = project_folder.root_dir
         self.name = name
         self.path = self.root_dir.joinpath(name)
         self.new_dir = False
