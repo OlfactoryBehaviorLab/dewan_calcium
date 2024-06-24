@@ -129,6 +129,13 @@ class Dir:
             self.path.mkdir(exist_ok=True)
             self.new_dir = True
 
+    def _check_file_not_found(self, file_list, filename: str):
+        if not len(file_list) > 0:
+            print(f"{{{filename}}} not found in {self.path}")
+            return False
+        return True
+
+
 class RawDataDir(Dir):
     def __init__(self, project_folder: ProjectFolder, name='Raw_Data'):
         super().__init__(project_folder, name)
@@ -158,26 +165,17 @@ class RawDataDir(Dir):
         h5_file = list(self.path.glob('*.h5'))
         odor_list = list(self.path.glob('*odor*'))
 
-        if len(json_file) > 0:
+        if self._check_file_not_found(json_file, 'session.json'):
             self.session_json_path = json_file[0]
-        else:
-            print("session.json file not found!")
-        if len(raw_GPIO) > 0:
+        if self._check_file_not_found(raw_GPIO, 'GPIO'):
             self.raw_GPIO_path = raw_GPIO[0]
-        else:
-            print("GPIO file not found!")
-        if len(raw_recordings) > 0:
-            self.raw_recordings = raw_recordings
-        else:
-            print("raw recordings not found!")
-        if len(h5_file) > 0:
+        if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
+            self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
+        if self._check_file_not_found(h5_file, 'H5 File'):
             self.exp_h5_path = h5_file[0]
-        else:
-            print('H5 file not found!')
-        if len(odor_list) > 0:
+        if self._check_file_not_found(odor_list, 'Odor List'):
             self.odorlist_path = odor_list[0]
-        else:
-            print('Odor List not found!')
+
 
 
 class InscopixDir(Dir):
