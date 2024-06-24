@@ -117,11 +117,21 @@ class ProjectFolder:
         return description
 
 
-class RawDataDir:
-    def __init__(self, project_folder: ProjectFolder):
-        self.root_dir: Path = project_folder.root_dir
-        self.path = self.root_dir.joinpath('Raw_Data')
+class Dir:
+    def __init__(self, project_folder, name):
+        self.root_dir = project_folder
+        self.name = name
+        self.path = self.root_dir.joinpath(name)
         self.new_dir = False
+
+    def _create(self):
+        if not self.path.exists():
+            self.path.mkdir(exist_ok=True)
+            self.new_dir = True
+
+class RawDataDir(Dir):
+    def __init__(self, project_folder: ProjectFolder, name='Raw_Data'):
+        super().__init__(project_folder, name)
 
         # Raw inscopix files
         self.session_json_path = None
@@ -169,11 +179,10 @@ class RawDataDir:
         else:
             print('Odor List not found!')
 
-class InscopixDir:
-    def __init__(self, project_folder: ProjectFolder):
-        self.root_dir = project_folder.root_dir
-        self.path = self.root_dir.joinpath('Inscopix')
-        self.new_dir = False
+
+class InscopixDir(Dir):
+    def __init__(self, project_folder: ProjectFolder, name='Inscopix'):
+        super().__init__(project_folder, name)
         # Processed Inscopix Files
         self.image_dir = None
         self.interim_file_dir = None
@@ -186,27 +195,16 @@ class InscopixDir:
         self._create()
 
 
-    def _create(self):
-        if not self.path.exists():
-            self.path.mkdir(exist_ok=True)
-            self.new_dir = True
 
+class AnalysisDir(Dir):
+    def __init__(self, project_folder: ProjectFolder, name='Analysis'):
+        super().__init__(project_folder, name)
 
-class AnalysisDir:
-    def __init__(self, project_folder: ProjectFolder):
-        self.root_dir = project_folder.root_dir
-        self.path = self.root_dir.joinpath('Analysis')
-        self.new_dir = False
         self.figures_dir = None
         self.preprocess_dir = None
 
         self._create()
 
-
-    def _create(self):
-        if not self.path.exists():
-            self.path.mkdir(exist_ok=True)
-            self.new_dir = True
 
     def _get_files(self):
         pass
