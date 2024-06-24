@@ -16,20 +16,15 @@ class ProjectFolder:
         self._set_root_dir(root_dir)
         self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._create_subfolders()  # Create or aquire folders
-        self._get_data()
 
 
         #  Empty file/folder paths
-
         #self.setup_folder()
         #self.get_project_files()
-    def _get_data(self):
-        if not self.raw_data_dir.new_dir:
-            self.raw_data_dir._get_files()
-        if not self.inscopix_dir.new_dir:
-            self.inscopix_dir._get_files()
-        # if not self.analysis_dir.net_dir:
-        #     self.inscopix_dir._get_files()
+    def get_data(self):
+        self.raw_data_dir._get_files()
+        self.inscopix_dir._get_files()
+        self.inscopix_dir._get_files()
 
 
     def _set_root_dir(self, root_dir):
@@ -70,7 +65,7 @@ class ProjectFolder:
         self.analysis_dir = AnalysisDir(self)
 
 
-    def get_project_files(self):
+    def old_get_project_files(self):
         max_projection_path = list(self.inscopix_path.glob('*HD*MAX_PROJ*.tiff'))
         cell_trace_data_path = list(self.inscopix_path.glob('*TRACES*.csv'))
         cell_props_path = list(self.inscopix_path.glob('*props*.csv'))
@@ -90,7 +85,7 @@ class ProjectFolder:
             self.cell_props_path = cell_props_path[0]
             self.cell_contours_path = cell_contours_path[0]
 
-    def select_project_folder(self) -> list[str]:
+    def old_select_project_folder(self) -> list[str]:
         file_names = []
 
         file_dialog = QFileDialog()
