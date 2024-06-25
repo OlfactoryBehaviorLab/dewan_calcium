@@ -29,14 +29,9 @@ def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:
     file_path = folder.joinpath(f'{file_header}{name}.pickle')
 
     try:
-        if type(data) is pd.DataFrame:
-            data_in = pd.read_pickle(file_path)
-        else:
-            pickle_in = open(file_path, 'rb')
-            data_in = pickle.load(pickle_in)
-            pickle_in.close()
+        data_in = pd.read_pickle(file_path)  # Since we don't know what the data is, we can just load with Pandas
 
-        print(f'{fileHeader}{name} has loaded successfully!')
+        print(f'{file_header}{name} has loaded successfully!')
         return data_in
 
     except pickle.UnpicklingError as e:
