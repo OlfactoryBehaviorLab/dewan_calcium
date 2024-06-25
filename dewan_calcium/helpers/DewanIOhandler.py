@@ -6,44 +6,6 @@ import pandas as pd
 from isx import make_output_file_path, make_output_file_paths
 
 
-def create_project_framework(project=None, root_path_override: Path = None) -> None:
-    match project:
-        case None | 'Odor':
-            paths = ['./ImagingAnalysis/RawData/',
-                     './ImagingAnalysis/PreProcessedData',
-                     './ImagingAnalysis/AUROCImports',
-                     './ImagingAnalysis/AUROCData',
-                     './ImagingAnalysis/CombinedData',
-                     './ImagingAnalysis/Statistics',
-                     './ImagingAnalysis/Figures/Statistics',
-                     './ImagingAnalysis/Figures/AUROCPlots/LatentCells',
-                     './ImagingAnalysis/Figures/AUROCPlots/OnTimeCells',
-                     './ImagingAnalysis/Figures/AllCellTracePlots/LatentCells',
-                     './ImagingAnalysis/Figures/AllCellTracePlots/OnTimeCells',
-                     './ImagingAnalysis/Figures/TrialVariancePlots/OnTimeCells',
-                     './ImagingAnalysis/Figures/TrialVariancePlots/LatentCells',
-                     ]
-
-        case 'HF-FM':
-            paths = ['./HF_FM_Analysis/RawData/',
-                     './HF_FM_Analysis/PreProcessedData'
-                     ]
-
-        case 'EPM':
-            paths = ['./EPM_Analysis/DLC_Data/',
-                     './EPM_Analysis/PreProcessedData']
-
-    paths = [Path(path) for path in paths]  # Ignore warning for paths, there is a default case
-
-    if root_path_override is not None:
-        # If a root path override was defined, append all the above paths to it
-        paths = [root_path_override.joinpath(path) for path in paths]
-
-    for path in paths:
-        if not path.exists():
-            path.mkdir(parents=True, exist_ok=True)
-
-
 def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, folder: Path) -> None:
     file_path = folder.joinpath(f'{file_header}{name}.pickle')
 
