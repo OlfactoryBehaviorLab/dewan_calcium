@@ -17,7 +17,7 @@ def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, 
             pickle.dump(data, output_file, protocol=pickle.HIGHEST_PROTOCOL)
             output_file.close()
 
-            print(f'{file_header}{name} has been saved!')
+        print(f'{file_header}{name} has been saved!')
 
     except pickle.PicklingError as e:
         print(f"Unable to pickle {file_path.name}!")
@@ -35,9 +35,10 @@ def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:
             pickle_in = open(file_path, 'rb')
             data_in = pickle.load(pickle_in)
             pickle_in.close()
-            print(f'{fileHeader}{name} has loaded successfully!')
 
-            return data_in
+        print(f'{fileHeader}{name} has loaded successfully!')
+        return data_in
+
     except pickle.UnpicklingError as e:
         print(f"Unable to load {file_path.name}!")
         print(e)
