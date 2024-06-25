@@ -4,17 +4,16 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, root_dir=None, project_dir=None, select_dir=False):
-        self.root_dir = None
-        self.project_dir = None
-        self.project_folder = None
+    def __init__(self, project_dir=None, root_dir=None, select_dir=False):
+        self.path = None
+        self.search_root_dir = None
 
         self.raw_data_dir = None
         self.inscopix_dir = None
         self.analysis_dir = None
 
-        self._set_root_dir(root_dir)
         self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
+        self._set_root_dir(root_dir)
         self._create_subfolders()  # Create or aquire folders
 
 
@@ -30,34 +29,33 @@ class ProjectFolder:
     def _set_root_dir(self, root_dir):
         cwd = Path(os.getcwd())
         if root_dir is None or root_dir == '.':
-            self.root_dir = cwd
+            self.search_root_dir = cwd
         else:
             user_root_dir = Path(root_dir)
 
             if not user_root_dir.exists():
-                print(f"User-supplied root path \'{str(user_root_dir)}\' does not exist! Setting root path to CWD {str(cwd)}!")
-                self.root_dir = cwd
+                print(f"User-supplied search root path \'{str(user_root_dir)}\' does not exist! Setting root path to CWD {str(cwd)}!")
+                self.search_root_dir = cwd
             else:
-                self.root_dir = user_root_dir
+                self.search_root_dir = user_root_dir
 
     def _set_project_dir(self, project_dir, select_dir):
-
         if project_dir is None and select_dir == True:
             # For backwards compatability with manual curation
             selected_dir = self.select_project_folder()
             if len(selected_dir) > 0:
-                self.project_dir = Path(returned_folder[0])
+                self.path = Path(returned_folder[0])
             else:
                 raise FileNotFoundError(f'No project folder selected!')
-
-        elif project_dir is None or project_dir == '.':
-            self.project_dir = self.root_dir
-        else:
+        elif project_dir is not None:
             user_project_dir = Path(project_dir)
             if not user_project_dir.exists():
                 raise FileNotFoundError(f'User-supplied project folder \'{str(user_project_dir)}\' does not exist')
             else:
-                self.project_dir = user_project_dir
+                self.path = user_project_dir
+        elif project_dir is None or project_dir == '.':
+            self.path = self.search_root_dir
+
 
     def _create_subfolders(self):
         self.raw_data_dir = RawDataDir(self)
@@ -92,7 +90,7 @@ class ProjectFolder:
         file_dialog.setWindowTitle("Select Project Directory:")
         file_dialog.setFileMode(QFileDialog.FileMode.Directory)
         file_dialog.setViewMode(QFileDialog.ViewMode.Detail)
-        file_dialog.setDirectory(self.root_dir)
+        file_dialog.setDirectory(self.search_root_dir)
 
         if file_dialog.exec():
             file_names = file_dialog.selectedFiles()
@@ -100,10 +98,10 @@ class ProjectFolder:
 
     #  Dunder Methods  #
     def __str__(self):
-        return f'Project folder: {str(self.project_dir)}'
+        return f'Project folder: {str(self.path)}'
 
     def __repr__(self):
-        description = f'{type(self).__name__}(root_directory={self.root_dir}, \n \
+        description = f'{type(self).__name__}(root_directory={self.search_root_dir}, \n \
                 project_directory={self.project_folder}, \n \
                 inscopix_directory={self.inscopix_path}, \n \
                 max_projection_path={self.max_projection_path}, \n \
@@ -116,9 +114,9 @@ class ProjectFolder:
 class Dir:
     def __init__(self, project_folder, name):
         self.parent = project_folder
-        self.root_dir = project_folder.root_dir
+        self.path_stem = project_folder.path
         self.name = name
-        self.path = self.root_dir.joinpath(name)
+        self.path = self.path_stem.joinpath(name)
         self.new_dir = False
 
     def _create(self):
