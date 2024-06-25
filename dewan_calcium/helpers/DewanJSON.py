@@ -58,6 +58,5 @@ def get_focal_planes(microscope: dict) -> list:
 
 def get_outline_coordinates(path: Path):
     outline_data = load_json_file(path)
-    keys = list(outline_data.keys())
 
-    return keys, outline_data
+    return outline_data
