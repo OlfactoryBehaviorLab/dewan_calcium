@@ -19,7 +19,7 @@ def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, 
 
             print(f'{file_header}{name} has been saved!')
 
-    except pickle.PickleingError as e:
+    except pickle.PicklingError as e:
         print(f"Unable to pickle {file_path.name}!")
         print(e)
 
