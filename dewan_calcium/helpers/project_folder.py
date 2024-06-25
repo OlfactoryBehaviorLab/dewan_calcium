@@ -100,7 +100,7 @@ class ProjectFolder:
 
     #  Dunder Methods  #
     def __str__(self):
-        return f'Project folder: {self.project_folder}'
+        return f'Project folder: {str(self.project_dir)}'
 
     def __repr__(self):
         description = f'{type(self).__name__}(root_directory={self.root_dir}, \n \
@@ -131,6 +131,10 @@ class Dir:
             print(f"{{{filename}}} not found in {self.path}")
             return False
         return True
+
+    def __str__(self):
+        return f'{self.parent.__str__()}\n{self.name} Directory: {self.path}'
+
 
 
 class RawDataDir(Dir):
