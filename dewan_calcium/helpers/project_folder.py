@@ -163,7 +163,7 @@ class RawDataDir(Dir):
 
         if self._check_file_not_found(json_file, 'session.json'):
             self.session_json_path = json_file[0]
-        if self._check_file_not_found(raw_GPIO, 'GPIO'):
+        if self._check_file_not_found(raw_GPIO, 'Raw GPIO'):
             self.raw_GPIO_path = raw_GPIO[0]
         if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
             self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
