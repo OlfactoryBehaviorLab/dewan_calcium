@@ -186,9 +186,16 @@ class InscopixDir(Dir):
         self.props_path = None
 
         self._create()
+        self._create_subdirs()
 
         if not self.new_dir:
             self._get_files()
+
+    def _create_subdirs(self):
+        if not self.cell_images_dir.exists():
+            self.cell_images_dir.mkdir()
+        if not self.interim_file_dir.exists():
+            self.interim_file_dir.mkdir()
 
     def _get_files(self):
         cell_trace_file = list(self.path.glob('*TRACES*.csv'))
@@ -218,9 +225,18 @@ class AnalysisDir(Dir):
         self.output_dir = self.path.joinpath('Output')
 
         self._create()
+        self._create_subdirs()
 
         if not self.new_dir:
             self._get_files()
+
+    def _create_subdirs(self):
+        if not self.figures_dir.exists():
+            self.figures_dir.mkdir()
+        if not self.preprocess_dir.exists():
+            self.preprocess_dir.mkdir()
+        if not self.output_dir.exists():
+            self.output_dir.mkdir()
 
     def _get_files(self):
         pass
