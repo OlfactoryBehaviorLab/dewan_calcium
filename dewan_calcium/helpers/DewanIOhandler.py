@@ -44,7 +44,7 @@ def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:
         return None
 
 
-def make_cell_folder4_plot(cell: str or int, *Folders: list) -> None:
+def make_cell_folder4_plot(cell: str | int, *Folders: list) -> None:
     cell_name = f'Cell-{cell}'
     path = Path('ImagingAnalysis', 'Figures', *Folders, cell_name)
 
