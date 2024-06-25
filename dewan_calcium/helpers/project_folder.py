@@ -8,9 +8,9 @@ class ProjectFolder:
         self.path = None
         self.search_root_dir = None
 
-        self.raw_data_dir = None
-        self.inscopix_dir = None
-        self.analysis_dir = None
+        self.raw_data_dir: RawDataDir = None
+        self.inscopix_dir: InscopixDir = None
+        self.analysis_dir: AnalysisDir = None
 
         self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._set_root_dir(root_dir)
