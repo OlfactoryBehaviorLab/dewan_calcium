@@ -115,6 +115,7 @@ class ProjectFolder:
 
 class Dir:
     def __init__(self, project_folder, name):
+        self.parent = project_folder
         self.root_dir = project_folder.root_dir
         self.name = name
         self.path = self.root_dir.joinpath(name)
@@ -168,7 +169,6 @@ class RawDataDir(Dir):
             self.exp_h5_path = h5_file[0]
         if self._check_file_not_found(odor_list, 'Odor List'):
             self.odorlist_path = odor_list[0]
-
 
 
 class InscopixDir(Dir):
