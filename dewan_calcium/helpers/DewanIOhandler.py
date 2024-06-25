@@ -44,31 +44,42 @@ def create_project_framework(project=None, root_path_override: Path = None) -> N
             path.mkdir(parents=True, exist_ok=True)
 
 
-def save_data_to_disk(data, name, fileHeader, folder, is_dataframe=False) -> None:
-    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
+def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, folder: Path) -> None:
+    file_path = folder.joinpath(f'{file_header}{name}.pickle')
 
-    if is_dataframe:
-        pd.to_pickle(data, file_path, protocol=-1)
-    else:
-        output_file = open(file_path, 'wb')
-        pickle.dump(data, output_file, protocol=-1)
-        output_file.close()
+    try:
+        if type(data) is pd.DataFrame:
+            pd.to_pickle(data, file_path)
+        else:
+            output_file = open(file_path, 'wb')
+            pickle.dump(data, output_file, protocol=pickle.HIGHEST_PROTOCOL)
+            output_file.close()
 
-    print(f'{fileHeader}{name} has been saved!')
+            print(f'{file_header}{name} has been saved!')
+
+    except pickle.PickleingError as e:
+        print(f"Unable to pickle {file_path.name}!")
+        print(e)
 
 
-def load_data_from_disk(name, fileHeader, folder, is_dataframe=False) -> object:
-    file_path = Path(*folder).joinpath(f'{fileHeader}{name}.pickle')
 
-    if is_dataframe:
-        data_in = pd.read_pickle(file_path)
-    else:
-        pickle_in = open(file_path, 'rb')
-        data_in = pickle.load(pickle_in)
-        pickle_in.close()
+def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:
+    file_path = folder.joinpath(f'{file_header}{name}.pickle')
 
-    print(f'{fileHeader}{name} has loaded successfully!')
-    return data_in
+    try:
+        if type(data) is pd.DataFrame:
+            data_in = pd.read_pickle(file_path)
+        else:
+            pickle_in = open(file_path, 'rb')
+            data_in = pickle.load(pickle_in)
+            pickle_in.close()
+            print(f'{fileHeader}{name} has loaded successfully!')
+
+            return data_in
+    except pickle.UnpicklingError as e:
+        print(f"Unable to load {file_path.name}!")
+        print(e)
+        return None
 
 
 def make_cell_folder4_plot(cell: str or int, *Folders: list) -> None:
