@@ -24,12 +24,14 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
+
+
 def shuffled_distribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.ndarray:
     shuffled_auroc = []
 
     for _ in itertools.repeat(None, 1000):  # Repeat 1000 times, faster than range()
 
-        split_1, split_2 = train_test_split(all_vector, test_size=len(vect_base1)) # Split the data into two randomized pools
+        split_1, split_2 = train_test_split(all_vector, test_size=len(vect_base1))  # Split the data into two randomized pools
 
         shuffle_max = max(split_1)
         shuffle_min = min(split_1)
@@ -54,20 +56,21 @@ def shuffled_distribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.
     return np.array(shuffled_auroc)
 
 
-def run_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells: bool,
-                    cell_number: int) -> DewanDataStore.AUROCReturn:
+def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool,
+                    cell_number: int) -> data_stores.AUROCReturn:
 
     significant = False; # Does this particular cell-odor pair show a significant response
 
     data_input = data_input.makeCopy() # Get a local copy of the data for this process
     data_input.update_cell(cell_number) # Update the local copy with which cell we're computing significance for
-    return_values = DewanDataStore.AUROCReturn() # Create an empty AUROCReturn object to store the return values in
+    return_values = data_stores.AUROCReturn() # Create an empty AUROCReturn object to store the return values in
 
     for odor_iterator in range(data_input.num_unique_odors): # Iterate over each odor
         data_input.update_odor(odor_iterator) # Update the current odor that we are computing significance for
 
         baseline_data, evoked_data = DewanTraceTools.collect_trial_data(data_input, return_values, latent_cells) # Get the raw df/F values for this cell-odor combination
         baseline_means, evoked_means = DewanTraceTools.average_trial_data(baseline_data, evoked_data) # average the baseline and trial data
+
         max_baseline_val = max(baseline_means)
         min_baseline_val = min(baseline_means)
 
@@ -113,7 +116,7 @@ def run_auroc(data_input: DewanDataStore.AUROCdataStore, latent_cells: bool,
     return return_values
 
 
-def pooled_auroc(data_input: DewanDataStore.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
+def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
     auroc_type = []
     
     if not latent_cells_only:
