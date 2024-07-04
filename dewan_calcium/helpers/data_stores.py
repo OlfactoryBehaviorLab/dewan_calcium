@@ -1,15 +1,17 @@
 import numpy as np
 
 
-class DataStore(object):
+class DataStore:
 
-    def __init__(self, Data, CellList, OdorData, FVData, fileHeader):
-        self.Data = Data
-        self.Cell_List = CellList
-        self.Odor_Data = OdorData
-        self.FV_Data = FVData
-        self.file_header = fileHeader
-        self.number_cells = len(CellList)
+    def __init__(self, trace_data, cell_names, odor_data, FV_data, file_header):
+        self.Data = trace_data
+        self.Cell_List = cell_names
+        self.Odor_Data = odor_data
+        self.FV_Data = FV_data
+        self.file_header = file_header
+        self.number_cells = len(cell_names)
+
+
         self.unique_odors, self.num_unique_odors = self.update_odor_trials(self.Odor_Data)
         # self.trialsWithThisOdor = None
         self.current_odor_trials = None
