@@ -159,7 +159,7 @@ class RawDataDir(Dir):
         raw_GPIO = list(self.path.glob('*GPIO*.csv'))
         raw_recordings = list(self.path.glob('*.isxd'))
         h5_file = list(self.path.glob('*.h5'))
-        odor_list = list(self.path.glob('*odor*'))
+        odor_list = list(self.path.glob('*.xlsx'))
 
         if self._check_file_not_found(json_file, 'session.json'):
             self.session_json_path = json_file[0]
