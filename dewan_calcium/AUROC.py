@@ -16,7 +16,7 @@ from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
 
 # Import from local modules
-from .helpers import data_stores, sliding_prob, DewanTraceTools
+from .helpers import data_stores, sliding_prob, trace_tools
 from . import DewanPlotting
 
 NUM_SHUFFLES = 1000
@@ -62,21 +62,20 @@ def shuffled_distribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.
 
 def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_number: int) -> data_stores.AUROCReturn:
 
-    significant = False  # Does this particular cell-odor pair show a significant response
+    significant = True  # Does this particular cell-odor pair show a significant response; True by default
 
     data_input = data_input.makeCopy()  # Get a local copy of the data for this process
     data_input.update_cell(cell_number)  # Update the local copy with which cell we're computing significance for
     return_values = data_stores.AUROCReturn()  # Create an empty AUROCReturn object to store the return values in
 
     for odor_iterator in range(data_input.num_unique_odors):
-        # Iterate over each odor
 
         data_input.update_odor(odor_iterator)
         # Update the current odor that we are computing significance for
 
-        baseline_data, evoked_data = DewanTraceTools.collect_trial_data(data_input, return_values, latent_cells)
+        baseline_data, evoked_data = trace_tools.collect_trial_data(data_input, return_values, latent_cells)
         # Get the raw df/F values for this cell-odor combination
-        baseline_means, evoked_means = DewanTraceTools.average_trial_data(baseline_data, evoked_data)
+        baseline_means, evoked_means = trace_tools.average_trial_data(baseline_data, evoked_data)
         # average the baseline and trial data
 
         auroc_value = compute_auc(baseline_means, evoked_means)
@@ -86,9 +85,9 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
         auroc_shuffle = shuffled_distribution(all_means_vector, baseline_means)
         # Put the baseline and evoked means together and create a shuffled distribution of all the data
 
-        # Get the 1st and 99th percentile values of the 'random' shuffled data
         lower_bound = np.percentile(auroc_shuffle, [1])
         upper_bound = np.percentile(auroc_shuffle, [99])
+        # Get the 1st and 99th percentile values of the 'random' shuffled data
 
         return_values.all_lower_bounds.append(lower_bound)
         return_values.all_upper_bounds.append(upper_bound)
@@ -102,6 +101,7 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
             return_values.response_chart.append(1)  # Negative evoked response
         else:
             return_values.response_chart.append(0)  # No response
+            significant = False
 
         if significant and data_input.do_plot:
             # Check that both the response was significant and we want to plot the distributions

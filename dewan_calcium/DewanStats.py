@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
 from .helpers import data_stores
-from .helpers import DewanTraceTools
+from .helpers import trace_tools
 
 def sparseness(iterable: int, means: np.array) -> float:
     """
@@ -86,7 +86,7 @@ def generate_correlation_pairs(number_trials: int) -> list:
     # We <3 list comprehension
 
 
-def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, significant_ontime_cells: list) -> list:
+def trial_averaged_odor_responses(stats_data: data_stores.AUROCdataStore, significant_ontime_cells: list) -> list:
     trial_averaged_responses_matrix = []
 
     for cell in significant_ontime_cells:
@@ -97,9 +97,9 @@ def trial_averaged_odor_responses(stats_data: DewanDataStore.AUROCdataStore, sig
 
         for odor in range(len(stats_data.unique_odors)):  # Loop through all odors
             stats_data.update_odor(odor)
-            baseline_data, evoked_data = DewanTraceTools.collect_trial_data(stats_data, None, False)
+            baseline_data, evoked_data = trace_tools.collect_trial_data(stats_data, None, False)
             # Get cell-odor data for all trials, no returns, on time cells only
-            baseline_data, evoked_data = DewanTraceTools.truncate_data(baseline_data, evoked_data)  # Make all rows the same length
+            baseline_data, evoked_data = trace_tools.truncate_data(baseline_data, evoked_data)  # Make all rows the same length
 
             baseline_mean = np.mean(baseline_data)  # Get the average baseline for all trials
             evoked_data = np.subtract(evoked_data, baseline_mean)  # Baseline shift all the evoked data
