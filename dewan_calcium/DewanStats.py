@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
-from .helpers import DewanDataStore
+from .helpers import data_stores
 from .helpers import DewanTraceTools
 
 def sparseness(iterable: int, means: np.array) -> float:

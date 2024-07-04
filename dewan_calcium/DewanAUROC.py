@@ -16,7 +16,7 @@ from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
 
 # Import from local modules
-from .helpers import DewanDataStore, DewanSlidingProbability, DewanTraceTools
+from .helpers import data_stores, DewanSlidingProbability, DewanTraceTools
 from . import DewanPlotting
 
 
