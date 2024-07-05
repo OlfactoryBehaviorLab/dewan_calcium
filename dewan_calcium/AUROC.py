@@ -9,6 +9,7 @@ December 2022
 
 import itertools
 import numpy as np
+import pandas as pd
 
 from multiprocessing import Pool
 from functools import partial
