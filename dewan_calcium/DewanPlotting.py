@@ -32,7 +32,7 @@ def truncate_data(data):
     return data
 
 
-def plot_cell_odor_traces(input_data: DewanDataStore.PlottingDataStore, latent_cells_only: bool,
+def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cells_only: bool,
                           plot_all_cells: bool, cell_number: int) -> None:
 
     if latent_cells_only:
@@ -149,9 +149,9 @@ def plot_cell_odor_traces(input_data: DewanDataStore.PlottingDataStore, latent_c
         plt.close()
 
 
-def plot_evoked_baseline_means(input_data: DewanDataStore.PlottingDataStore, ax2: plt.axis, colormap: cycler):
-    baseline_data, evoked_data = DewanTraceTools.collect_trial_data(input_data) # Get the baseline and evoked df/F data
-    baseline_means, evoked_means = DewanTraceTools.average_trial_data(baseline_data, evoked_data) # Get means of the baseline/evoked data
+def plot_evoked_baseline_means(input_data: data_stores.PlottingDataStore, ax2: plt.axis, colormap: cycler):
+    baseline_data, evoked_data = trace_tools.collect_trial_data(input_data) # Get the baseline and evoked df/F data
+    baseline_means, evoked_means = trace_tools.average_trial_data(baseline_data, evoked_data) # Get means of the baseline/evoked data
 
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
@@ -174,7 +174,7 @@ def plot_evoked_baseline_means(input_data: DewanDataStore.PlottingDataStore, ax2
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore,
+def pooled_cell_plotting(input_data: data_stores.PlottingDataStore,
                          latent_cells_only: bool = False, plot_all_cells: bool = False, num_workers: int = 8) -> None:
 
     plot_type = []
@@ -197,7 +197,7 @@ def pooled_cell_plotting(input_data: DewanDataStore.PlottingDataStore,
     # TQDM wrapper for concurrent features
 
 
-def plot_significance_matricies(input_data: DewanDataStore.PlottingDataStore, latent_cells_only: bool = False) -> None:
+def plot_significance_matricies(input_data: data_stores.PlottingDataStore, latent_cells_only: bool = False) -> None:
     if latent_cells_only:
         folder = 'LatentCells'
         title = 'Latent'
@@ -264,7 +264,7 @@ def plot_auroc_distributions(file_header, auroc_shuffle, auroc, ub, lb, cell_lis
     plt.close()
 
 
-def plot_trial_variances(input_data: DewanDataStore.AUROCdataStore, significance_table: np.array,
+def plot_trial_variances(input_data: data_stores.AUROCdataStore, significance_table: np.array,
                          latentCells: bool = False) -> None:
     responsive_cells_truth_table = np.any(significance_table, axis=1)  # Find all rows that are not all zeros
     responsive_cell_list_index = np.nonzero(responsive_cells_truth_table)[0]  # Only keep cells that are not
@@ -285,7 +285,7 @@ def plot_trial_variances(input_data: DewanDataStore.AUROCdataStore, significance
         for odor in responsive_odor_indexes:
             input_data.update_odor(odor)
 
-            baseline_data, evok_data = DewanTraceTools.collect_trial_data(input_data, None, latentCells)
+            baseline_data, evok_data = trace_tools.collect_trial_data(input_data, None, latentCells)
 
             baseline_mean = np.mean(np.hstack(baseline_data))
 
@@ -296,7 +296,7 @@ def plot_trial_variances(input_data: DewanDataStore.AUROCdataStore, significance
             vertical_scatter_plot(baseline_corrected_evok_data, input_data, *folders)
 
 
-def vertical_scatter_plot(data_2_plot: list, data_input: DewanDataStore.AUROCdataStore, *folders):
+def vertical_scatter_plot(data_2_plot: list, data_input: data_stores.AUROCdataStore, *folders):
     # x = len(data2Plot)
     width = 0.6
     dotSize = 10
