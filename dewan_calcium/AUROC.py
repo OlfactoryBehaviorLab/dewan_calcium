@@ -111,10 +111,26 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
 
     return return_values
 
-def new_run_auroc():
+
+def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,  latent: bool = False) \
+        -> data_stores.AUROCReturn:
+    significant = True
+    odors = []
+
+    for odor in odors:
+        odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
+        odor_timestamps = FV_timestamps[odor]
+        baseline_data, evoked_data = trace_tools.new_collect_trial_data(odor_df, odor_timestamps, baseline_duration, latent)
+        baseline_means = baseline_data.mean(axis=1)
+        evoked_means = evoked_data.means(axis=1)
+
+        auroc_value = compute_auc(baseline_means, evoked_means)
+        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, baseline_means)
+
+    return data_stores.AUROCReturn()
 
 
-    pass
 def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
     auroc_type = []
     
