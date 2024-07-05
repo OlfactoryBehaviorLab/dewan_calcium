@@ -14,7 +14,7 @@ class ProjectFolder:
 
         self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._set_root_dir(root_dir)
-        self._create_subfolders()  # Create or aquire folders
+        self._create_subfolders()  # Create or acquire folders
 
 
         #  Empty file/folder paths
@@ -44,7 +44,7 @@ class ProjectFolder:
             # For backwards compatability with manual curation
             selected_dir = self.select_project_folder()
             if len(selected_dir) > 0:
-                self.path = Path(returned_folder[0])
+                self.path = Path(selected_dir[0])
             else:
                 raise FileNotFoundError(f'No project folder selected!')
         elif project_dir is not None:
@@ -156,7 +156,7 @@ class RawDataDir(Dir):
 
     def _get_files(self):
         json_file = list(self.path.glob('*session*.json'))
-        raw_GPIO = list(self.path.glob('*GPIO*.csv'))
+        raw_GPIO = list(self.path.glob('*.gpio'))
         raw_recordings = list(self.path.glob('*.isxd'))
         h5_file = list(self.path.glob('*.h5'))
         odor_list = list(self.path.glob('*.xlsx'))
