@@ -3,8 +3,18 @@
 ### Austin Pauley: Dewan Lab, Florida State University, 2024
 
 import numpy as np
-
+import pandas as pd
 from .data_stores import AUROCdataStore, AUROCReturn # Import for typedef
+
+
+def new_collect_trial_data(odor_df:  pd.DataFrame, time_df: pd.DataFrame, latent: bool = False):
+    baseline_data = []
+    evoked_data = []
+
+
+
+
+
 
 
 def collect_trial_data(data_input: AUROCdataStore, return_values: AUROCReturn = None,
@@ -16,9 +26,9 @@ def collect_trial_data(data_input: AUROCdataStore, return_values: AUROCReturn = 
     evoked_start_indexes = []
     evoked_end_indexes = []
 
-    for trial in data_input.current_odor_trials:
-        time_array = data_input.unix_time_array[trial, :]
-        trial_data = data_input.Data[data_input.cell_index, trial, :]
+    for trial in data_input.current_odor_trials:  # For each odor
+        time_array = data_input.unix_time_array[trial, :] # Get times for trial
+        trial_data = data_input.Data[data_input.cell_index, trial, :]  # Get data for cell x trial combo
         fv_on_time = float(data_input.FV_Data[data_input.FV_on_index[trial], 0])
         fv_on_index = len(np.nonzero(time_array < fv_on_time)[0])
         baseline_start_index = len(np.nonzero(time_array < (fv_on_time - data_input.baseline_duration))[0])

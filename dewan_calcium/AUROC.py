@@ -110,7 +110,10 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
 
     return return_values
 
+def new_run_auroc():
 
+
+    pass
 def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
     auroc_type = []
     
@@ -120,6 +123,9 @@ def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, lat
         auroc_type = 'Latent'
 
     print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
+
+
+
 
     workers = Pool()
     partial_function = partial(run_auroc, data_input, latent_cells_only)
