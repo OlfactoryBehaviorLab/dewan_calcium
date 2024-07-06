@@ -44,12 +44,12 @@ def compute_auc(means_1, means_2) -> float:
     return auroc_value
 
 
-def shuffled_distribution(all_vector: np.ndarray, vect_base1: np.ndarray) -> np.ndarray:
+def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.ndarray:
     shuffled_auroc = []
 
     for _ in itertools.repeat(None, NUM_SHUFFLES):  # Repeat 1000 times, faster than range()
 
-        split_1, split_2 = train_test_split(all_vector, test_size=len(vect_base1))
+        split_1, split_2 = train_test_split(all_vector, test_size=test_data_size)
         # Split all the data into two randomized pools
 
         shuffled_auroc_value = compute_auc(split_1, split_2)
@@ -114,20 +114,46 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
 
 def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,  latent: bool = False) \
         -> data_stores.AUROCReturn:
-    significant = True
-    odors = []
+def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, odor_list: list,
+                  baseline_duration: int, latent: bool = False) -> data_stores.AUROCReturn:
+    all_bounds = []
+    auroc_values = []
+    all_percentiles = []
+    response_chart = []
 
-    for odor in odors:
+    significant = True
+
+    for odor in odor_list:
         odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
         odor_timestamps = FV_timestamps[odor]
-        baseline_data, evoked_data = trace_tools.new_collect_trial_data(odor_df, odor_timestamps, baseline_duration, latent)
+        baseline_data, evoked_data, baseline_indices, evoked_indices = (
+            trace_tools.new_collect_trial_data(odor_df, odor_timestamps, baseline_duration, latent))
+
         baseline_means = baseline_data.mean(axis=1)
-        evoked_means = evoked_data.means(axis=1)
+        evoked_means = evoked_data.mean(axis=1)
 
         auroc_value = compute_auc(baseline_means, evoked_means)
-        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
-        auroc_shuffle = shuffled_distribution(all_means, baseline_means)
 
+        # # # GET SHUFFLED DISTRIBUTION # # #
+        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, len(baseline_means))
+        bounds = np.percentile(auroc_shuffle, [1, 99])
+
+        lower_bound, upper_bound = bounds
+
+        # # # Output Data # # # 
+        if auroc_value > upper_bound:
+            response_chart.append(2)  # Positive evoked response
+        elif auroc_value < lower_bound:
+            response_chart.append(1)  # Negative evoked response
+        else:
+            response_chart.append(0)  # No response
+            significant = False
+
+        all_bounds.append(bounds)
+        auroc_values.append(auroc_value)
+        all_percentiles.append(compute_percentile(auroc_value, auroc_shuffle))
+        
     return data_stores.AUROCReturn()
 
 
