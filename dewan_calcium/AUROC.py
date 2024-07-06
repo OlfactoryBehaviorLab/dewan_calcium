@@ -60,13 +60,115 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
-def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_number: int) -> data_stores.AUROCReturn:
+def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
+                  latent: bool, cell_data: tuple) -> dict:
+    all_bounds = []
+    auroc_values = []
+    all_percentiles = []
+    significance_matrix = []
+    all_indices = []
+
+    significant = True
+
+    # # # Unpack the Input # # #
+    cell_name, trace_data = cell_data
+    cell_df = trace_data.T[cell_name]  # Transpose data so (Cells, Odor) is the columns, and the enter one level
+    odor_list = cell_df.columns.unique()
+
+    for odor in odor_list:
+        odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
+        odor_timestamps = FV_timestamps[odor]
+        baseline_data, evoked_data, baseline_indices, evoked_indices = (
+            trace_tools.new_collect_trial_data(odor_df, odor_timestamps, baseline_duration, latent))
+
+        baseline_means = baseline_data.mean(axis=1)
+        evoked_means = evoked_data.mean(axis=1)
+
+        auroc_value = compute_auc(baseline_means, evoked_means)
+
+        # # # GET SHUFFLED DISTRIBUTION # # #
+        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, len(baseline_means))
+        bounds = np.percentile(auroc_shuffle, [1, 99])
+
+        lower_bound, upper_bound = bounds
+
+        # # # Output Data # # #
+        if auroc_value > upper_bound:
+            significance_matrix.append(2)  # Positive evoked response
+        elif auroc_value < lower_bound:
+            significance_matrix.append(1)  # Negative evoked response
+        else:
+            significance_matrix.append(0)  # No response
+            significant = False
+
+        all_bounds.append(bounds)
+        auroc_values.append(auroc_value)
+        all_percentiles.append(compute_percentile(auroc_value, auroc_shuffle))
+        indices = (baseline_indices, evoked_indices)
+        all_indices.append(indices)
+
+    return_dict = {
+        'auroc_values': auroc_values,
+        'significance_chart': significance_matrix,
+        'bounds': all_bounds,
+        'percentiles': all_percentiles,
+        'indices': all_indices
+    }
+
+    return return_dict
+
+
+def new_pooled_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,
+                     num_workers: int = 8, latent_cells_only: bool = False):
+    # if latent_cells_only:
+    #     auroc_type = 'Latent'
+    # else:
+    #     auroc_type = 'On Time'
+
+    # print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
+
+    iterable = combined_data_shift.T.groupby(level=0)
+    # Level 0 is the cells; groupby() works on indexes, so we need to transpose it
+    # since we ordered the data as columns with (Cell Name, Odor Name)
+    auroc_partial_function = partial(new_run_auroc, FV_timestamps, baseline_duration, latent_cells_only)
+    return_dicts = process_map(auroc_partial_function, iterable, max_workers=num_workers)
+
+    print("AUROC Processing Finished!")
+
+    return return_dicts
+
+def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, latent_cells_only: bool = False) -> list:
+    if latent_cells_only:
+        auroc_type = 'Latent'
+    else:
+        auroc_type = 'On Time'
+
+    print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
+
+
+    # workers = Pool()
+    partial_function = partial(run_auroc, data_input, latent_cells_only)
+    return_values = process_map(partial_function, range(data_input.number_cells), max_workers=num_workers,
+                                desc='AUROC Progress: ')
+    # TQDM wrapper for concurrent features
+
+
+    # workers.close()
+    # workers.join()
+
+    print("AUROC Processing Finished!")
+
+    return return_values
+
+
+def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_number: int):
 
     significant = True  # Does this particular cell-odor pair show a significant response; True by default
 
     data_input = data_input.makeCopy()  # Get a local copy of the data for this process
     data_input.update_cell(cell_number)  # Update the local copy with which cell we're computing significance for
-    return_values = data_stores.AUROCReturn()  # Create an empty AUROCReturn object to store the return values in
+    return_values =[] # Create an empty AUROCReturn object to store the return values in
 
     for odor_iterator in range(data_input.num_unique_odors):
 
@@ -108,69 +210,5 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
             DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound,
                                                    lower_bound, data_input.Cell_List, cell_number,
                                                    data_input.unique_odors, odor_iterator, latent_cells)
-
-    return return_values
-
-
-def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, odor_list: list,
-                  baseline_duration: int, latent: bool = False) -> data_stores.AUROCReturn:
-    all_bounds = []
-    auroc_values = []
-    all_percentiles = []
-    response_chart = []
-
-    significant = True
-
-    for odor in odor_list:
-        odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
-        odor_timestamps = FV_timestamps[odor]
-        baseline_data, evoked_data, baseline_indices, evoked_indices = (
-            trace_tools.new_collect_trial_data(odor_df, odor_timestamps, baseline_duration, latent))
-
-        baseline_means = baseline_data.mean(axis=1)
-        evoked_means = evoked_data.mean(axis=1)
-
-        auroc_value = compute_auc(baseline_means, evoked_means)
-
-        # # # GET SHUFFLED DISTRIBUTION # # #
-        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
-        auroc_shuffle = shuffled_distribution(all_means, len(baseline_means))
-        bounds = np.percentile(auroc_shuffle, [1, 99])
-
-        lower_bound, upper_bound = bounds
-
-        # # # Output Data # # # 
-        if auroc_value > upper_bound:
-            response_chart.append(2)  # Positive evoked response
-        elif auroc_value < lower_bound:
-            response_chart.append(1)  # Negative evoked response
-        else:
-            response_chart.append(0)  # No response
-            significant = False
-
-        all_bounds.append(bounds)
-        auroc_values.append(auroc_value)
-        all_percentiles.append(compute_percentile(auroc_value, auroc_shuffle))
-        
-    return data_stores.AUROCReturn()
-
-
-def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, latent_cells_only: bool = False) -> list:
-    if latent_cells_only:
-        auroc_type = 'Latent'
-    else:
-        auroc_type = 'On Time'
-
-    print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
-
-    workers = Pool()
-    partial_function = partial(run_auroc, data_input, latent_cells_only)
-    return_values = process_map(partial_function, range(data_input.number_cells), max_workers=num_workers,
-                                desc='AUROC Progress: ')
-    # TQDM wrapper for concurrent features
-    workers.close()
-    workers.join()
-
-    print("AUROC Processing Finished!")
 
     return return_values
