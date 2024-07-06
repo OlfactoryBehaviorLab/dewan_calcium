@@ -62,62 +62,26 @@ class ProjectFolder:
         self.inscopix_dir = InscopixDir(self)
         self.analysis_dir = AnalysisDir(self)
 
-
-    def old_get_project_files(self):
-        max_projection_path = list(self.inscopix_path.glob('*HD*MAX_PROJ*.tiff'))
-        cell_trace_data_path = list(self.inscopix_path.glob('*TRACES*.csv'))
-        cell_props_path = list(self.inscopix_path.glob('*props*.csv'))
-        cell_contours_path = list(self.inscopix_path.glob('*CONTOURS*.json'))
-
-        if len(max_projection_path) == 0:
-            raise FileNotFoundError(f'Max Projection image not found!')
-        elif len(cell_trace_data_path) == 0:
-            raise FileNotFoundError(f'Cell Trace data not found!')
-        elif len(cell_props_path) == 0:
-            raise FileNotFoundError(f'Cell Props data not found!')
-        elif len(cell_contours_path) == 0:
-            raise FileNotFoundError(f'Cell Contour data not found!')
-        else:
-            self.max_projection_path = max_projection_path[0]
-            self.cell_trace_data_path = cell_trace_data_path[0]
-            self.cell_props_path = cell_props_path[0]
-            self.cell_contours_path = cell_contours_path[0]
-
-    def old_select_project_folder(self) -> list[str]:
-        file_names = []
-
-        file_dialog = QFileDialog()
-        file_dialog.setWindowTitle("Select Project Directory:")
-        file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-        file_dialog.setViewMode(QFileDialog.ViewMode.Detail)
-        file_dialog.setDirectory(self.search_root_dir)
-
-        if file_dialog.exec():
-            file_names = file_dialog.selectedFiles()
-        return file_names
-
     #  Dunder Methods  #
     def __str__(self):
         return f'Project folder: {str(self.path)}'
 
     def __repr__(self):
         description = f'{type(self).__name__}(root_directory={self.search_root_dir}, \n \
-                project_directory={self.project_folder}, \n \
-                inscopix_directory={self.inscopix_path}, \n \
-                max_projection_path={self.max_projection_path}, \n \
-                cell_trace_data_path={self.cell_trace_data_path}, \n \
-                cell_props_path={self.cell_props_path}, \n \
-                cell_contours_path={self.cell_contours_path})'
+                project_directory={self.path} \n '
         return description
 
 
 class Dir:
-    def __init__(self, project_folder, name):
-        self.parent = project_folder
-        self.path_stem = project_folder.path
+    def __init__(self, parent_folder, name):
+        self.parent = parent_folder
+        self.path_stem = parent_folder.path
         self.name = name
         self.path = self.path_stem.joinpath(name)
-        self.new_dir = False
+
+        self._new_dir = False
+
+        self._create()
 
     def _create(self):
         if not self.path.exists():
@@ -130,14 +94,36 @@ class Dir:
             return False
         return True
 
-    def __str__(self):
-        return f'{self.parent.__str__()}\n{self.name} Directory: {self.path}'
+    def _get_files(self):
+        if not self._new_dir:
+            return self.path.glob('*')
 
+    def __str__(self):
+        return f'Directory: {self.path}'
+
+    def __repr__(self):
+        return f'{self.name}: {self.parent.__repr__()}\n{str(self)}'
+
+
+class FigureDir(Dir):
+    def __init__(self, parent_folder, name='Figures'):
+        super().__init__(parent_folder, name)
+
+        self.auroc_dir = Dir(self, 'auroc')
+
+        # There shouldn't be anything placed in these folders, so we'll just mark them private
+        self._traces_dir = Dir(self, 'traces')
+        self._scatter_dir = Dir(self, 'scatter')
+
+        self.ontime_traces_dir = Dir(self._traces_dir, 'ontime_traces')
+        self.latent_traces_dir = Dir(self._traces_dir, 'latent_traces')
+        self.ontime_trial_scatter_dir = Dir(self._scatter_dir, 'ontime_trial_scatter')
+        self.latent_trial_scatter_dir = Dir(self._scatter_dir, 'latent_trial_scatter')
 
 
 class RawDataDir(Dir):
-    def __init__(self, project_folder: ProjectFolder, name='Raw_Data'):
-        super().__init__(project_folder, name)
+    def __init__(self, parent_folder: ProjectFolder, name='Raw_Data'):
+        super().__init__(parent_folder, name)
 
         # Raw inscopix files
         self.session_json_path = None
@@ -148,11 +134,8 @@ class RawDataDir(Dir):
         self.exp_h5_path = None
         self.odorlist_path = None
 
-        self._create()
-
-        if not self.new_dir:
+        if not self._new_dir:
             self._get_files()
-
 
     def _get_files(self):
         json_file = list(self.path.glob('*session*.json'))
@@ -174,28 +157,19 @@ class RawDataDir(Dir):
 
 
 class InscopixDir(Dir):
-    def __init__(self, project_folder: ProjectFolder, name='Inscopix'):
-        super().__init__(project_folder, name)
+    def __init__(self, parent_folder: ProjectFolder, name='Inscopix'):
+        super().__init__(parent_folder, name)
         # Processed Inscopix Files
-        self.cell_images_dir = self.path.joinpath('Cell_Images')
-        self.interim_file_dir = self.path.joinpath('Interim_Files')
+        self.cell_images_dir = Dir(self, 'cell_images')
+        self.interim_file_dir = Dir(self, 'interim_files')
         self.cell_trace_path = None
         self.GPIO_path = None
         self.max_projection_path = None
         self.contours_path = None
         self.props_path = None
 
-        self._create()
-        self._create_subdirs()
-
-        if not self.new_dir:
+        if not self._new_dir:
             self._get_files()
-
-    def _create_subdirs(self):
-        if not self.cell_images_dir.exists():
-            self.cell_images_dir.mkdir()
-        if not self.interim_file_dir.exists():
-            self.interim_file_dir.mkdir()
 
     def _get_files(self):
         cell_trace_file = list(self.path.glob('*TRACES*.csv'))
@@ -217,26 +191,23 @@ class InscopixDir(Dir):
 
 
 class AnalysisDir(Dir):
-    def __init__(self, project_folder: ProjectFolder, name='Analysis'):
-        super().__init__(project_folder, name)
+    def __init__(self, parent_folder: ProjectFolder, name='Analysis'):
+        super().__init__(parent_folder, name)
 
-        self.figures_dir = self.path.joinpath('Figures')
-        self.preprocess_dir = self.path.joinpath('Preprocessed')
-        self.output_dir = self.path.joinpath('Output')
+        #  Main Directories
+        self.figures_dir = FigureDir(self)
+        self.preprocess_dir = Dir(self, 'Preprocessed')
+        self.output_dir = Dir(self, 'Output')
 
-        self._create()
-        self._create_subdirs()
+        #  Figure Subdirectories
+        self.auroc_figures_dir = Dir(self.figures_dir, 'auroc')
 
-        if not self.new_dir:
+        #  Output Subdirectories
+        self.combined_directory = Dir(self.output_dir, 'combined')
+
+        if not self._new_dir:
             self._get_files()
 
-    def _create_subdirs(self):
-        if not self.figures_dir.exists():
-            self.figures_dir.mkdir()
-        if not self.preprocess_dir.exists():
-            self.preprocess_dir.mkdir()
-        if not self.output_dir.exists():
-            self.output_dir.mkdir()
 
     def _get_files(self):
         pass
