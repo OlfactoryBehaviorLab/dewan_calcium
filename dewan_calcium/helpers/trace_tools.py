@@ -4,7 +4,7 @@
 
 import numpy as np
 import pandas as pd
-from .data_stores import AUROCdataStore, AUROCReturn  # Import for typedef
+from .data_stores import AUROCdataStore  # Import for typedef
 
 
 def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, response_duration: int, latent: bool = False):
@@ -49,7 +49,7 @@ def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, respons
     return baseline_data, evoked_data, baseline_indices, evoked_indices
 
 
-def collect_trial_data(data_input: AUROCdataStore, return_values: AUROCReturn = None,
+def collect_trial_data(data_input: AUROCdataStore, return_values = None,
                        latent_cells_only: bool = False) -> tuple:
     baseline_data = []
     evoked_data = []
