@@ -28,7 +28,6 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
 
 
 def compute_auc(means_1, means_2) -> float:
-
     max_baseline_val = max(means_1)
     min_baseline_val = min(means_1)
 
@@ -106,14 +105,13 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
 
         if significant and data_input.do_plot:
             # Check that both the response was significant and we want to plot the distributions
-            DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound, lower_bound, data_input.Cell_List,
-                                                       cell_number, data_input.unique_odors, odor_iterator, latent_cells)
+            DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound,
+                                                   lower_bound, data_input.Cell_List, cell_number,
+                                                   data_input.unique_odors, odor_iterator, latent_cells)
 
     return return_values
 
 
-def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,  latent: bool = False) \
-        -> data_stores.AUROCReturn:
 def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, odor_list: list,
                   baseline_duration: int, latent: bool = False) -> data_stores.AUROCReturn:
     all_bounds = []
@@ -157,22 +155,18 @@ def new_run_auroc(cell_df: pd.DataFrame, FV_timestamps: pd.DataFrame, odor_list:
     return data_stores.AUROCReturn()
 
 
-def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, latent_cells_only: bool=False) -> list:
-    auroc_type = []
-    
-    if not latent_cells_only:
-        auroc_type = 'On Time'
-    else:
+def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, latent_cells_only: bool = False) -> list:
+    if latent_cells_only:
         auroc_type = 'Latent'
+    else:
+        auroc_type = 'On Time'
 
     print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
 
-
-
-
     workers = Pool()
     partial_function = partial(run_auroc, data_input, latent_cells_only)
-    return_values = process_map(partial_function, range(data_input.number_cells), max_workers = num_workers, desc='AUROC Progress: ')
+    return_values = process_map(partial_function, range(data_input.number_cells), max_workers=num_workers,
+                                desc='AUROC Progress: ')
     # TQDM wrapper for concurrent features
     workers.close()
     workers.join()
@@ -180,4 +174,3 @@ def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int=8, lat
     print("AUROC Processing Finished!")
 
     return return_values
-
