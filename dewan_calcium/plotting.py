@@ -258,7 +258,7 @@ def _plot_auroc_distribution(shuffle_dist, auroc_value, bounds, cell_name, odor_
 
 
 def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolder,
-                             latent_cells_only: bool = False) -> None:
+                             latent_cells_only: bool = False, plot_all: bool = False) -> None:
     # Plot AUROC Histograms if Desired
     unique_odors = odor_data.unique()
 
@@ -274,7 +274,7 @@ def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolde
         shuffles = cell_df['shuffles']
 
         for i, significance_value in enumerate(cell_significance_data):
-            if significance_value != 0:
+            if significance_value != 0 | plot_all:
                 odor_name = unique_odors[i]
                 shuffle = shuffles.iloc[i]
                 auroc_val = auroc_values.iloc[i]
