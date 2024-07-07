@@ -108,12 +108,13 @@ class FigureDir(Dir):
     def __init__(self, parent_folder, name='Figures'):
         super().__init__(parent_folder, name)
 
-        self.auroc_dir = Dir(self, 'auroc')
-
         # There shouldn't be anything placed in these folders, so we'll just mark them private
         self._traces_dir = Dir(self, 'traces')
         self._scatter_dir = Dir(self, 'scatter')
+        self._auroc_dir = Dir(self, 'auroc')
 
+        self.ontime_auroc_dir = Dir(self._auroc_dir, 'ontime_auroc')
+        self.latent_auroc_dir = Dir(self._auroc_dir, 'latent_auroc')
         self.ontime_traces_dir = Dir(self._traces_dir, 'ontime_traces')
         self.latent_traces_dir = Dir(self._traces_dir, 'latent_traces')
         self.ontime_trial_scatter_dir = Dir(self._scatter_dir, 'ontime_trial_scatter')
