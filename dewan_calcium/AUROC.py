@@ -67,8 +67,7 @@ def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
     all_percentiles = []
     significance_matrix = []
     all_indices = []
-
-    significant = True
+    shuffles = []
 
     # # # Unpack the Input # # #
     cell_name, trace_data = cell_data
@@ -100,20 +99,21 @@ def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
             significance_matrix.append(1)  # Negative evoked response
         else:
             significance_matrix.append(0)  # No response
-            significant = False
 
         all_bounds.append(bounds)
         auroc_values.append(auroc_value)
         all_percentiles.append(compute_percentile(auroc_value, auroc_shuffle))
         indices = (baseline_indices, evoked_indices)
         all_indices.append(indices)
+        shuffles.append(auroc_shuffle)
 
     return_dict = {
         'auroc_values': auroc_values,
         'significance_chart': significance_matrix,
         'bounds': all_bounds,
         'percentiles': all_percentiles,
-        'indices': all_indices
+        'indices': all_indices,
+        'shuffles': shuffles
     }
 
     return return_dict
