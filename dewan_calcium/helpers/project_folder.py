@@ -67,8 +67,7 @@ class ProjectFolder:
         return f'Project folder: {str(self.path)}'
 
     def __repr__(self):
-        description = f'{type(self).__name__}(root_directory={self.search_root_dir}, \n \
-                project_directory={self.path} \n '
+        description = f'{type(self).__name__}(root_directory={self.search_root_dir}, project_directory={self.path}'
         return description
 
 
@@ -99,10 +98,10 @@ class Dir:
             return self.path.glob('*')
 
     def __str__(self):
-        return f'Directory: {self.path}'
+        return f'{self.path}'
 
     def __repr__(self):
-        return f'{self.name}: {self.parent.__repr__()}\n{str(self)}'
+        return f'{type(self).__name__}({str(self)})\nParent(s): {self.parent.__repr__()}'
 
 
 class FigureDir(Dir):
@@ -198,9 +197,6 @@ class AnalysisDir(Dir):
         self.figures_dir = FigureDir(self)
         self.preprocess_dir = Dir(self, 'Preprocessed')
         self.output_dir = Dir(self, 'Output')
-
-        #  Figure Subdirectories
-        self.auroc_figures_dir = Dir(self.figures_dir, 'auroc')
 
         #  Output Subdirectories
         self.combined_directory = Dir(self.output_dir, 'combined')

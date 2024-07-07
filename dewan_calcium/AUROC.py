@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 
 # Import from local modules
 from .helpers import data_stores, sliding_prob, trace_tools
-from . import DewanPlotting
+from . import plotting
 
 NUM_SHUFFLES = 1000
 
