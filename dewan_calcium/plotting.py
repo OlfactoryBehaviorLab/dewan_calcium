@@ -1,6 +1,6 @@
 import cycler
 import numpy as np
-import multiprocessing
+
 
 from functools import partial
 from tqdm.contrib.concurrent import process_map
@@ -13,6 +13,7 @@ import matplotlib.cm as cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 from .helpers import data_stores, DewanIOhandler, trace_tools
+from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
 
@@ -243,25 +244,47 @@ def plot_significance_matricies(input_data: data_stores.PlottingDataStore, laten
     plt.close()
 
 
-def plot_auroc_distributions(file_header, auroc_shuffle, auroc, ub, lb, cell_list, cell_number, unique_odors, odor_index,
-                             latent_cells_only: bool = False) -> None:
-    cell_name = str(cell_list[cell_number])
-    odor_name = str(unique_odors[odor_index])
+def _plot_auroc_distribution(shuffle_dist, auroc_value, bounds, cell_name, odor_name) -> plt.figure:
+    upper_bound, lower_bound = bounds
 
     fig, ax = plt.subplots()
-    plt.hist(auroc_shuffle, bins=10)
-    plt.axvline(x=ub, color='b'), plt.axvline(x=lb, color='b'), plt.axvline(x=auroc, color='r')
-    plt.title(f'Cell:{cell_name} {odor_name}')
+    ax.hist(shuffle_dist, bins=10)
+    ax.axvline(x=upper_bound, color='b'), ax.axvline(x=lower_bound, color='b')
+    ax.axvline(x=auroc_value, color='r')
+    fig.suptitle(f'{cell_name} x {odor_name}')
+    plt.close(fig)
 
+    return fig
+
+
+def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolder,
+                             latent_cells_only: bool = False) -> None:
+    # Plot AUROC Histograms if Desired
+    unique_odors = odor_data.unique()
+
+    folder = project_folder.analysis_dir.figures_dir.ontime_auroc_dir.path
     if latent_cells_only:
-        sub_folder = 'LatentCells'
-    else:
-        sub_folder = 'OnTimeCells'
+        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir.pat
 
-    folder = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', f'{sub_folder}'])
-    filename = f'{file_header}Cell{cell_name}-{odor_name}.pdf'
-    plt.savefig(folder.joinpath(filename))
-    plt.close()
+    for cell in auroc_data.columns.levels[0]:
+        cell_df = auroc_data[cell]
+        cell_significance_data = cell_df['significance_chart']
+        auroc_values = cell_df['auroc_values']
+        ul_bounds = cell_df['bounds']
+        shuffles = cell_df['shuffles']
+
+        for i, significance_value in enumerate(cell_significance_data):
+            if significance_value != 0:
+                odor_name = unique_odors[i]
+                shuffle = shuffles.iloc[i]
+                auroc_val = auroc_values.iloc[i]
+                bounds = ul_bounds.iloc[i]
+                auroc_fig = _plot_auroc_distribution(shuffle, auroc_val, bounds, cell, odor_name)
+
+                filename = f'{cell}-{odor_name}.pdf'
+                filepath = folder.joinpath(filename)
+                auroc_fig.savefig(filepath, dpi=300)
+
 
 
 def plot_trial_variances(input_data: data_stores.AUROCdataStore, significance_table: np.array,
