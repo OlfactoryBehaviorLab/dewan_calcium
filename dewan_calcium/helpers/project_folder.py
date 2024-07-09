@@ -200,7 +200,7 @@ class AnalysisDir(Dir):
         self.output_dir = Dir(self, 'Output')
 
         #  Output Subdirectories
-        self.combined_directory = Dir(self.output_dir, 'combined')
+        self.combined_dir = Dir(self.output_dir, 'combined')
 
         if not self._new_dir:
             self._get_files()
