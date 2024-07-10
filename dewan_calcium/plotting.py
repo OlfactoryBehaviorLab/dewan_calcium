@@ -33,15 +33,72 @@ def truncate_data(data):
     return data
 
 
-def new_plot_odor_traces(cell_df: pd.DataFrame, significance_table: pd.Series, project_folder: ProjectFolder,
-                         latent: bool = False, all_cells: bool = False) -> plt.Figure:
+def new_plot_odor_traces(significance_table: pd.Series, auroc_data: pd.DataFrame, FV_data: pd.DataFrame,
+                         odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder, latent: bool, all_cells: bool
+                         , cell_data: tuple) -> list[plt.Figure]:
+
+    cell_name, cell_df = cell_data
+    test_figs = []
 
     folder = project_folder.analysis_dir.figures_dir.ontime_traces_dir
     if latent:
         folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir
 
+    for odor in odor_list:
+        significant = False
+        significance_val = significance_table[odor]
 
+        if significance_val == 0 and all_cells is False:
+            continue
+        else:
+            significant = True
 
+        odor_data = cell_df[odor]
+        odor_times = FV_data[odor]
+
+        trial_data = list(odor_data.items())
+        timestamps = list(odor_times.items())
+
+        baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
+                                                                             response_duration, latent)
+
+        auroc_stats = auroc_data.loc[odor]
+        percentile = auroc_stats['percentiles']
+        lower_bound, upper_bound = auroc_stats['bounds']
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
+        plt.suptitle(f'Cell: {cell_name} Odor: {odor}', fontsize=14)
+        ax1.set_title('Cell Traces', fontsize=10)
+        ax1.set(xlabel="Time ((s) since FV On)", ylabel="Signal")
+
+        plot_data = zip(timestamps, trial_data)
+
+        x_vals = []  # We want to expose the last set of x_vals for the average to use
+        for x_vals, y_vals in plot_data:
+            _, x_vals = x_vals   # Items() returns a name, we don't need it
+            _, y_vals = y_vals
+
+            ax1.plot(x_vals, y_vals, linewidth=0.5)
+
+        avg_data = odor_data.mean(axis=1)
+        ax1.plot(x_vals, avg_data, "k", linewidth=1.5)
+
+        ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
+        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(percentile*100)}',
+                 transform=ax1.transAxes, fontsize='x-small', style='italic',
+                 bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
+
+        if significant:
+            ax1.text(0.015, 0.965, 'Significant!', transform=ax1.transAxes,
+                     fontsize='x-small', style='italic',
+                     bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
+
+        plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
+
+        # plt.close(fig)
+        test_figs.append(fig)
+
+    return test_figs
 
 def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cells_only: bool,
                           plot_all_cells: bool, cell_number: int) -> None:
@@ -123,7 +180,7 @@ def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cell
         ax1.set_xlim([x_min, x_max])
         ax1.set_ylim([y_min - (0.01 * y_min), y_max + (0.01 * y_max)])
 
-        ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
+        ax1.set_xticks(np.arange(-4, 6), labels=np.arange(-4, 7))
 
         rectangle_y_min = y_min - 30
         rectangle_y_max = y_max - y_min + 60
@@ -157,13 +214,10 @@ def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cell
         plt.subplots_adjust(bottom=0.15)
 
         plt.savefig(path, dpi=800)
-        plt.close()
+        #plt.close()
 
 
-def plot_evoked_baseline_means(input_data: data_stores.PlottingDataStore, ax2: plt.axis, colormap: cycler):
-    baseline_data, evoked_data = trace_tools.collect_trial_data(input_data) # Get the baseline and evoked df/F data
-    baseline_means, evoked_means = trace_tools.average_trial_data(baseline_data, evoked_data) # Get means of the baseline/evoked data
-
+def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
     ax2.set_title('Baseline v. Evoked Means', fontsize=10)
@@ -178,6 +232,7 @@ def plot_evoked_baseline_means(input_data: data_stores.PlottingDataStore, ax2: p
 
     ax2.set_ylim([y_min - (0.05 * y_min), y_max + (0.05 * y_max)])
     ax2.set_xlim([0.8, 2.2])
+
 
     baseline_mean = np.mean(baseline_means)
     evoked_mean = np.mean(evoked_means)
@@ -274,7 +329,7 @@ def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolde
 
     folder = project_folder.analysis_dir.figures_dir.ontime_auroc_dir.path
     if latent_cells_only:
-        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir.pat
+        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir.path
 
     for cell in auroc_data.columns.levels[0]:
         cell_df = auroc_data[cell]
