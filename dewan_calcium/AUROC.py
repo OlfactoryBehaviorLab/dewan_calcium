@@ -11,14 +11,12 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from multiprocessing import Pool
 from functools import partial
 from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
 
 # Import from local modules
 from .helpers import sliding_prob, trace_tools
-from . import plotting
 
 NUM_SHUFFLES = 100
 
@@ -139,7 +137,8 @@ def new_pooled_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFr
 
     return return_dicts
 
-def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, latent_cells_only: bool = False) -> list:
+
+def pooled_auroc(data_input, num_workers: int = 8, latent_cells_only: bool = False) -> list:
     if latent_cells_only:
         auroc_type = 'Latent'
     else:
@@ -147,13 +146,11 @@ def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, l
 
     print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
 
-
     # workers = Pool()
     partial_function = partial(run_auroc, data_input, latent_cells_only)
     return_values = process_map(partial_function, range(data_input.number_cells), max_workers=num_workers,
                                 desc='AUROC Progress: ')
     # TQDM wrapper for concurrent features
-
 
     # workers.close()
     # workers.join()
@@ -163,7 +160,7 @@ def pooled_auroc(data_input: data_stores.AUROCdataStore, num_workers: int = 8, l
     return return_values
 
 
-def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_number: int):
+def run_auroc(data_input, latent_cells: bool, cell_number: int):
 
     significant = True  # Does this particular cell-odor pair show a significant response; True by default
 
@@ -207,9 +204,10 @@ def run_auroc(data_input: data_stores.AUROCdataStore, latent_cells: bool, cell_n
             significant = False
 
         if significant and data_input.do_plot:
+            pass
             # Check that both the response was significant and we want to plot the distributions
-            DewanPlotting.plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound,
-                                                   lower_bound, data_input.Cell_List, cell_number,
-                                                   data_input.unique_odors, odor_iterator, latent_cells)
+            # plot_auroc_distributions(data_input.file_header, auroc_shuffle, auroc_value, upper_bound,
+            #                                        lower_bound, data_input.Cell_List, cell_number,
+            #                                        data_input.unique_odors, odor_iterator, latent_cells)
 
     return return_values

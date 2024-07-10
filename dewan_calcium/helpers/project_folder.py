@@ -1,5 +1,5 @@
 import os
-from PySide6.QtWidgets import QFileDialog
+# from PySide6.QtWidgets import QFileDialog
 from pathlib import Path
 
 
@@ -16,15 +16,10 @@ class ProjectFolder:
         self._set_root_dir(root_dir)
         self._create_subfolders()  # Create or acquire folders
 
-
-        #  Empty file/folder paths
-        #self.setup_folder()
-        #self.get_project_files()
     def get_data(self):
         self.raw_data_dir._get_files()
         self.inscopix_dir._get_files()
         self.inscopix_dir._get_files()
-
 
     def _set_root_dir(self, root_dir):
         cwd = Path(os.getcwd())
@@ -40,13 +35,13 @@ class ProjectFolder:
                 self.search_root_dir = user_root_dir
 
     def _set_project_dir(self, project_dir, select_dir):
-        if project_dir is None and select_dir == True:
+        if project_dir is None and select_dir:
             # For backwards compatability with manual curation
             selected_dir = self.select_project_folder()
             if len(selected_dir) > 0:
                 self.path = Path(selected_dir[0])
             else:
-                raise FileNotFoundError(f'No project folder selected!')
+                raise FileNotFoundError('No project folder selected!')
         elif project_dir is not None:
             user_project_dir = Path(project_dir)
             if not user_project_dir.exists():
@@ -55,7 +50,6 @@ class ProjectFolder:
                 self.path = user_project_dir
         elif project_dir is None or project_dir == '.':
             self.path = self.search_root_dir
-
 
     def _create_subfolders(self):
         self.raw_data_dir = RawDataDir(self)

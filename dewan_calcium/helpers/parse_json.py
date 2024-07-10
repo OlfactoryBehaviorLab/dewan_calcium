@@ -1,8 +1,5 @@
 import json
-import numpy as np
-
 from pathlib import Path
-import os
 
 
 def load_json_file(json_file_path: Path) -> dict:

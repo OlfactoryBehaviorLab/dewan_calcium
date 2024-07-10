@@ -1,5 +1,4 @@
 import pickle
-import os
 from pathlib import Path
 
 import pandas as pd
@@ -22,7 +21,6 @@ def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, 
     except pickle.PicklingError as e:
         print(f"Unable to pickle {file_path.name}!")
         print(e)
-
 
 
 def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:

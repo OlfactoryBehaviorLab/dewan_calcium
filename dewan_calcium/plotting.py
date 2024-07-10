@@ -34,15 +34,15 @@ def truncate_data(data):
 
 
 def new_plot_odor_traces(significance_table: pd.Series, auroc_data: pd.DataFrame, FV_data: pd.DataFrame,
-                         odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder, latent: bool, all_cells: bool
-                         , cell_data: tuple) -> list[plt.Figure]:
+                         odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder, latent: bool,
+                         all_cells: bool, cell_data: tuple) -> list[plt.Figure]:
 
     cell_name, cell_df = cell_data
     test_figs = []
 
-    folder = project_folder.analysis_dir.figures_dir.ontime_traces_dir
-    if latent:
-        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir
+    # folder = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+    # if latent:
+    # folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir
 
     for odor in odor_list:
         significant = False
@@ -120,7 +120,7 @@ def plot_cell_odor_traces(input_data, latent_cells_only: bool,
     else:
         odor_indexes = np.nonzero(input_data.significance_table[cell_number])[0]
 
-    DewanIOhandler.make_cell_folder4_plot(str(cell_name), *folders)
+    IO.make_cell_folder4_plot(str(cell_name), *folders)
 
     for index in odor_indexes:
 
@@ -194,7 +194,8 @@ def plot_cell_odor_traces(input_data, latent_cells_only: bool,
         evoked_x_start = input_data.FV_time_map[0, min(input_data.evoked_start_indexes[cell_number][index])]
         evoked_y_start = input_data.FV_time_map[0, max(input_data.evoked_end_indexes[cell_number][index])]
 
-        baseline_rectangle = mpatches.Rectangle((baseline_x_start, rectangle_y_min), (baseline_x_end - baseline_x_start),
+        baseline_rectangle = mpatches.Rectangle((baseline_x_start, rectangle_y_min),
+                                                (baseline_x_end - baseline_x_start),
                                                 rectangle_y_max, alpha=0.3, facecolor='blue')
 
         evoked_rectangle = mpatches.Rectangle((evoked_x_start, rectangle_y_min), (evoked_y_start - evoked_x_start),
@@ -215,7 +216,7 @@ def plot_cell_odor_traces(input_data, latent_cells_only: bool,
         plt.subplots_adjust(bottom=0.15)
 
         plt.savefig(path, dpi=800)
-        #plt.close()
+        # plt.close()
 
 
 def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
@@ -233,7 +234,6 @@ def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
 
     ax2.set_ylim([y_min - (0.05 * y_min), y_max + (0.05 * y_max)])
     ax2.set_xlim([0.8, 2.2])
-
 
     baseline_mean = np.mean(baseline_means)
     evoked_mean = np.mean(evoked_means)
@@ -259,12 +259,12 @@ def pooled_cell_plotting(input_data,
         cells = np.unique(np.nonzero(input_data.significance_table > 0)[0])
         # Get only the cells that had some type of significant response
 
-
-    process_map(partial_function, cells, max_workers = num_workers, desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
+    process_map(partial_function, cells, max_workers=num_workers,
+                desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
     # TQDM wrapper for concurrent features
 
 
-def plot_significance_matricies(input_data, latent_cells_only: bool = False) -> None:
+def plot_significance_matrices(input_data, latent_cells_only: bool = False) -> None:
     if latent_cells_only:
         folder = 'LatentCells'
         title = 'Latent'
@@ -368,7 +368,7 @@ def plot_trial_variances(input_data, significance_table: np.array,
         responsive_odor_indexes = np.nonzero(significance_table[cell] > 0)[0]
 
         input_data.update_cell(cell)
-        DewanIOhandler.make_cell_folder4_plot(input_data.current_cell_name, *folders)
+        IO.make_cell_folder4_plot(input_data.current_cell_name, *folders)
 
         for odor in responsive_odor_indexes:
             input_data.update_odor(odor)
@@ -406,7 +406,7 @@ def vertical_scatter_plot(data_2_plot: list, data_input, *folders):
 def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distances, cells, unique_odors):
 
     fontdict = {
-    'weight': 'bold'
+        'weight': 'bold'
     }
 
     inferno = plt.colormaps['inferno']
@@ -431,7 +431,6 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
     ax[1].set_yticklabels(cells, fontdict=fontdict, fontsize=8)
 
 
-    
     ax[0].set_title("Odor v. Odor", y=-0.25)
     ax[1].set_title("Cell v. Cell", y=-0.25)
 
@@ -440,7 +439,6 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
 
     fig.tight_layout()
     fig.suptitle('Pairwise Correlation Distance (1-r)', fontweight='bold', fontsize=18)
-
 
     path = Path('ImagingAnalysis', 'Figures', 'Statistics', 'correlations.pdf')
     fig.savefig(path, dpi=800)
@@ -462,4 +460,4 @@ def plot_distance_v_correlation(unique_distance_v_correlation):
     plt.xlabel("Pairwise Distance")
     plt.ylabel("Pairwise Signal Correlation")
     plt.title("Activity vs. Spatial Distance")
-    formula = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
+    _ = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
