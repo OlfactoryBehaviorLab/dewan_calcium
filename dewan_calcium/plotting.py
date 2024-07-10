@@ -12,7 +12,7 @@ import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
-from .helpers import data_stores, DewanIOhandler, trace_tools
+from .helpers import DewanIOhandler, trace_tools
 from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
@@ -100,7 +100,8 @@ def new_plot_odor_traces(significance_table: pd.Series, auroc_data: pd.DataFrame
 
     return test_figs
 
-def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cells_only: bool,
+
+def plot_cell_odor_traces(input_data, latent_cells_only: bool,
                           plot_all_cells: bool, cell_number: int) -> None:
 
     if latent_cells_only:
@@ -240,7 +241,7 @@ def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def pooled_cell_plotting(input_data: data_stores.PlottingDataStore,
+def pooled_cell_plotting(input_data,
                          latent_cells_only: bool = False, plot_all_cells: bool = False, num_workers: int = 8) -> None:
 
     plot_type = []
@@ -263,7 +264,7 @@ def pooled_cell_plotting(input_data: data_stores.PlottingDataStore,
     # TQDM wrapper for concurrent features
 
 
-def plot_significance_matricies(input_data: data_stores.PlottingDataStore, latent_cells_only: bool = False) -> None:
+def plot_significance_matricies(input_data, latent_cells_only: bool = False) -> None:
     if latent_cells_only:
         folder = 'LatentCells'
         title = 'Latent'
@@ -351,8 +352,7 @@ def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolde
                 auroc_fig.savefig(filepath, dpi=300)
 
 
-
-def plot_trial_variances(input_data: data_stores.AUROCdataStore, significance_table: np.array,
+def plot_trial_variances(input_data, significance_table: np.array,
                          latentCells: bool = False) -> None:
     responsive_cells_truth_table = np.any(significance_table, axis=1)  # Find all rows that are not all zeros
     responsive_cell_list_index = np.nonzero(responsive_cells_truth_table)[0]  # Only keep cells that are not
@@ -384,7 +384,7 @@ def plot_trial_variances(input_data: data_stores.AUROCdataStore, significance_ta
             vertical_scatter_plot(baseline_corrected_evok_data, input_data, *folders)
 
 
-def vertical_scatter_plot(data_2_plot: list, data_input: data_stores.AUROCdataStore, *folders):
+def vertical_scatter_plot(data_2_plot: list, data_input, *folders):
     # x = len(data2Plot)
     width = 0.6
     dotSize = 10
@@ -463,4 +463,3 @@ def plot_distance_v_correlation(unique_distance_v_correlation):
     plt.ylabel("Pairwise Signal Correlation")
     plt.title("Activity vs. Spatial Distance")
     formula = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
-

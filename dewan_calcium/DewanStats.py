@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
-from .helpers import data_stores
 from .helpers import trace_tools
+
 
 def sparseness(iterable: int, means: np.array) -> float:
     """
@@ -80,13 +80,12 @@ def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, si
     return lifetime_sparseness_DF
 
 
-
 def generate_correlation_pairs(number_trials: int) -> list:
     return [pair for pair in itertools.combinations(range(number_trials), r=2)]
     # We <3 list comprehension
 
 
-def trial_averaged_odor_responses(stats_data: data_stores.AUROCdataStore, significant_ontime_cells: list) -> list:
+def trial_averaged_odor_responses(stats_data, significant_ontime_cells: list) -> list:
     trial_averaged_responses_matrix = []
 
     for cell in significant_ontime_cells:

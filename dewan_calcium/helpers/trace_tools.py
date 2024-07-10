@@ -4,7 +4,6 @@
 
 import numpy as np
 import pandas as pd
-from .data_stores import AUROCdataStore  # Import for typedef
 
 
 def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, response_duration: int, latent: bool = False):
@@ -12,7 +11,7 @@ def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, respons
 
     Args:
         odor_df: Pandas DataFrame containing all the trials for a specific odor
-        time_df: Pandas DataFrame containing all the timestamps for the trials for a sepcific odor
+        time_df: Pandas DataFrame containing all the timestamps for the trials for a specific odor
         response_duration: int reflecting the amount of time that the "response" period envelops
         latent: True if we're looking for latent responses, response start time is offset by response_duration
 
@@ -59,8 +58,7 @@ def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, la
     return baseline_means, evoked_means
 
 
-
-def collect_trial_data(data_input: AUROCdataStore, return_values = None,
+def collect_trial_data(data_input, return_values = None,
                        latent_cells_only: bool = False) -> tuple:
     baseline_data = []
     evoked_data = []
@@ -104,6 +102,7 @@ def collect_trial_data(data_input: AUROCdataStore, return_values = None,
 
     return baseline_data, evoked_data
 
+
 def average_trial_data(baseline_data: list, response_data: list) -> tuple:
     baseline_vector = []
     evoked_vector = []
@@ -115,6 +114,7 @@ def average_trial_data(baseline_data: list, response_data: list) -> tuple:
         baseline_vector = np.append(baseline_vector, baseline_mean)
 
     return baseline_vector, evoked_vector
+
 
 def truncate_data(data1: list, data2: list) -> tuple:
     data1_minima = [np.min(len(row)) for row in data1]
