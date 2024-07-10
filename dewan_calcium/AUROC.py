@@ -20,7 +20,7 @@ from sklearn.model_selection import train_test_split
 from .helpers import data_stores, sliding_prob, trace_tools
 from . import plotting
 
-NUM_SHUFFLES = 1000
+NUM_SHUFFLES = 100
 
 
 def compute_percentile(auroc, auroc_shuffle) -> float:
@@ -62,6 +62,7 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
 
 def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
                   latent: bool, cell_data: tuple) -> dict:
+
     all_bounds = []
     auroc_values = []
     all_percentiles = []
