@@ -1,6 +1,6 @@
 import cycler
 import numpy as np
-
+import pandas as pd
 
 from functools import partial
 from tqdm.contrib.concurrent import process_map
@@ -31,6 +31,16 @@ def truncate_data(data):
         data[i] = row[:row_len]
 
     return data
+
+
+def new_plot_odor_traces(cell_df: pd.DataFrame, significance_table: pd.Series, project_folder: ProjectFolder,
+                         latent: bool = False, all_cells: bool = False) -> plt.Figure:
+
+    folder = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+    if latent:
+        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir
+
+
 
 
 def plot_cell_odor_traces(input_data: data_stores.PlottingDataStore, latent_cells_only: bool,
