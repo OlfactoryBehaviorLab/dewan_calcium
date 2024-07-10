@@ -12,7 +12,7 @@ import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
-from .helpers import DewanIOhandler, trace_tools
+from .helpers import IO, trace_tools
 from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
