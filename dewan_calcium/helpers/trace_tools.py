@@ -42,11 +42,22 @@ def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, respons
         evoked_trial_indices = trial_timestamps[trial_timestamps.between(0, evoke_end_time, 'both')].index
         evoked_trial_data = data[evoked_trial_indices]
         evoked_data.append(evoked_trial_data)
+
         evoked_indices.append((evoked_trial_indices[0], evoked_trial_indices[-1]))
 
     baseline_data = pd.DataFrame(baseline_data)
     evoked_data = pd.DataFrame(evoked_data)
     return baseline_data, evoked_data, baseline_indices, evoked_indices
+
+
+def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, latent: bool = False):
+    baseline_data, evoked_data, _, _ = new_collect_trial_data(odor_df, timestamps_df, response_duration, latent)
+
+    baseline_means = baseline_data.mean(axis=1)
+    evoked_means = evoked_data.mean(axis=1)
+
+    return baseline_means, evoked_means
+
 
 
 def collect_trial_data(data_input: AUROCdataStore, return_values = None,
