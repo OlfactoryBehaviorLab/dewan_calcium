@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from functools import partial
-from tqdm.contrib.concurrent import process_map
+from tqdm.contrib import concurrent
 from pathlib import Path
 
 import matplotlib as mpl
@@ -16,6 +16,11 @@ from .helpers import IO, trace_tools
 from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
+
+
+def plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix):
+    for cell in cell_names:
+        yield cell, combined_data_shift[cell], AUROC_data[cell], significance_matrix[cell]
 
 
 def generate_color_map(numColors: int):
@@ -33,19 +38,15 @@ def truncate_data(data):
     return data
 
 
-def new_plot_odor_traces(significance_table: pd.Series, auroc_data: pd.DataFrame, FV_data: pd.DataFrame,
-                         odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder, latent: bool,
+def new_plot_odor_traces(FV_data: pd.DataFrame,
+                         odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
                          all_cells: bool, cell_data: tuple) -> list[plt.Figure]:
 
-    cell_name, cell_df = cell_data
+    cell_name, cell_df, auroc_data, significance_table = cell_data
     test_figs = []
 
-    # folder = project_folder.analysis_dir.figures_dir.ontime_traces_dir
-    # if latent:
-    # folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir
-
     for odor in odor_list:
-        significant = False
+        # significant = False
         significance_val = significance_table[odor]
 
         if significance_val == 0 and all_cells is False:
@@ -95,11 +96,29 @@ def new_plot_odor_traces(significance_table: pd.Series, auroc_data: pd.DataFrame
 
         plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
 
-        # plt.close(fig)
-        test_figs.append(fig)
+        fig_name = f'{cell_name}-{odor}.pdf'
+        fig_save_path = save_path.path.joinpath(fig_name)
+        fig.savefig(fig_save_path, dpi=300)
 
-    return test_figs
 
+def new_pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
+                             FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
+                             project_folder: ProjectFolder, latent: bool = False, all_cells: bool = False,
+                             num_workers: int = 20):
+
+    save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+    plot_type = 'On Time'
+    if latent:
+        save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
+        plot_type = 'Latent'
+
+    data_iterator = plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix)
+    plot_function = partial(new_plot_odor_traces,
+                            FV_data, odor_list, response_duration, save_path, latent, all_cells)
+
+    concurrent.process_map(plot_function, data_iterator, max_workers=num_workers,
+                desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
+    # TQDM wrapper for concurrent features
 
 def plot_cell_odor_traces(input_data, latent_cells_only: bool,
                           plot_all_cells: bool, cell_number: int) -> None:
@@ -259,7 +278,7 @@ def pooled_cell_plotting(input_data,
         cells = np.unique(np.nonzero(input_data.significance_table > 0)[0])
         # Get only the cells that had some type of significant response
 
-    process_map(partial_function, cells, max_workers=num_workers,
+    concurrent.process_map(partial_function, cells, max_workers=num_workers,
                 desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
     # TQDM wrapper for concurrent features
 
