@@ -131,7 +131,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
         ax1.set_xlim([x_min, x_max])
         ax1.set_ylim([y_min, y_max])
 
-        plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
+        _plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
 
         plt.subplots_adjust(bottom=0.15)
 
@@ -160,68 +160,49 @@ def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, signific
                 pbar.update()
 
 
-def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
-    x_val = [[1], [2]]
-    x_vals = np.tile(x_val, (1, len(baseline_means)))
-    ax2.set_title('Baseline v. Evoked Means', fontsize=10)
+def _plot_auroc_distribution(AUROC_data, odor_list, save_path, plot_all, cell_name):
 
-    ax2.plot(x_vals, (baseline_means, evoked_means), '-o', linewidth=2)
+    cell_df = AUROC_data[cell_name]
+    cell_significance_data = cell_df['significance_chart']
+    auroc_values = cell_df['auroc_values']
+    ul_bounds = cell_df['bounds']
+    shuffles = cell_df['shuffles']
 
-    ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
-    ax2.yaxis.tick_right()
+    for i, significance_value in enumerate(cell_significance_data):
+        if significance_value != 0 | plot_all:
+            odor_name = odor_list[i]
+            shuffle = shuffles.iloc[i]
+            auroc_val = auroc_values.iloc[i]
+            bounds = ul_bounds.iloc[i]
+            upper_bound, lower_bound = bounds
 
-    y_min = np.min((baseline_means, evoked_means))
-    y_max = np.max((baseline_means, evoked_means))
+            fig, ax = plt.subplots()
+            ax.hist(shuffle, bins=10)
+            ax.axvline(x=upper_bound, color='b'), ax.axvline(x=lower_bound, color='b')
+            ax.axvline(x=auroc_val, color='r')
+            fig.suptitle(f'{cell_name} x {odor_name}')
+            plt.close(fig)
 
-    ax2.set_ylim([y_min - (0.05 * y_min), y_max + (0.05 * y_max)])
-    ax2.set_xlim([0.8, 2.2])
-
-    baseline_mean = np.mean(baseline_means)
-    evoked_mean = np.mean(evoked_means)
-
-    ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
-
-
-def _plot_auroc_distribution(shuffle_dist, auroc_value, bounds, cell_name, odor_name) -> plt.figure:
-    upper_bound, lower_bound = bounds
-
-    fig, ax = plt.subplots()
-    ax.hist(shuffle_dist, bins=10)
-    ax.axvline(x=upper_bound, color='b'), ax.axvline(x=lower_bound, color='b')
-    ax.axvline(x=auroc_value, color='r')
-    fig.suptitle(f'{cell_name} x {odor_name}')
-    plt.close(fig)
-
-    return fig
+            filename = f'{cell_name}-{odor_name}.pdf'
+            filepath = save_path.path.joinpath(filename)
+            fig.savefig(filepath, dpi=300)
 
 
-def plot_auroc_distributions(auroc_data, odor_data, project_folder: ProjectFolder,
-                             latent_cells_only: bool = False, plot_all: bool = False) -> None:
-    # Plot AUROC Histograms if Desired
-    unique_odors = odor_data.unique()
+def pooled_auroc_distributions(AUROC_data, cell_names, odor_list, project_folder: ProjectFolder,
+                               latent: bool = False, all_cells: bool = False, num_workers: int = None):
 
-    folder = project_folder.analysis_dir.figures_dir.ontime_auroc_dir.path
-    if latent_cells_only:
-        folder = project_folder.analysis_dir.figures_dir.latent_auroc_dir.path
+    save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+    plot_type = 'On Time'
+    if latent:
+        save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
+        plot_type = 'Latent'
 
-    for cell in auroc_data.columns.levels[0]:
-        cell_df = auroc_data[cell]
-        cell_significance_data = cell_df['significance_chart']
-        auroc_values = cell_df['auroc_values']
-        ul_bounds = cell_df['bounds']
-        shuffles = cell_df['shuffles']
+    plot_function = partial(_plot_auroc_distribution, AUROC_data, odor_list, save_path, all_cells)
 
-        for i, significance_value in enumerate(cell_significance_data):
-            if significance_value != 0 | plot_all:
-                odor_name = unique_odors[i]
-                shuffle = shuffles.iloc[i]
-                auroc_val = auroc_values.iloc[i]
-                bounds = ul_bounds.iloc[i]
-                auroc_fig = _plot_auroc_distribution(shuffle, auroc_val, bounds, cell, odor_name)
-
-                filename = f'{cell}-{odor_name}.pdf'
-                filepath = folder.joinpath(filename)
-                auroc_fig.savefig(filepath, dpi=300)
+    with tqdm(desc=f"Plotting {plot_type} AUROC Distributions: ", total=len(cell_names)) as pbar:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executer:
+            for _ in executer.map(plot_function, cell_names):
+                pbar.update()
 
 
 def plot_trial_variances(input_data, significance_table: np.array,
