@@ -260,75 +260,6 @@ def plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def pooled_cell_plotting(input_data,
-                         latent_cells_only: bool = False, plot_all_cells: bool = False, num_workers: int = 8) -> None:
-
-    plot_type = []
-
-    if latent_cells_only:
-        plot_type = 'Latent'
-    else:
-        plot_type = 'On Time'
-
-    partial_function = partial(plot_cell_odor_traces, input_data, latent_cells_only, plot_all_cells)
-
-    if plot_all_cells:
-        cells = range(input_data.number_cells)
-    else:
-        cells = np.unique(np.nonzero(input_data.significance_table > 0)[0])
-        # Get only the cells that had some type of significant response
-
-    concurrent.process_map(partial_function, cells, max_workers=num_workers,
-                desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
-    # TQDM wrapper for concurrent features
-
-
-def plot_significance_matrices(input_data, latent_cells_only: bool = False) -> None:
-    if latent_cells_only:
-        folder = 'LatentCells'
-        title = 'Latent'
-    else:
-        folder = 'OnTimeCells'
-        title = 'OnTime'
-
-    fig, ax = plt.subplots()
-    unique_odor_labels = input_data.unique_odors
-    ax.set_facecolor((1, 1, 1))
-    colormap = ListedColormap(['yellow', 'red', 'green'])
-    ax.imshow(input_data.significance_table, cmap=colormap,
-              extent=(0, input_data.num_unique_odors, input_data.number_cells, 0))
-    ax.set_yticks(np.arange(input_data.number_cells), labels=[])
-    ax.set_xticks(np.arange(input_data.num_unique_odors), labels=[])
-    ax.set_xticks(np.arange(0.5, input_data.num_unique_odors + 0.5, 1), labels=unique_odor_labels, minor=True)
-    ax.set_yticks(np.arange(0.5, input_data.number_cells + 0.5, 1), labels=input_data.Cell_List, minor=True)
-
-    ax.tick_params(axis='both', which='both', left=False, bottom=False)
-
-    plt.setp(ax.get_xminorticklabels(), rotation=90, ha="center")
-
-    ax.set_title(f'{title} Cells v. Odors AUROC Values')
-    plt.xlabel("Odors")
-    plt.ylabel("Cells")
-
-    ax.set_xlim([0, input_data.num_unique_odors])
-    ax.set_ylim([0, input_data.number_cells])
-    red_patch = mpatches.Patch(color='red', label='Negative AUROC')
-    green_patch = mpatches.Patch(color='green', label='Positive AUROC')
-    yellow_patch = mpatches.Patch(color='yellow', label='No Significance')
-    ax.legend(handles=[red_patch, green_patch, yellow_patch], loc='upper right', bbox_to_anchor=(1.5, 1.0),
-              borderaxespad=0)
-
-    plt.grid(which='major')
-
-    fig.tight_layout(pad=0.2)
-
-    folders = Path(*['.', 'ImagingAnalysis', 'Figures', 'AUROCPlots', folder])
-    filename = f'{input_data.file_header}{title}AllCellsvOdorsAUROC.svg'
-    plt.savefig(folders.joinpath(filename), dpi=1200, bbox_inches="tight")
-    plt.show()
-    plt.close()
-
-
 def _plot_auroc_distribution(shuffle_dist, auroc_value, bounds, cell_name, odor_name) -> plt.figure:
     upper_bound, lower_bound = bounds
 
@@ -423,7 +354,6 @@ def vertical_scatter_plot(data_2_plot: list, data_input, *folders):
 
 
 def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distances, cells, unique_odors):
-
     fontdict = {
         'weight': 'bold'
     }
@@ -448,7 +378,6 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
     ax[1].set_yticks(np.arange(len(cell_pairwise_distances[0])))
     ax[1].set_xticklabels(cells, fontdict=fontdict, fontsize=8, ha='left')
     ax[1].set_yticklabels(cells, fontdict=fontdict, fontsize=8)
-
 
     ax[0].set_title("Odor v. Odor", y=-0.25)
     ax[1].set_title("Cell v. Cell", y=-0.25)
