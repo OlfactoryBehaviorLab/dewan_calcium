@@ -37,7 +37,10 @@ def genminmax(data: list[pd.Series], pad: float = 0):
     data_min, data_max = np.min(all_values), np.max(all_values)
 
     if pad > 0:
-        data_min *= (1 - pad)
+        if data_min > 0:
+            data_min *= (1 - pad)
+        else:
+            data_min *= (1 + pad)
         data_max *= (1 + pad)
 
     return data_min, data_max
@@ -116,6 +119,9 @@ def new_plot_odor_traces(FV_data: pd.DataFrame,
                      fontsize='x-small', style='italic',
                      bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
 
+        ax1.set_xlim([x_min, x_max])
+        ax1.set_ylim([y_min, y_max])
+
         plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
 
         fig_name = f'{cell_name}-{odor}.pdf'
@@ -134,7 +140,7 @@ def new_pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, sign
         plot_type = 'Latent'
 
     data_iterator = plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix)
-    plot_function = partial(new_plot_odor_traces,
+    plot_function = partial(_plot_odor_traces,
                             FV_data, odor_list, response_duration, save_path, latent, all_cells)
 
     with tqdm(desc=f"Plotting {plot_type} Cells: ", total=len(cell_names)) as pbar:
