@@ -1,17 +1,20 @@
-import cycler
+import concurrent.futures
+from functools import partial
+from pathlib import Path
+import sys
+
 import numpy as np
 import pandas as pd
-
-from functools import partial
-from tqdm.contrib import concurrent
-from pathlib import Path
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.cm as cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
+if 'ipykernel' in sys.modules:
+    from tqdm.notebook import tqdm
+elif 'IPython' in sys.modules:
+    from tqdm import tqdm
 from .helpers import IO, trace_tools
 from .helpers.project_folder import ProjectFolder
 
@@ -104,8 +107,7 @@ def new_plot_odor_traces(FV_data: pd.DataFrame,
 def new_pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
                              FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
                              project_folder: ProjectFolder, latent: bool = False, all_cells: bool = False,
-                             num_workers: int = 20):
-
+                             num_workers: int = None):
     save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
     plot_type = 'On Time'
     if latent:
@@ -116,13 +118,14 @@ def new_pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, sign
     plot_function = partial(new_plot_odor_traces,
                             FV_data, odor_list, response_duration, save_path, latent, all_cells)
 
-    concurrent.process_map(plot_function, data_iterator, max_workers=num_workers,
-                desc=f'Plotting {plot_type} Cell-Odor Pairings: ')
-    # TQDM wrapper for concurrent features
+    with tqdm(desc=f"Plotting {plot_type} Cells: ", total=len(cell_names)) as pbar:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executer:
+            for _ in executer.map(plot_function, data_iterator):
+                pbar.update()
+
 
 def plot_cell_odor_traces(input_data, latent_cells_only: bool,
                           plot_all_cells: bool, cell_number: int) -> None:
-
     if latent_cells_only:
         folder = 'LatentCells'
     else:
