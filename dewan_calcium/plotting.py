@@ -46,10 +46,10 @@ def genminmax(data: list[pd.Series], pad: float = 0):
     return data_min, data_max
 
 
-def generate_color_map(numColors: int):
-    color_map = cm.get_cmap('rainbow')
-    indices = (np.linspace(0, 1, numColors))  # % color_map.N
-    return cycler.cycler('color', color_map(indices))
+# def generate_color_map(numColors: int):
+#     color_map = cm.get_cmap('rainbow')
+#     indices = (np.linspace(0, 1, numColors))  # % color_map.N
+#     return cycler.cycler('color', color_map(indices))
 
 
 def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
@@ -250,11 +250,16 @@ def plot_trial_variances(input_data, significance_table: np.array,
 
             baseline_mean = np.mean(np.hstack(baseline_data))
 
-            truncated_evok_data = truncate_data(evok_data)
+            # truncated_evok_data = truncate_data(evok_data)
 
-            baseline_corrected_evok_data = truncated_evok_data - baseline_mean
+            # baseline_corrected_evok_data = truncated_evok_data - baseline_mean
 
-            vertical_scatter_plot(baseline_corrected_evok_data, input_data, *folders)
+            # vertical_scatter_plot(baseline_corrected_evok_data, input_data, *folders)
+
+
+def pooled_trial_variances():
+    # TODO: Setup trial variance plotting like other functions
+    pass
 
 
 def vertical_scatter_plot(data_2_plot: list, data_input, *folders):
