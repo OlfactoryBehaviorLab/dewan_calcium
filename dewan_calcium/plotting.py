@@ -143,6 +143,8 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
 
         plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
 
+        plt.subplots_adjust(bottom=0.15)
+
         fig_name = f'{cell_name}-{odor}.pdf'
         fig_save_path = save_path.path.joinpath(fig_name)
         fig.savefig(fig_save_path, dpi=300)
