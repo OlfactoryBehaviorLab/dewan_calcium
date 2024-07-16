@@ -15,15 +15,32 @@ if 'ipykernel' in sys.modules:
     from tqdm.notebook import tqdm
 elif 'IPython' in sys.modules:
     from tqdm import tqdm
+
 from .helpers import IO, trace_tools
 from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
 
+AXIS_PAD = 0.05  # PERCENT
+
 
 def plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix):
     for cell in cell_names:
         yield cell, combined_data_shift[cell], AUROC_data[cell], significance_matrix[cell]
+
+
+def genminmax(data: list[pd.Series], pad: float = 0):
+    all_values = []
+    for _, values in data:
+        all_values.append(values)
+
+    data_min, data_max = np.min(all_values), np.max(all_values)
+
+    if pad > 0:
+        data_min *= (1 - pad)
+        data_max *= (1 + pad)
+
+    return data_min, data_max
 
 
 def generate_color_map(numColors: int):
@@ -43,25 +60,27 @@ def truncate_data(data):
 
 def new_plot_odor_traces(FV_data: pd.DataFrame,
                          odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
-                         all_cells: bool, cell_data: tuple) -> list[plt.Figure]:
-
+                         all_cells: bool, cell_data: tuple):
     cell_name, cell_df, auroc_data, significance_table = cell_data
-    test_figs = []
 
     for odor in odor_list:
-        # significant = False
+        significant = False
         significance_val = significance_table[odor]
 
-        if significance_val == 0 and all_cells is False:
+        if all_cells is False and significance_val == 0:
+            # If were not plotting everything and the cell is not significant; skip
             continue
-        else:
+
+        if significance_val > 0:  # Tag the significant graphs
             significant = True
 
         odor_data = cell_df[odor]
         odor_times = FV_data[odor]
 
-        trial_data = list(odor_data.items())
         timestamps = list(odor_times.items())
+        trial_data = list(odor_data.items())
+        x_min, x_max = genminmax(timestamps, 0.05)
+        y_min, y_max = genminmax(trial_data, 0.05)
 
         baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
                                                                              response_duration, latent)
