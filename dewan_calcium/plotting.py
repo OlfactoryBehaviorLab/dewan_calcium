@@ -52,19 +52,9 @@ def generate_color_map(numColors: int):
     return cycler.cycler('color', color_map(indices))
 
 
-def truncate_data(data):
-    row_len = np.min([len(row) for row in data])
-    # print(row_len)
-    for i, row in enumerate(data):
-        data[i] = row[:row_len]
-
-    return data
-
-
 def _plot_odor_traces(FV_data: pd.DataFrame,
                       odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
                       all_cells: bool, cell_data: tuple):
-
     cell_name, cell_df, auroc_data, significance_table = cell_data
     baseline_start = 0
     baseline_end = -response_duration
@@ -150,10 +140,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
         fig.savefig(fig_save_path, dpi=300)
 
 
-def new_pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
-                             FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
-                             project_folder: ProjectFolder, latent: bool = False, all_cells: bool = False,
-                             num_workers: int = None):
+def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
+                         FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
+                         project_folder: ProjectFolder, latent: bool = False, all_cells: bool = False,
+                         num_workers: int = None):
     save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
     plot_type = 'On Time'
     if latent:
