@@ -66,6 +66,14 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
                       all_cells: bool, cell_data: tuple):
 
     cell_name, cell_df, auroc_data, significance_table = cell_data
+    baseline_start = 0
+    baseline_end = -response_duration
+    evoked_start = 0
+    evoked_end = response_duration
+
+    if latent:
+        evoked_start = response_duration
+        evoked_end = response_duration * 2
 
     for odor in odor_list:
         significant = False
@@ -85,13 +93,12 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
         trial_data = list(odor_data.items())
         x_min, x_max = genminmax(timestamps, 0.05)
         y_min, y_max = genminmax(trial_data, 0.05)
-
-        baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
-                                                                             response_duration, latent)
-
         auroc_stats = auroc_data.loc[odor]
         percentile = auroc_stats['percentiles']
         lower_bound, upper_bound = auroc_stats['bounds']
+
+        baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
+                                                                             response_duration, latent)
 
         fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
         plt.suptitle(f'Cell: {cell_name} Odor: {odor}', fontsize=14)
@@ -102,7 +109,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
 
         x_vals = []  # We want to expose the last set of x_vals for the average to use
         for x_vals, y_vals in plot_data:
-            _, x_vals = x_vals   # Items() returns a name, we don't need it
+            _, x_vals = x_vals  # Items() returns a name, we don't need it
             _, y_vals = y_vals
 
             ax1.plot(x_vals, y_vals, linewidth=0.5)
@@ -111,7 +118,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
         ax1.plot(x_vals, avg_data, "k", linewidth=1.5)
 
         ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
-        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(percentile*100)}',
+        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(percentile * 100)}',
                  transform=ax1.transAxes, fontsize='x-small', style='italic',
                  bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
 
@@ -119,6 +126,17 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
             ax1.text(0.015, 0.965, 'Significant!', transform=ax1.transAxes,
                      fontsize='x-small', style='italic',
                      bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
+
+        baseline_rectangle = mpatches.Rectangle((baseline_start, y_min),
+                                                (baseline_end - baseline_start),
+                                                y_max, alpha=0.3, facecolor='blue')
+
+        evoked_rectangle = mpatches.Rectangle((evoked_start, y_min), (evoked_end - evoked_start),
+                                              y_max,
+                                              alpha=0.3, facecolor='green')
+
+        ax1.add_patch(baseline_rectangle)
+        ax1.add_patch(evoked_rectangle)
 
         ax1.set_xlim([x_min, x_max])
         ax1.set_ylim([y_min, y_max])
