@@ -61,9 +61,10 @@ def truncate_data(data):
     return data
 
 
-def new_plot_odor_traces(FV_data: pd.DataFrame,
-                         odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
-                         all_cells: bool, cell_data: tuple):
+def _plot_odor_traces(FV_data: pd.DataFrame,
+                      odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
+                      all_cells: bool, cell_data: tuple):
+
     cell_name, cell_df, auroc_data, significance_table = cell_data
 
     for odor in odor_list:
