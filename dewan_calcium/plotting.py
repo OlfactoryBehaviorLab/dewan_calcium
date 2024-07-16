@@ -17,7 +17,7 @@ elif 'IPython' in sys.modules:
     from tqdm import tqdm
 
 from .helpers import IO, trace_tools
-from .helpers.project_folder import ProjectFolder
+from .helpers.project_folder import ProjectFolder, Dir
 
 mpl.rcParams['font.family'] = 'Arial'
 
@@ -52,8 +52,28 @@ def generate_color_map(numColors: int):
     return cycler.cycler('color', color_map(indices))
 
 
-def _plot_odor_traces(FV_data: pd.DataFrame,
-                      odor_list: pd.Series, response_duration: int, save_path: Path, latent: bool,
+def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
+    x_val = [[1], [2]]
+    x_vals = np.tile(x_val, (1, len(baseline_means)))
+    ax2.set_title('Baseline v. Evoked Means', fontsize=10)
+
+    ax2.plot(x_vals, (baseline_means, evoked_means), '-o', linewidth=2)
+
+    ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
+    ax2.yaxis.tick_right()
+
+    y_min = np.min((baseline_means, evoked_means))
+    y_max = np.max((baseline_means, evoked_means))
+
+    ax2.set_ylim([y_min - (0.05 * y_min), y_max + (0.05 * y_max)])
+    ax2.set_xlim([0.8, 2.2])
+
+    baseline_mean = np.mean(baseline_means)
+    evoked_mean = np.mean(evoked_means)
+    ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
+
+
+def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_duration: int, save_path: Dir, latent: bool,
                       all_cells: bool, cell_data: tuple):
     cell_name, cell_df, auroc_data, significance_table = cell_data
     baseline_start = 0
@@ -85,7 +105,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
         y_min, y_max = genminmax(trial_data, 0.05)
         auroc_stats = auroc_data.loc[odor]
         percentile = auroc_stats['percentiles']
-        lower_bound, upper_bound = auroc_stats['bounds']
+        #  lower_bound, upper_bound = auroc_stats['bounds']
 
         baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
                                                                              response_duration, latent)
@@ -118,7 +138,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame,
                      bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
 
         baseline_rectangle = mpatches.Rectangle((baseline_start, y_min),
-                                                (baseline_end - baseline_start),
+                                                baseline_end - baseline_start,
                                                 y_max, alpha=0.3, facecolor='blue')
 
         evoked_rectangle = mpatches.Rectangle((evoked_start, y_min), (evoked_end - evoked_start),
