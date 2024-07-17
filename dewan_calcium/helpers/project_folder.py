@@ -19,7 +19,7 @@ class ProjectFolder:
     def get_data(self):
         self.raw_data_dir._get_files()
         self.inscopix_dir._get_files()
-        self.inscopix_dir._get_files()
+        self.analysis_dir._get_files()
 
     def _set_root_dir(self, root_dir):
         cwd = Path(os.getcwd())
@@ -128,6 +128,10 @@ class RawDataDir(Dir):
         self.exp_h5_path = None
         self.odorlist_path = None
 
+        # Raw DLC Files
+        self.labeled_video_path = None
+        self.points_h5_path = None
+
         if not self._new_dir:
             self._get_files()
 
@@ -135,8 +139,10 @@ class RawDataDir(Dir):
         json_file = list(self.path.glob('*session*.json'))
         raw_GPIO = list(self.path.glob('*.gpio'))
         raw_recordings = list(self.path.glob('*.isxd'))
-        h5_file = list(self.path.glob('*.h5'))
+        exp_h5_file = list(self.path.glob('*mouse*.h5'))
+        points_h5_file = list(self.path.glob('*DLC*.h5'))
         odor_list = list(self.path.glob('*.xlsx'))
+        labeled_video = list(self.path.glob('*DLC*labeled*')) # Usually mp4 files, but this is more flexible
 
         if self._check_file_not_found(json_file, 'session.json'):
             self.session_json_path = json_file[0]
@@ -144,10 +150,14 @@ class RawDataDir(Dir):
             self.raw_GPIO_path = raw_GPIO[0]
         if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
             self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
-        if self._check_file_not_found(h5_file, 'H5 File'):
-            self.exp_h5_path = h5_file[0]
+        if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
+            self.exp_h5_path = exp_h5_file[0]
         if self._check_file_not_found(odor_list, 'Odor List'):
             self.odorlist_path = odor_list[0]
+        if self._check_file_not_found(points_h5_file, 'Points H5 File'):
+            self.points_h5_path = points_h5_file[0]
+        if self._check_file_not_found(labeled_video, 'Labeled Video'):
+            self.labeled_video_path = labeled_video[0]
 
 
 class InscopixDir(Dir):
