@@ -5,11 +5,13 @@ import sys
 
 import numpy as np
 import pandas as pd
+
 import matplotlib as mpl
-import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-import matplotlib.cm as cm
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.patches import Polygon
+import matplotlib.pyplot as plt
+from matplotlib.collections import PatchCollection
+from matplotlib.colors import LinearSegmentedColormap
 
 if 'ipykernel' in sys.modules:
     from tqdm.notebook import tqdm
