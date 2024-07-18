@@ -42,13 +42,24 @@ def z_score_data(data: pd.DataFrame) -> list:
     return z_scored_data
 
 
-def calc_smoothing_params(framerate, decay_time, rise_time):
+def calc_smoothing_params(endoscope_framerate=10, decay_time_s=0.4, rise_time_s=0.08):
+    """
 
-    decay_param = np.exp(-1 / (decay_time * framerate))
-    rise_param = np.exp(-1 / (rise_time * framerate))
+    Args:
+        endoscope_framerate: Frame rate in seconds of the micro-endoscope (10Hz)
+        decay_time_s: Time in seconds for the decay of 10 action potentials (0.4 for gcamp6f)
+        rise_time_s: Time in seconds for the rise to peak of 10 action potentials (0.08 for gcamp6f)
+
+    Returns:
+        g1: kernel component 1
+        g2: kernel component 2
+
+    """
+    decay_param = np.exp(-1 / (decay_time_s * endoscope_framerate))
+    rise_param = np.exp(-1 / (rise_time_s * endoscope_framerate))
 
     g1 = round(decay_param + rise_param, 5)
-    g2 = round(-decay_time * rise_param, 5)
+    g2 = round(-decay_time_s * rise_param, 5)
 
     return g1, g2
 
@@ -62,7 +73,6 @@ def smooth_data(trace, calc_kernel) -> np.ndarray:
     warnings.simplefilter("ignore", category=RuntimeWarning)
 
     deconv_data = deconvolve(trace, (g1, g2))
-
     smoothed_trace = deconv_data[0]
 
     return smoothed_trace
