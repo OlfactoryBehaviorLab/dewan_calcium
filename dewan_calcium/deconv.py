@@ -8,25 +8,23 @@ def find_peaks(smoothed_data: np.ndarray, framerate: int, peak_args: dict) -> li
     width_time = peak_args['decay']
     distance_time = peak_args['distance']
     peak_height = peak_args['height']
-
-    peak_width = (framerate * width_time) / 1000
-    peak_distance = (framerate * distance_time) / 1000
-
-    transient_indexes = []
-
-    for trace in smoothed_data:
-        peaks = signal.find_peaks(trace, height=peak_height, width=peak_width, distance=peak_distance)
-        peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
-        transient_indexes.append(peaks)
-
-    return transient_indexes
-
-
-def z_score_data(data: pd.DataFrame) -> list:
+def z_score_data(trace_data: pd.DataFrame, cell_names) -> pd.DataFrame:
     # Function is given a Cells x Trials array
     # Zscores each trial and then returns the array
 
     from scipy.stats import zscore
+
+    z_scored_data = pd.DataFrame()
+
+    for cell in cell_names:
+
+        fluorescence_values = trace_data[cell].values
+        z_score = zscore(fluorescence_values)
+
+        z_score = pd.Series(z_score, name=cell)
+        z_scored_data = pd.concat((z_scored_data, z_score), axis=1)
+
+    return z_scored_data
 
     z_scored_data = []
 
