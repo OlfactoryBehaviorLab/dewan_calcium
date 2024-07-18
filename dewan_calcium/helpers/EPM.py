@@ -7,7 +7,8 @@ import numpy as np
 from shapely import Polygon, Point, prepare, intersection, symmetric_difference_all
 
 
-def find_led_start(points: pd.DataFrame) -> list:
+def find_led_start(points: pd.DataFrame) -> np.array:
+
     indexes = points.index[points['led_p'] > 0.98].values
     bins = []
     temp_bin = []
@@ -30,6 +31,7 @@ def find_led_start(points: pd.DataFrame) -> list:
                 bins.append(temp_bin)
                 temp_bin = []
 
+    bins = np.array(bins)
     return bins
 
 
@@ -140,7 +142,7 @@ def get_coordinate_region(animal_coordinates: pd.Series, individual_regions: dic
     return location_name, location_index
 
 
-def get_distances(individual_regions: dict, coordinate_pairs:list):
+def get_distances(individual_regions: dict, coordinate_pairs: list):
     distances = []
 
     for pair in coordinate_pairs:
@@ -165,7 +167,5 @@ def get_distances(individual_regions: dict, coordinate_pairs:list):
             distance = current_point.distance(shared_border_center)
             # Distance between the current coordinate and center of our shared border
             distances.append(distance)
-
-
 
     return distances
