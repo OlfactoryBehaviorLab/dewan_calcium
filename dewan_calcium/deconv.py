@@ -2,12 +2,9 @@ import numpy as np
 import pandas as pd
 from scipy import signal
 from oasis.functions import deconvolve  # install using conda install to avoid having to build
+from tqdm import tqdm
 
 
-def find_peaks(smoothed_data: np.ndarray, framerate: int, peak_args: dict) -> list:
-    width_time = peak_args['decay']
-    distance_time = peak_args['distance']
-    peak_height = peak_args['height']
 def z_score_data(trace_data: pd.DataFrame, cell_names) -> pd.DataFrame:
     # Function is given a Cells x Trials array
     # Zscores each trial and then returns the array
