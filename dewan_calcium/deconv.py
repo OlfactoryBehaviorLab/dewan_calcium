@@ -26,18 +26,24 @@ def z_score_data(trace_data: pd.DataFrame, cell_names) -> pd.DataFrame:
 
     return z_scored_data
 
-    z_scored_data = []
 
-    for cell in data.columns:
+def find_peaks(smoothed_data: pd.DataFrame, cell_names, framerate: int, peak_args: dict) -> dict:
+    width_time = peak_args['decay']
+    inter_spike_time = peak_args['ISI']
+    peak_height = peak_args['height']
 
-        fluorescence_values = data[cell].values
+    peak_width_distance = framerate * (width_time / 1000)
+    inter_transient_distance = framerate * (inter_spike_time / 1000)
 
-        combined_data = np.hstack(fluorescence_values)
-        z_score_combined = zscore(combined_data)
+    transient_indexes = dict()
 
-        z_scored_data.append(z_score_combined)
+    for name, trace in tqdm(smoothed_data[cell_names].items(), desc="Find Transient Indexes: ", total=len(cell_names)):
+        peaks = signal.find_peaks(trace, height=peak_height, width=peak_width_distance,
+                                  distance=inter_transient_distance)
+        peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
+        transient_indexes[name] = peaks
 
-    return z_scored_data
+    return transient_indexes
 
 
 def calc_smoothing_params(endoscope_framerate=10, decay_time_s=0.4, rise_time_s=0.08):
