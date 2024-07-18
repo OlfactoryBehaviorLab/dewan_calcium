@@ -64,8 +64,11 @@ def calc_smoothing_params(endoscope_framerate=10, decay_time_s=0.4, rise_time_s=
     return g1, g2
 
 
-def smooth_data(trace, calc_kernel) -> np.ndarray:
+def smooth_data(calc_kernel, trace_data) -> tuple[str, np.ndarray]:
     import warnings
+
+    name, trace = trace_data
+    trace = trace.values
 
     g1, g2 = calc_kernel
 
@@ -75,39 +78,4 @@ def smooth_data(trace, calc_kernel) -> np.ndarray:
     deconv_data = deconvolve(trace, (g1, g2))
     smoothed_trace = deconv_data[0]
 
-    return smoothed_trace
-
-
-def multithread_smoothing(zscored_data: list, framerate: int, peak_args: dict, num_workers: int = 4) -> list[tuple]:
-    from concurrent.futures import ProcessPoolExecutor
-    from contextlib import ExitStack
-    from functools import partial
-    from tqdm.notebook import tqdm
-
-    iterator = zscored_data
-
-    rise_time = peak_args['rise'] / 1000
-    decay_time = peak_args['decay'] / 1000
-
-    calc_kernel = calc_smoothing_params(framerate, decay_time, rise_time)
-
-    num_traces = len(iterator)
-
-    traces = []
-
-    print("Begin smoothing of trace data...")
-
-
-    with ExitStack() as stack:
-        pool = stack.enter_context(ProcessPoolExecutor(max_workers=num_workers))
-        progress_bar = stack.enter_context(tqdm(position=0, total=num_traces))
-
-        smooth_func = partial(smooth_data, calc_kernel=calc_kernel)
-
-        for trace in pool.map(smooth_func, iterator):
-            progress_bar.update(1)
-            traces.append(trace)
-
-    print("Trace smoothing completed!")
-
-    return traces
+    return name, smoothed_trace
