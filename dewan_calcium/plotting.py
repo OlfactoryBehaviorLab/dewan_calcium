@@ -10,8 +10,8 @@ import matplotlib as mpl
 import matplotlib.patches as mpatches
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.collections import PatchCollection, LineCollection
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
 
 if 'ipykernel' in sys.modules:
     from tqdm.notebook import tqdm
@@ -225,6 +225,31 @@ def pooled_auroc_distributions(AUROC_data, cell_names, odor_list, project_folder
         with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executer:
             for _ in executer.map(plot_function, cell_names):
                 pbar.update()
+
+
+def plot_activity_heatmap(heatmap: np.array, line_coordinates, background_img, name, save_path: Path,  segments=20):
+    cmap = mpl.colormaps['hot'](np.linspace(0, 1, segments))[:-1]
+    cmap[0] = [0, 0, 0, 0]  # Hide all the lowest values
+    new_cmap = ListedColormap(cmap)
+
+    lc = LineCollection(line_coordinates, colors='dimgrey', alpha=0.8, linewidths=0.1)
+
+    fig, ax = plt.subplots()
+    ax.set_axis_off()
+    _ = ax.imshow(background_img)
+    _ = ax.add_collection(lc)
+    _hm = ax.imshow(heatmap, cmap=new_cmap, zorder=2)
+    _ = fig.colorbar(_hm)
+
+    plt.suptitle(f'{name} Activity with Position')
+
+    file_name = f'{name}_activity_heatmap.pdf'
+    file_path = save_path.joinpath(file_name)
+
+    plt.tight_layout()
+
+    fig.savefig(file_path, dpi=900)
+    plt.close(fig)
 
 
 def plot_trial_variances(input_data, significance_table: np.array,
