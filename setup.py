@@ -23,6 +23,7 @@ setup(
 						'tqdl',
 						'PySide6',
 						'PyQtDarkTheme',
+						'opencv-python',
 						#'oasis-deconv'
 						#'isx>=1.9.4'
 						]
