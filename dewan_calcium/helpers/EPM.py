@@ -113,6 +113,41 @@ def get_region_polygons(arm_coordinates):
     return individual_polygons, original_polygons
 
 
+def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shape: tuple):
+    image_x, image_y, _ = image_shape
+
+    combined_spike_heatmap = np.zeros((image_x, image_y))
+    cell_heatmaps = dict()
+    for cell in cell_names:
+        cell_indexes = spike_indexes[cell]
+        cell_heatmap = np.zeros((image_x, image_y))
+        for index in cell_indexes:
+            x, y = coordinates[index]
+            combined_spike_heatmap[y][x] += 1
+            cell_heatmap[y][x] += 1
+
+        cell_heatmaps[cell] = cell_heatmap
+
+    return combined_spike_heatmap, cell_heatmaps
+
+
+def generate_position_lines(coordinates, threshold=70):
+    from shapely import LineString
+    line_coordinates = []
+    for i in range(len(coordinates) - 1):
+        current_coord = coordinates[i]
+        next_coord = coordinates[i + 1]
+        line_coords = [current_coord, next_coord]
+        line = LineString(line_coords)
+        if line.length > threshold:
+            # Skip any very long lines; they're probably artifact, or our mice can teleport...
+            continue
+
+        line_coordinates.append(line_coords)
+
+    return line_coordinates
+
+
 def get_coordinate_region(animal_coordinates: pd.Series, individual_regions: dict):
     location_name = []
     location_index = []
