@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 
 from shapely import Polygon, Point, prepare, intersection, symmetric_difference_all
+from sklearn.metrics.pairwise import paired_distances
 
 
 def find_led_start(points: pd.DataFrame) -> np.array:
@@ -204,3 +205,38 @@ def get_distances(individual_regions: dict, coordinate_pairs: list):
             distances.append(distance)
 
     return distances
+
+
+def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
+    """
+    Function that finds points where adjacent coordinates are separated by an euclidian distance greater than some
+    threshold. If the distance >= the threshold, the later coordinate is replaced with the former. This effectively
+    "freezes" the animal in place in case the Deep Lab Cut tracking isn't perfect.
+
+    Args:
+        coordinates (list[list]: [X, Y] coordinate pairs
+        percentile (int): Percentile to calculate the threshold of what is a "jump" from the data
+        threshold (np.number): Manually set the threshold of what a "jump" is considered
+
+    Returns:
+        threshold (np.number): Threshold used to define a "jump"
+        coordinates (list[list]): List of new coordinates with jumps replaced with the last coordinate before the jump
+
+    """
+    coordinates_1 = coordinates[:-1]
+    coordinates_2 = coordinates[1:]
+
+    distances = paired_distances(coordinates_1, coordinates_2)
+    
+    if threshold is None:
+        threshold = np.percentile(distances, [percentile])
+
+    jump_indexes = np.where(distances >= threshold)[0] + 1  # We offset by one to match the original list
+
+    for index in jump_indexes:
+        coordinates[index] = coordinates[index-1]
+
+    coordinates = np.array(coordinates)
+
+    return threshold, coordinates
+
