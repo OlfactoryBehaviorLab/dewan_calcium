@@ -8,24 +8,26 @@ from shapely import Polygon, Point, prepare, intersection, symmetric_difference_
 from sklearn.metrics.pairwise import paired_distances
 
 
-def find_led_start(points: pd.DataFrame) -> np.array:
-
-    indexes = points.index[points['led_p'] > 0.98].values
+def find_index_bins(indices) -> np.array:
+    num_indices = len(indices)
     bins = []
     temp_bin = []
-    for i in range(len(indexes) - 1):
-        i1 = indexes[i]
-        i2 = indexes[i + 1]
 
-        diff = i2 - i1
+    for i in range(num_indices):
+        i1 = indices[i]
+
         if not temp_bin:
             temp_bin.append(i1)
+
+        if i == (num_indices - 1):
+            temp_bin.append(i1)
+            bins.append(temp_bin)
+            continue
         else:
-            if i == len(indexes) - 2:  # End is len - 1, and then -1 again for the zero indexes
-                temp_bin.append(i2)
-                bins.append(temp_bin)
-                temp_bin = []
-            elif diff == 1:
+            i2 = indices[i + 1]
+            diff = i2 - i1
+
+            if diff == 1:
                 continue
             elif diff > 1:
                 temp_bin.append(i1)
