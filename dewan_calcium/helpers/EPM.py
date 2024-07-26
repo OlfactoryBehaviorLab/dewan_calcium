@@ -38,6 +38,27 @@ def find_index_bins(indices) -> np.array:
     return bins
 
 
+def replace_the_void(coordinate_locations, region_indexes, void_index_bins):
+    for index_bin in void_index_bins:
+        bin_start, bin_end = index_bin
+
+        if bin_start == 0:  # If the beginning of the bin is 0, we want the first value after the end of the bin
+            replacement_index = bin_end + 1
+        else:
+            replacement_index = bin_start - 1
+
+        replacement_value = coordinate_locations[replacement_index]
+        replacement_index = region_indexes[replacement_index]
+
+        if bin_start == bin_end:  # One value to replace
+            coordinate_locations[bin_start] = replacement_value
+            region_indexes[bin_start] = replacement_index
+        else:  # replace the whole range
+            coordinate_locations[bin_start:bin_end] = replacement_value
+            region_indexes[bin_start:bin_end] = replacement_index
+
+    return coordinate_locations, region_indexes
+
 def get_arm_rois(image):
     fig, ax = plt.subplots()
     ax.imshow(image)
