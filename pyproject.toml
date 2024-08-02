@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "dewan-calcium"
+version = "1.0.0"
+description = "Dewan Lab calcium imaging toolbox"
+authors = ["Austin Pauley <austin2118ace@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10, <3.12"
+numpy = "^2.0.1"
+pandas = ">2.0"
+matplotlib = "^3.9.1"
+openpyxl = "^3.1.5"
+scikit-learn = "^1.5.1"
+scipy = "^1.14.0"
+pyarrow = "^17.0.0"
+tqdm = "^4.66.4"
+opencv-python = "^4.10.0.84"
+pyside6 = "^6.7.2"
+pyqtdarktheme = "^2.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
