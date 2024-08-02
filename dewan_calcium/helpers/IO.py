@@ -46,49 +46,6 @@ def make_cell_folder4_plot(cell: str | int, *Folders: list) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
 
-def get_project_files(directory: str) -> (str, list, Path):
-    """
-    Takes an input raw data folder and generates a list of video files, the gpio file, and the video base
-    (file name minus extension).
-
-    Args:
-        directory (string):
-            Folder containing the raw data for the project
-    Returns:
-        tuple (string, list, string)
-            0) Video Base (file name minus extension)
-            1) List of video files in the folder excluding the GPIO file
-            2) Path to the GPIO file
-        tuple (None, None, None):
-            If one of the file types cannot be found, function returns None
-    """
-    data_folder = Path(directory)
-
-    try:
-        session_json_path = Path(sorted(data_folder.glob('*.json'))[0])
-    except IndexError:
-        print(f'session.json not found in {data_folder.absolute()}')
-        session_json_path = None
-
-    try:
-        gpio_file_path = Path(sorted(data_folder.glob('*.gpio'))[0])
-        video_base = gpio_file_path.stem
-    except IndexError:
-        print(f'GPIO File not found in {data_folder.absolute()}')
-        gpio_file_path = None
-        video_base = None
-
-    try:
-        video_files = sorted(data_folder.glob('*.isxd'))
-        video_files = [str(path) for path in video_files if 'gpio' not in path.name]
-        # After processing is run once, an isxd file with gpio in the name is generated.
-        # If processing is run again, this will ignore that file and only load the video files
-    except IndexError:
-        print(f'No video file(s) found in {data_folder.absolute()}')
-        video_files = None
-
-    return video_base, video_files, gpio_file_path, session_json_path
-
 
 def check_files(input_files: list or None, output_files: list or None) -> bool:
     from numpy import hstack
