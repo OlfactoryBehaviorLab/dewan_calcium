@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "dewan-calcium"
-version = "1.0.0"
+name = "dewan_calcium"
+version = "2.0.0"
 description = "Dewan Lab calcium imaging toolbox"
-authors = ["Austin Pauley <austin2118ace@gmail.com>"]
+authors = ["Austin Pauley <pauley@psy.fsu.edu>", "Adam Dewan <dewan@psy.fsu.edu>", "Samuel Caton <caton@psy.fsu.edu>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
