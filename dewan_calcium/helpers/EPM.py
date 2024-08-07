@@ -172,7 +172,7 @@ def generate_position_lines(coordinates, threshold=70):
     return line_coordinates
 
 
-def get_coordinate_region(animal_coordinates: pd.Series, individual_regions: dict):
+def get_regions(animal_coordinates: pd.Series, individual_regions: dict):
     location_name = []
     location_index = []
     names = individual_regions['Name']
@@ -198,6 +198,8 @@ def get_coordinate_region(animal_coordinates: pd.Series, individual_regions: dic
         location_name.append(temp_name)
         location_index.append(temp_index)
 
+    location_name = np.array(location_name)
+    location_index = np.array(location_index)
     return location_name, location_index
 
 
