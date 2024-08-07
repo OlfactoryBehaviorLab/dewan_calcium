@@ -47,6 +47,10 @@ def replace_the_void(coordinate_locations, region_indexes, void_index_bins):
         else:
             replacement_index = bin_start - 1
 
+        if bin_end + 1 < len(coordinate_locations):
+            # If not at the last value, we need to add one to account for slices no being inclusive
+            bin_end = bin_end + 1
+
         replacement_value = coordinate_locations[replacement_index]
         replacement_index = region_indexes[replacement_index]
 
@@ -264,4 +268,5 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
     coordinates = np.array(coordinates)
 
     return threshold, coordinates
+
 
