@@ -366,12 +366,13 @@ def plot_distance_v_correlation(unique_distance_v_correlation):
     _ = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
 
 
-
-def plot_epm_roi(polygons: dict, image):
+def plot_epm_roi(polygons: pd.DataFrame, image):
     fig, ax = plt.subplots()  # New Graph
     ax.set_axis_off()
 
-    open_coordinates, closed_coordinates, center_coordinates = get_polygon_coordinates(polygons)
+    original_polygons = polygons['Shape']
+
+    open_coordinates, closed_coordinates, center_coordinates = get_polygon_coordinates(original_polygons)
 
     open_poly = Polygon(open_coordinates, alpha=0.2, color='r')
     closed_poly = Polygon(closed_coordinates, alpha=0.2, color='b')
@@ -386,10 +387,10 @@ def plot_epm_roi(polygons: dict, image):
     return fig, ax
 
 
-def get_polygon_coordinates(polygons: dict):
+def get_polygon_coordinates(polygons):
     coordinates = []
 
-    for polygon in polygons['Polygon']:
+    for polygon in polygons:
         coordinates.append(list(polygon.exterior.coords)[:-1])  # Drop last point as it is a duplicate of the first
 
     return coordinates
