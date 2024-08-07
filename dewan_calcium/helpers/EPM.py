@@ -1,3 +1,4 @@
+import shapely
 from matplotlib import pyplot as plt
 from roipoly import MultiRoi
 # Must be installed from GitHub as the PyPi version is obsolete; pip install git+https://github.com/jdoepfert/roipoly.py
@@ -63,6 +64,7 @@ def replace_the_void(coordinate_locations, region_indexes, void_index_bins):
 
     return coordinate_locations, region_indexes
 
+
 def get_arm_rois(image):
     fig, ax = plt.subplots()
     ax.imshow(image)
@@ -110,7 +112,7 @@ def display_roi_instructions():
     display(HTML(alert_html))
 
 
-def get_region_polygons(arm_coordinates):
+def get_region_polygons(arm_coordinates) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     open_arm_coordinates = [tuple(each) for each in arm_coordinates[0]]  # Convert the coordinates into tuples
     closed_arm_coordinates = [tuple(each) for each in arm_coordinates[1]]
@@ -126,17 +128,19 @@ def get_region_polygons(arm_coordinates):
 
     # Starting in the top left and going clockwise, O1, C1, O2, C2
 
-    individual_polygons = {
-        'Name': ['open1', 'open2', 'closed1', 'closed2', 'center'],
-        'Polygon': [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
-    }
-    original_polygons = {
-        'Name': ['open_arm', 'closed_arm', 'center'],
-        'Polygon': [open_arm_polygon, closed_arm_polygon, center_polygon]
-    }
+    names = ['open1', 'open2', 'closed1', 'closed2', 'center']
+    polygons = [open_arm_1, open_arm_2, closed_arm_1, closed_arm_2, center_polygon]
 
-    for polygon in individual_polygons['Polygon']:
-        prepare(polygon)
+    dimensions = [approximate_rectangle_dimensions(polygon) for polygon in polygons]
+    widths, lengths = zip(*dimensions)
+    individual_data = zip(names, polygons, widths, lengths)
+
+    original_names = ['open_arm', 'closed_arm', 'center']
+    original_shapes = [open_arm_polygon, closed_arm_polygon, center_polygon]
+    original_data = zip(original_names, original_shapes)
+
+    individual_polygons = pd.DataFrame(individual_data, columns=['Name', 'Shape', 'Width', 'Length'])
+    original_polygons = pd.DataFrame(original_data, columns=['Name', 'Shape'])
 
     return individual_polygons, original_polygons
 
@@ -164,6 +168,8 @@ def approximate_rectangle_dimensions(polygon: shapely.Polygon) -> tuple[float, f
     width, length = round(width, 4), round(length, 4)
 
     return width, length
+
+
 def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shape: tuple):
     image_x, image_y, _ = image_shape
 
@@ -291,5 +297,3 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
     coordinates = np.array(coordinates)
 
     return threshold, coordinates
-
-
