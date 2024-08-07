@@ -133,14 +133,14 @@ def get_region_polygons(arm_coordinates) -> tuple[pd.DataFrame, pd.DataFrame]:
 
     dimensions = [approximate_rectangle_dimensions(polygon) for polygon in polygons]
     widths, lengths = zip(*dimensions)
-    individual_data = zip(names, polygons, widths, lengths)
+    individual_data = zip(polygons, widths, lengths)
 
     original_names = ['open_arm', 'closed_arm', 'center']
     original_shapes = [open_arm_polygon, closed_arm_polygon, center_polygon]
     original_data = zip(original_names, original_shapes)
 
-    individual_polygons = pd.DataFrame(individual_data, columns=['Name', 'Shape', 'Width', 'Length'])
-    original_polygons = pd.DataFrame(original_data, columns=['Name', 'Shape'])
+    individual_polygons = pd.DataFrame(individual_data, index=names, columns=['Shape', 'Width', 'Length'])
+    original_polygons = pd.DataFrame(original_data, index=original_names, columns=['Name', 'Shape'])
 
     return individual_polygons, original_polygons
 
