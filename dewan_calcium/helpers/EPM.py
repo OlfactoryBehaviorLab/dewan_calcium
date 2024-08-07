@@ -141,6 +141,29 @@ def get_region_polygons(arm_coordinates):
     return individual_polygons, original_polygons
 
 
+def approximate_rectangle_dimensions(polygon: shapely.Polygon) -> tuple[float, float]:
+    """
+    Small function to estimate the length of an approximately rectangular polygon. Using perimeter and area, the
+    length and width of a rectangle can be derived. When the formulae for area and perimeter are combined and solved for
+    length, we get a quadratic where 0 = 2*l^2 - P*l + 2A Solving the two roots of this quadratic will give both
+    the length and width of the rectangle. The longer root is length, the shorter width.
+    Args:
+        polygon (shapely.Polygon): Shapely polygon containing the four corners of the rectangle
+
+    Returns:
+        width (float): approximate width of the rectangle
+        length (float): approximate length of the rectangle
+
+    """
+    area, perimeter = polygon.area, polygon.length
+    polynomial = np.polynomial.Polynomial([2*area, -perimeter, 2])
+    #  Coefficients are ordered as C, B, A for a quadratic function
+    roots = polynomial.roots()
+    width, length = np.sort(roots)
+
+    width, length = round(width, 4), round(length, 4)
+
+    return width, length
 def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shape: tuple):
     image_x, image_y, _ = image_shape
 
