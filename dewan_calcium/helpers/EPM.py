@@ -236,15 +236,15 @@ def get_regions(animal_coordinates: pd.Series, individual_regions: pd.DataFrame)
     return location_name, location_index
 
 
-def get_distances(individual_regions: dict, coordinate_pairs: list):
+def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list):
     distances = []
 
     for pair in coordinate_pairs:
         coordinate, region_index = pair
 
-        current_polygon = individual_regions['Polygon'][region_index]
-        open_arm_1_polygon = individual_regions['Polygon'][0] # O1 is always first
-        center_polygon = individual_regions['Polygon'][-1]  # Center is always last
+        current_polygon = individual_regions.iloc[region_index]['Shape']
+        open_arm_1_polygon = individual_regions.loc['open1']['Shape']  # O1 is always first
+        center_polygon = individual_regions.loc['center']['Shape']  # Center is always last
         current_point = Point(coordinate)
 
         if region_index == -1:  # If point is in 'the_void'
