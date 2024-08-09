@@ -205,19 +205,19 @@ def generate_position_lines(coordinates, threshold=70):
     return line_coordinates
 
 
-def get_regions(animal_coordinates: pd.Series, individual_regions: dict):
+def get_regions(animal_coordinates: pd.Series, individual_regions: pd.DataFrame):
     location_name = []
     location_index = []
-    names = individual_regions['Name']
-    polygons = individual_regions['Polygon']
+    names = individual_regions.index.values
+    polygons = individual_regions['Shape']
 
     for coordinate in animal_coordinates.values:
         point = Point(coordinate)
         temp_name = []
         temp_index = []
-        for index in range(len(individual_regions['Name'])):
+        for index in range(len(names)):
             name = names[index]
-            polygon = polygons[index]
+            polygon = polygons.iloc[index]
 
             if point.within(polygon):
                 temp_name = name
