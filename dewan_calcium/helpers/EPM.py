@@ -113,7 +113,6 @@ def display_roi_instructions():
 
 
 def get_region_polygons(arm_coordinates) -> tuple[pd.DataFrame, pd.DataFrame]:
-
     open_arm_coordinates = [tuple(each) for each in arm_coordinates[0]]  # Convert the coordinates into tuples
     closed_arm_coordinates = [tuple(each) for each in arm_coordinates[1]]
 
@@ -160,7 +159,7 @@ def approximate_rectangle_dimensions(polygon: shapely.Polygon) -> tuple[float, f
 
     """
     area, perimeter = polygon.area, polygon.length
-    polynomial = np.polynomial.Polynomial([2*area, -perimeter, 2])
+    polynomial = np.polynomial.Polynomial([2 * area, -perimeter, 2])
     #  Coefficients are ordered as C, B, A for a quadratic function
     roots = polynomial.roots()
     width, length = np.sort(roots)
@@ -262,7 +261,31 @@ def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list):
             # Distance between the current coordinate and center of our shared border
             distances.append(distance)
 
-    return distances
+    return np.ndarray(distances)
+
+
+def normalize_distance(individual_regions, coordinate_locations, distances, is_percent=False) -> np.ndarray:
+    """
+    This function takes the animals position as calculated by get_distances and normalizes each distance to the length
+    of the currently occupied arm.
+
+    Args:
+        individual_regions (pd.DataFrame): Dataframe containing information about the five arms of the EPM
+        coordinate_locations (np.ndarray): Ndarray containing the arm each position/distance is located in
+        distances (np.ndarray): Ndarray containing the position along the arm for each frame
+        is_percent (bool) (default: False): Optional argument to convert output into a percentage
+    Returns: new_distance (np.ndarray): Ndarray containing positions that have been normalized to the length of their
+    respective arms
+    """
+
+    lengths = individual_regions.loc[coordinate_locations]['Length'].values
+    new_distances = np.divide(distances, lengths)
+    new_distances = np.round(new_distances, 4)
+
+    if is_percent:
+        new_distances = np.multiply(new_distances, 100)
+
+    return new_distances
 
 
 def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
@@ -285,14 +308,14 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
     coordinates_2 = coordinates[1:]
 
     distances = paired_distances(coordinates_1, coordinates_2)
-    
+
     if threshold is None:
         threshold = np.percentile(distances, [percentile])
 
     jump_indexes = np.where(distances >= threshold)[0] + 1  # We offset by one to match the original list
 
     for index in jump_indexes:
-        coordinates[index] = coordinates[index-1]
+        coordinates[index] = coordinates[index - 1]
 
     coordinates = np.array(coordinates)
 
