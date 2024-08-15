@@ -211,10 +211,10 @@ def _plot_auroc_distribution(AUROC_data, odor_list, save_path, plot_all, cell_na
 def pooled_auroc_distributions(AUROC_data, cell_names, odor_list, project_folder: ProjectFolder,
                                latent: bool = False, all_cells: bool = False, num_workers: int = None):
 
-    save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+    save_path = project_folder.analysis_dir.figures_dir.ontime_auroc_dir
     plot_type = 'On Time'
     if latent:
-        save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
+        save_path = project_folder.analysis_dir.figures_dir.latent_auroc_dir
         plot_type = 'Latent'
 
     plot_function = partial(_plot_auroc_distribution, AUROC_data, odor_list, save_path, all_cells)
