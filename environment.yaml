@@ -1,0 +1,13 @@
+### Dewan Calcium Anaconda Environment
+### For users and development
+### Austin Pauley, Dewan Lab, Florida State University, 2024
+
+name: dewan_calcium
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - 7zip
+  - oasis-deconv  # Conda has wheels and pip PyPi doesn't
