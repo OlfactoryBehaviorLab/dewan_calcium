@@ -10,4 +10,4 @@ dependencies:
   - python=3.10
   - pip
   - 7zip
-  - oasis-deconv  # Conda has wheels and pip PyPi doesn't
+  - oasis-deconv  # Conda has wheels and PyPi doesn't
