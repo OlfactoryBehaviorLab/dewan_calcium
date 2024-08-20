@@ -1,5 +1,5 @@
 import os
-# from PySide6.QtWidgets import QFileDialog
+from PySide6.QtWidgets import QFileDialog, QApplication
 from pathlib import Path
 
 
@@ -41,7 +41,7 @@ class ProjectFolder:
         if project_dir is None:
             if select_dir:
                 # For backwards compatability with manual curation
-                selected_dir = self.select_project_folder()
+                selected_dir = self._folder_selection()
                 if len(selected_dir) > 0:
                     self.path = Path(selected_dir[0])
                 else:
@@ -62,6 +62,32 @@ class ProjectFolder:
         self.raw_data_dir = RawDataDir(self)
         self.inscopix_dir = InscopixDir(self)
         self.analysis_dir = AnalysisDir(self)
+
+    def _folder_selection(self, existing_app=None) -> list:
+        if existing_app is None:
+            # Project Folder can be launched standalone, or as part of a package with an existing QApplication
+            app = QApplication.instance()
+            if not app:
+                app = QApplication([])
+        else:
+            app = existing_app
+
+        file_names = []
+
+        file_dialog = QFileDialog()
+        file_dialog.setWindowTitle("Select Project Directory:")
+        file_dialog.setFileMode(QFileDialog.FileMode.Directory)
+        file_dialog.setViewMode(QFileDialog.ViewMode.Detail)
+        file_dialog.setDirectory(str(self.search_root_dir))
+
+        if file_dialog.exec():
+            file_names = file_dialog.selectedFiles()
+
+        if not existing_app:  # Only close the app if we spawned it
+            app.exit()
+
+        return file_names
+
 
     #  Dunder Methods  #
     def __str__(self):
@@ -175,8 +201,6 @@ class RawDataDir(Dir):
             self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
         if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
             self.exp_h5_path = exp_h5_file[0]
-
-
 
 
 class InscopixDir(Dir):
