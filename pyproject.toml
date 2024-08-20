@@ -16,7 +16,7 @@ scipy = "^1.14.0"
 pyarrow = "^17.0.0"
 tqdm = "^4.66.4"
 opencv-python = "^4.10.0.84"
-pyside6 = "^6.7.2"
+pyside6 = "6.7.2"
 pyqtdarktheme = "^2.1.0"
 jupyter = "^1.0.0"
 roipoly = {git = "https://github.com/jdoepfert/roipoly.py"}
