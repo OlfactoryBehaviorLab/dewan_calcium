@@ -261,7 +261,7 @@ def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list):
             # Distance between the current coordinate and center of our shared border
             distances.append(distance)
 
-    return np.ndarray(distances)
+    return np.array(distances)
 
 
 def normalize_distance(individual_regions, coordinate_locations, distances, is_percent=False) -> np.ndarray:
