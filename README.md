@@ -12,7 +12,7 @@ Special thanks to Roberto Vincis for the frameworks of several functions include
 
 1) Clone the repository to a directory of your choosing
 2) Navigate to the clone directory
-3) Execute `pip install .` within the root directory
+3) Execute `pip install .` within the root
 
 ## Usage
 
@@ -24,3 +24,5 @@ Special thanks to Roberto Vincis for the frameworks of several functions include
 - Additionally, you will need to add the ISX library path to the LD_LIBRARY_PATH; see the following link for instructions to tie this to the conda library [Stack Overflow](https://stackoverflow.com/questions/46826497/conda-set-ld-library-path-for-env-only)
   - You can also symlink the inscopix library path to the environment lib path {miniforge_path}/envs/{env_name}/lib
 - Further, you will need to create a symlink between the libisxpublicapi.so file and the site-packages folder
+- On Windows, you will likely need to move the IDPS software from Program Files to another not protected folder to allow the build wheels to be created
+  - Additionally, it is essential to use the `-e` flag when installing with pip
