@@ -22,6 +22,7 @@ jupyter = "^1.0.0"
 roipoly = {git = "https://github.com/jdoepfert/roipoly.py"}
 xlsxwriter = "^3.2.0"
 cvxpy = "^1.5.2"
+tables = "^3.10.1"
 
 
 [build-system]
