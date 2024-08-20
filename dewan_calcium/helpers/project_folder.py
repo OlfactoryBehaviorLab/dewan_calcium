@@ -4,7 +4,9 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, project_dir=None, root_dir=None, select_dir=False):
+    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False):
+        self.project_type = project_type
+
         self.path = None
         self.search_root_dir = None
 
@@ -29,7 +31,8 @@ class ProjectFolder:
             user_root_dir = Path(root_dir)
 
             if not user_root_dir.exists():
-                print(f"User-supplied search root path \'{str(user_root_dir)}\' does not exist! Setting root path to CWD {str(cwd)}!")
+                print(
+                    f"User-supplied search root path \'{str(user_root_dir)}\' does not exist! Setting root path to CWD {str(cwd)}!")
                 self.search_root_dir = cwd
             else:
                 self.search_root_dir = user_root_dir
@@ -140,13 +143,29 @@ class RawDataDir(Dir):
             self._get_files()
 
     def _get_files(self):
+        if self.parent.project_type == 'ODOR':
+            odor_list = list(self.path.glob('*.xlsx'))
+            if self._check_file_not_found(odor_list, 'Odor List'):
+                self.odorlist_path = odor_list[0]
+        elif self.parent.project_type == 'EPM':
+            points_h5_file = list(self.path.glob('*DLC*.h5'))
+            labeled_video = list(self.path.glob('*DLC*labeled*'))  # Usually mp4 files, but this is more flexible
+
+            if self._check_file_not_found(points_h5_file, 'Points H5 File'):
+                self.points_h5_path = points_h5_file[0]
+            if self._check_file_not_found(labeled_video, 'Labeled Video'):
+                self.labeled_video_path = labeled_video[0]
+        elif self.parent.project_type == 'HFvFM':
+            pass  # No HFvFM specific files right now, will leave this here incase it is needed
+        else:
+            raise ValueError((f'{{{self.parent.project_type}}} is not a valid project type. '
+                              f'Please select from the following list: [\'ODOR\', \'EPM\', \'HFvFM\']'))
+
+        # General Files for all project types
         json_file = list(self.path.glob('*session*.json'))
         raw_GPIO = list(self.path.glob('*.gpio'))
         raw_recordings = list(self.path.glob('*.isxd'))
         exp_h5_file = list(self.path.glob('*mouse*.h5'))
-        points_h5_file = list(self.path.glob('*DLC*.h5'))
-        odor_list = list(self.path.glob('*.xlsx'))
-        labeled_video = list(self.path.glob('*DLC*labeled*')) # Usually mp4 files, but this is more flexible
 
         if self._check_file_not_found(json_file, 'session.json'):
             self.session_json_path = json_file[0]
@@ -156,12 +175,8 @@ class RawDataDir(Dir):
             self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
         if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
             self.exp_h5_path = exp_h5_file[0]
-        if self._check_file_not_found(odor_list, 'Odor List'):
-            self.odorlist_path = odor_list[0]
-        if self._check_file_not_found(points_h5_file, 'Points H5 File'):
-            self.points_h5_path = points_h5_file[0]
-        if self._check_file_not_found(labeled_video, 'Labeled Video'):
-            self.labeled_video_path = labeled_video[0]
+
+
 
 
 class InscopixDir(Dir):
@@ -212,7 +227,6 @@ class AnalysisDir(Dir):
 
         if not self._new_dir:
             self._get_files()
-
 
     def _get_files(self):
         pass
