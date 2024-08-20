@@ -12,8 +12,8 @@ class ProjectFolder:
         self.inscopix_dir: InscopixDir = None
         self.analysis_dir: AnalysisDir = None
 
-        self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._set_root_dir(root_dir)
+        self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
         self._create_subfolders()  # Create or acquire folders
 
     def get_data(self):
@@ -35,21 +35,25 @@ class ProjectFolder:
                 self.search_root_dir = user_root_dir
 
     def _set_project_dir(self, project_dir, select_dir):
-        if project_dir is None and select_dir:
-            # For backwards compatability with manual curation
-            selected_dir = self.select_project_folder()
-            if len(selected_dir) > 0:
-                self.path = Path(selected_dir[0])
+        if project_dir is None:
+            if select_dir:
+                # For backwards compatability with manual curation
+                selected_dir = self.select_project_folder()
+                if len(selected_dir) > 0:
+                    self.path = Path(selected_dir[0])
+                else:
+                    raise FileNotFoundError('No project folder selected!')
             else:
-                raise FileNotFoundError('No project folder selected!')
+                self.path = self.search_root_dir
         elif project_dir is not None:
-            user_project_dir = Path(project_dir)
-            if not user_project_dir.exists():
-                raise FileNotFoundError(f'User-supplied project folder \'{str(user_project_dir)}\' does not exist')
+            if project_dir == '.':
+                self.path = self.search_root_dir
             else:
-                self.path = user_project_dir
-        elif project_dir is None or project_dir == '.':
-            self.path = self.search_root_dir
+                user_project_dir = Path(project_dir)
+                if not user_project_dir.exists():
+                    raise FileNotFoundError(f'User-supplied project folder \'{str(user_project_dir)}\' does not exist')
+                else:
+                    self.path = user_project_dir
 
     def _create_subfolders(self):
         self.raw_data_dir = RawDataDir(self)
