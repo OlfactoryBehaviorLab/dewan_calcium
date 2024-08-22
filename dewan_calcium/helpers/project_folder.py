@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False):
+    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False, existing_app=None):
         self.project_type = project_type
 
         self.path = None
@@ -15,7 +15,7 @@ class ProjectFolder:
         self.analysis_dir: AnalysisDir = None
 
         self._set_root_dir(root_dir)
-        self._set_project_dir(project_dir, select_dir)  # Allow the user to select/supply the folder
+        self._set_project_dir(project_dir, select_dir, existing_app)  # Allow the user to select/supply the folder
         self._create_subfolders()  # Create or acquire folders
 
     def get_data(self):
@@ -37,11 +37,11 @@ class ProjectFolder:
             else:
                 self.search_root_dir = user_root_dir
 
-    def _set_project_dir(self, project_dir, select_dir):
+    def _set_project_dir(self, project_dir, select_dir, app):
         if project_dir is None:
             if select_dir:
                 # For backwards compatability with manual curation
-                selected_dir = self._folder_selection()
+                selected_dir = self._folder_selection(existing_app=app)
                 if len(selected_dir) > 0:
                     self.path = Path(selected_dir[0])
                 else:
@@ -63,9 +63,10 @@ class ProjectFolder:
         self.inscopix_dir = InscopixDir(self)
         self.analysis_dir = AnalysisDir(self)
 
-    def _folder_selection(self, existing_app=None) -> list:
+    def _folder_selection(self, existing_app) -> list:
         if existing_app is None:
             # Project Folder can be launched standalone, or as part of a package with an existing QApplication
+            # Safest to check if an app exists before we create a new one
             app = QApplication.instance()
             if not app:
                 app = QApplication([])
@@ -83,11 +84,11 @@ class ProjectFolder:
         if file_dialog.exec():
             file_names = file_dialog.selectedFiles()
 
-        if not existing_app:  # Only close the app if we spawned it
+        if not existing_app:
+            # Only close the app if we spawned it
             app.exit()
 
         return file_names
-
 
     #  Dunder Methods  #
     def __str__(self):
@@ -169,7 +170,9 @@ class RawDataDir(Dir):
             self._get_files()
 
     def _get_files(self):
-        if self.parent.project_type == 'ODOR':
+        if self.parent.project_type == 'MAN':
+            return
+        elif self.parent.project_type == 'ODOR':
             odor_list = list(self.path.glob('*.xlsx'))
             if self._check_file_not_found(odor_list, 'Odor List'):
                 self.odorlist_path = odor_list[0]
