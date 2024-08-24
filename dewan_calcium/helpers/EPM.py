@@ -8,6 +8,41 @@ from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
 
 
+def find_region_transitions(animal_locations):
+    # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
+    # The transition from open1 -> center is a  transition
+
+    transition_locations = {
+        'Region_Start': [],
+        'Region_End': [],
+        'Location': [],
+    }
+    start_time = []
+
+    for i, location in enumerate(animal_locations):
+        # If we are at the last item, stop
+        if i == len(animal_locations) - 1:
+            break
+        # If we are still in the same location, continue
+        if location == animal_locations[i + 1]:
+            continue
+        else:  # This will mark the last frame of the region
+            if len(transition_locations['Region_Start']) == 0:
+                start_time = 0
+            else:
+                start_time = transition_locations['Region_End'][-1] + 1
+                # A region starts 1 frame after the last region ends
+
+            transition_locations['Region_Start'].append(start_time)
+            transition_locations['Region_End'].append(i)
+            transition_locations['Location'].append(location)
+
+    transition_locations = pd.DataFrame(transition_locations)
+    # Find all "centers" as we only care about "center" -> {arm} transitions
+    center_indexes = transition_locations[transition_locations['Location'] == 'center']
+
+    return transition_locations, center_indexes
+
 def find_index_bins(indices) -> np.array:
     num_indices = len(indices)
     bins = []
