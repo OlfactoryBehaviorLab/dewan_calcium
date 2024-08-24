@@ -10,7 +10,7 @@ December 2022
 import itertools
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+
 from functools import partial
 from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
@@ -25,14 +25,14 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
-def compute_auc(group_1, group_2) -> float:
-    max_baseline_val = max(group_1)
-    min_baseline_val = min(group_1)
+def compute_auc(means_1, means_2) -> float:
+    max_baseline_val = max(means_1)
+    min_baseline_val = min(means_1)
 
-    baseline_prob = sliding_prob.sliding_probability(group_1, min_baseline_val, max_baseline_val)
+    baseline_prob = sliding_prob.sliding_probability(means_1, min_baseline_val, max_baseline_val)
     baseline_prob = sliding_prob.prep_probabilities(baseline_prob)
 
-    evoked_prob = sliding_prob.sliding_probability(group_2, min_baseline_val, max_baseline_val)
+    evoked_prob = sliding_prob.sliding_probability(means_2, min_baseline_val, max_baseline_val)
     evoked_prob = sliding_prob.prep_probabilities(evoked_prob)
 
     auroc_value = np.trapz(evoked_prob, baseline_prob, axis=-1)
@@ -56,53 +56,6 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
         # Save that AUC value
 
     return np.array(shuffled_auroc)
-
-
-def EPM_auroc(pseudotrial_means, groups, cell_names):
-
-    auroc_values = {}
-
-    group_1, group_2 = prep_EPM_data(pseudotrial_means, groups)
-
-    for cell in tqdm(cell_names):
-        group_1_cell = group_1[cell]
-        group_2_cell = group_2[cell]
-
-        auroc_value = compute_auc(group_1_cell, group_2_cell)
-
-        # # # GET SHUFFLED DISTRIBUTION # # #
-        all_means = pd.concat((group_1_cell, group_2_cell), ignore_index=True)
-        auroc_shuffle = shuffled_distribution(all_means, len(group_1_cell))
-        bounds = np.percentile(auroc_shuffle, [1, 99])
-        lower_bound, upper_bound = bounds
-
-        if auroc_value <= lower_bound:
-            significance = -1
-        elif auroc_value >= upper_bound:
-            significance = 1
-        else:
-            significance = 0
-
-        cell_data = {
-            'auroc': auroc_value,
-            'significance': significance,
-            'lb': lower_bound,
-            'ub': upper_bound,
-            'shuffle': auroc_shuffle
-        }
-        auroc_values[cell] = cell_data
-
-    return auroc_values
-
-
-def prep_EPM_data(means, groups):
-    group1, group2 = groups
-    group1_data = [means[arm] for arm in group1]
-    group2_data = [means[arm] for arm in group2]
-    group1_data = pd.concat(group1_data)
-    group2_data = pd.concat(group2_data)
-
-    return group1_data, group2_data
 
 
 def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
