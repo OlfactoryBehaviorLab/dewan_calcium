@@ -62,6 +62,21 @@ def get_pseudotrials(center_indexes, all_transitions, pseudotrial_len_s, endosco
         trial_stats['PSEUDOTRIAL_LEN_S'] = pseudotrial_len_s
 
     return trials_per_arm, trial_stats
+
+
+def print_pseudotrial_stats(stats_dict: dict) -> None:
+
+    median_time = round(np.mean(stats_dict['all_times']), 2)
+    median_good_time = round(np.mean(stats_dict['good_times']), 2)
+    median_bad_time = round(np.mean(stats_dict['bad_times']), 2)
+
+    print(f'Mean trial time (all trials): {median_time}s')
+    print(f'Mean trial time (good trials): {median_good_time}s')
+    print(f'Mean trial time (bad trials): {median_bad_time}s')
+    print(f'Number of trials with time of stay >= {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["good_trials"]}')
+    print(f'Number of trials with time of stay < {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["bad_trials"]}')
+
+
 def find_region_transitions(animal_locations):
     # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
     # The transition from open1 -> center is a  transition
@@ -96,6 +111,7 @@ def find_region_transitions(animal_locations):
     center_indexes = transition_locations[transition_locations['Location'] == 'center']
 
     return transition_locations, center_indexes
+
 
 def find_index_bins(indices) -> np.array:
     num_indices = len(indices)
