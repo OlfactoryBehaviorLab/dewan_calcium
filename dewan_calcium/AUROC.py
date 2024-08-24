@@ -58,6 +58,14 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
+def prep_EPM_data(means, groups):
+    group1, group2 = groups
+    group1_data = [means[arm] for arm in group1]
+    group2_data = [means[arm] for arm in group2]
+    group1_data = pd.concat(group1_data)
+    group2_data = pd.concat(group2_data)
+
+    return group1_data, group2_data
 def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
                latent: bool, cell_data: tuple) -> dict:
 
