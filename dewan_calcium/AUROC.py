@@ -58,8 +58,8 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
-def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
-                  latent: bool, cell_data: tuple) -> dict:
+def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
+               latent: bool, cell_data: tuple) -> dict:
 
     all_bounds = []
     auroc_values = []
@@ -118,7 +118,7 @@ def new_run_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
     return return_dict
 
 
-def new_pooled_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,
+def pooled_odor_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,
                      num_workers: int = 8, latent_cells_only: bool = False):
     # if latent_cells_only:
     #     auroc_type = 'Latent'
@@ -130,7 +130,7 @@ def new_pooled_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFr
     iterable = combined_data_shift.T.groupby(level=0)
     # Level 0 is the cells; groupby() works on indexes, so we need to transpose it
     # since we ordered the data as columns with (Cell Name, Odor Name)
-    auroc_partial_function = partial(new_run_auroc, FV_timestamps, baseline_duration, latent_cells_only)
+    auroc_partial_function = partial(odor_auroc, FV_timestamps, baseline_duration, latent_cells_only)
     return_dicts = process_map(auroc_partial_function, iterable, max_workers=num_workers)
 
     print("AUROC Processing Finished!")
