@@ -8,6 +8,60 @@ from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
 
 
+def get_pseudotrials(center_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate):
+
+    trials_per_arm = {
+        'open1': [],
+        'open2': [],
+        'closed1': [],
+        'closed2': []
+    }
+
+    trial_stats = {
+        'good_trials': 0,
+        'bad_trials': 0,
+        'all_times': [],
+        'good_times': [],
+        'bad_times': [],
+    }
+
+    for i in center_indexes.index:
+        # If we are on the last item, stop
+        if i == len(all_transitions) - 1:
+            break
+
+        # i is the index of the current "center", so i+1 is the region the mouse entered
+        new_region = all_transitions.iloc[i + 1]
+        new_region_start = new_region['Region_Start']  # First frame of new region
+        new_region_end = new_region['Region_End']  # Last frame of new region
+        new_region_name = new_region['Location']  # Where the animal is at
+
+        # deltaFrames / framerate = time in seconds
+        time_in_arm_f = (new_region_end - new_region_start)
+        time_in_arm_s = time_in_arm_f / endoscope_framerate
+        trial_stats['all_times'].append(time_in_arm_s)
+
+        if time_in_arm_s >= pseudotrial_len_s:
+            # If a trial meets our length criteria, save it
+            # Each visit will have these properties
+            region_visit = {
+                'time_s': time_in_arm_s,
+                'time_f': time_in_arm_f,
+                'start': new_region_start,
+                'end': new_region_end,
+            }
+
+            trials_per_arm[new_region_name].append(region_visit)
+            trial_stats['good_times'].append(time_in_arm_s)
+            trial_stats['good_trials'] += 1
+
+        else:
+            trial_stats['bad_times'].append(time_in_arm_s)
+            trial_stats['bad_trials'] += 1
+
+        trial_stats['PSEUDOTRIAL_LEN_S'] = pseudotrial_len_s
+
+    return trials_per_arm, trial_stats
 def find_region_transitions(animal_locations):
     # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
     # The transition from open1 -> center is a  transition
