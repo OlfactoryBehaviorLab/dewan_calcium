@@ -25,14 +25,14 @@ def compute_percentile(auroc, auroc_shuffle) -> float:
     return np.sum(auroc_shuffle < auroc) / auroc_shuffle.size
 
 
-def compute_auc(means_1, means_2) -> float:
-    max_baseline_val = max(means_1)
-    min_baseline_val = min(means_1)
+def compute_auc(group_1, group_2) -> float:
+    max_baseline_val = max(group_1)
+    min_baseline_val = min(group_1)
 
-    baseline_prob = sliding_prob.sliding_probability(means_1, min_baseline_val, max_baseline_val)
+    baseline_prob = sliding_prob.sliding_probability(group_1, min_baseline_val, max_baseline_val)
     baseline_prob = sliding_prob.prep_probabilities(baseline_prob)
 
-    evoked_prob = sliding_prob.sliding_probability(means_2, min_baseline_val, max_baseline_val)
+    evoked_prob = sliding_prob.sliding_probability(group_2, min_baseline_val, max_baseline_val)
     evoked_prob = sliding_prob.prep_probabilities(evoked_prob)
 
     auroc_value = np.trapz(evoked_prob, baseline_prob, axis=-1)
