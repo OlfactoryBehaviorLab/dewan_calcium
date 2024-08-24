@@ -125,6 +125,13 @@ class Dir:
         if not self._new_dir:
             return self.path.glob('*')
 
+    def subdir(self, name):
+        _temp_path = self.path.joinpath(name)
+        if not _temp_path.exists():
+            _temp_path.mkdir(exist_ok=True)
+
+        return _temp_path
+
     def __str__(self):
         return f'{self.path}'
 
