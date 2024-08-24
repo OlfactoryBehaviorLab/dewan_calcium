@@ -58,6 +58,34 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
+def EPM_auroc(pseudotrial_means, groups, cell_names):
+
+    auroc_values = {}
+
+    group_1, group_2 = prep_EPM_data(pseudotrial_means, groups)
+
+    for cell in tqdm(cell_names):
+        group_1_cell = group_1[cell]
+        group_2_cell = group_2[cell]
+
+        auroc_value = compute_auc(group_1_cell, group_2_cell)
+
+        # # # GET SHUFFLED DISTRIBUTION # # #
+        all_means = pd.concat((group_1_cell, group_2_cell), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, len(group_1_cell))
+        bounds = np.percentile(auroc_shuffle, [1, 99])
+        lower_bound, upper_bound = bounds
+
+        cell_data = {
+            'auroc': auroc_value,
+            'lb': lower_bound,
+            'ub': upper_bound,
+            'shuffle': auroc_shuffle
+        }
+        auroc_values[cell] = cell_data
+
+    return auroc_values
+
 def prep_EPM_data(means, groups):
     group1, group2 = groups
     group1_data = [means[arm] for arm in group1]
@@ -66,6 +94,8 @@ def prep_EPM_data(means, groups):
     group2_data = pd.concat(group2_data)
 
     return group1_data, group2_data
+
+
 def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
                latent: bool, cell_data: tuple) -> dict:
 
