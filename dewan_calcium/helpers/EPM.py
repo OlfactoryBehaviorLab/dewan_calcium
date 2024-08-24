@@ -1,11 +1,10 @@
 import shapely
 from matplotlib import pyplot as plt
 from roipoly import MultiRoi
-# Must be installed from GitHub as the PyPi version is obsolete; pip install git+https://github.com/jdoepfert/roipoly.py
 import pandas as pd
 import numpy as np
 
-from shapely import Polygon, Point, prepare, intersection, symmetric_difference_all
+from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
 
 
