@@ -10,7 +10,7 @@ December 2022
 import itertools
 import numpy as np
 import pandas as pd
-
+from tqdm import tqdm
 from functools import partial
 from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
