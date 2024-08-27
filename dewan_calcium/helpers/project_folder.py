@@ -1,5 +1,4 @@
 import os
-from PySide6.QtWidgets import QFileDialog, QApplication
 from pathlib import Path
 
 
@@ -64,6 +63,7 @@ class ProjectFolder:
         self.analysis_dir = AnalysisDir(self)
 
     def _folder_selection(self, existing_app) -> list:
+        from PySide6.QtWidgets import QFileDialog, QApplication
         if existing_app is None:
             # Project Folder can be launched standalone, or as part of a package with an existing QApplication
             # Safest to check if an app exists before we create a new one
