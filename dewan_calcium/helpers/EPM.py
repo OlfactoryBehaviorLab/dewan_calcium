@@ -93,7 +93,7 @@ def find_region_transitions(animal_locations):
         if i == len(animal_locations) - 1:
             break
         # If we are still in the same location, continue
-        if location == animal_locations[i + 1]:
+        if location == animal_locations.iloc[i + 1]:
             continue
         else:  # This will mark the last frame of the region
             if len(transition_locations['Region_Start']) == 0:
