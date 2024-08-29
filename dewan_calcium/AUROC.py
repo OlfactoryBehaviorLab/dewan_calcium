@@ -76,8 +76,16 @@ def EPM_auroc(pseudotrial_means, groups, cell_names):
         bounds = np.percentile(auroc_shuffle, [1, 99])
         lower_bound, upper_bound = bounds
 
+        if auroc_value <= lower_bound:
+            significance = -1
+        elif auroc_value >= upper_bound:
+            significance = 1
+        else:
+            significance = 0
+
         cell_data = {
             'auroc': auroc_value,
+            'significance': significance,
             'lb': lower_bound,
             'ub': upper_bound,
             'shuffle': auroc_shuffle
@@ -85,6 +93,7 @@ def EPM_auroc(pseudotrial_means, groups, cell_names):
         auroc_values[cell] = cell_data
 
     return auroc_values
+
 
 def prep_EPM_data(means, groups):
     group1, group2 = groups
