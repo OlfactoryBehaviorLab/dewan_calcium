@@ -358,7 +358,7 @@ def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list):
             # Since the center is part of the open region, we're just going to measure distance from arm 1
             distance = current_point.distance(shared_border_center)
             distances.append(distance)
-        else:  # If point is in a closed arm
+        else:  # If point is in any other arm
             shared_border_center = intersection(current_polygon, center_polygon).centroid
             # Find the shared border between the center and the current arm
             distance = current_point.distance(shared_border_center)
@@ -396,7 +396,7 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
     """
     Function that finds points where adjacent coordinates are separated by an euclidian distance greater than some
     threshold. If the distance >= the threshold, the later coordinate is replaced with the former. This effectively
-    "freezes" the animal in place in case the Deep Lab Cut tracking isn't perfect.
+    "freezes" the animal in place in case the DeepLabCut tracking isn't perfect.
 
     Args:
         coordinates (list[list]: [X, Y] coordinate pairs
@@ -423,4 +423,4 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
 
     coordinates = np.array(coordinates)
 
-    return threshold, coordinates
+    return threshold, len(jump_indexes), coordinates
