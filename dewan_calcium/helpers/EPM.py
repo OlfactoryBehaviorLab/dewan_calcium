@@ -424,3 +424,35 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
     coordinates = np.array(coordinates)
 
     return threshold, len(jump_indexes), coordinates
+
+
+def get_true_bin_index(led_bins: np.ndarray, num_total_frames: int) -> list:
+    """
+        Once we have multiple LED bins, we must find which one represents the LED turning on to mark the start of the experiment.
+        We first find the largest bin, as the "true" bin will be larger than any other bin. However, it is possible that the LED
+        is turned on a second time to mark the end of the experiment.
+
+        If this is the case, there are two possible outcomes:
+            1) The "true" bin is larger than the "end" bin. If the largest bin occurs in the first half of the video, it is the "true" bin and returned.
+            2) The "end" bin is larger than the "true" bin. If the largest bin occurs in the second half of the video, it is the "end" bin. The "true"
+                bin must be the second-largest bin which is returned.
+
+        Note: To determine if the bin is in the first or second half, the start of the bin is compared to the midpoint (1/2 the number of frames in the video).
+
+    Args:
+        led_bins ([n x 2] ndarray): A ndarray containing n [1 x 2] rows. Each row contains a start index followed by an end index.
+        num_total_frames (int): Number of frames in the video
+
+    Returns:
+        true_bin ([1 x 2] list): A [1 x 2] list containing the start and end index of the "true" LED bin
+
+    """
+    led_bin_sizes = np.subtract(led_bins[:, 1], led_bins[:, 0])  # Size of each bin
+    sorted_bins = np.argsort(led_bin_sizes)  # Sort size of bins from smallest -> largest
+
+    true_bin = sorted_bins[-1]
+
+    if led_bins[true_bin][0] > (num_total_frames / 2):
+        true_bin = sorted_bins[-2]
+
+    return list(led_bins[true_bin])
