@@ -64,7 +64,7 @@ def get_pseudotrials(center_indexes, all_transitions, pseudotrial_len_s, endosco
     return trials_per_arm, trial_stats
 
 
-def print_pseudotrial_stats(stats_dict: dict) -> None:
+def print_pseudotrial_stats(pseudotrials: dict, stats_dict: dict) -> None:
 
     median_time = round(np.mean(stats_dict['all_times']), 2)
     median_good_time = round(np.mean(stats_dict['good_times']), 2)
@@ -75,6 +75,23 @@ def print_pseudotrial_stats(stats_dict: dict) -> None:
     print(f'Mean trial time (bad trials): {median_bad_time}s')
     print(f'Number of trials with time of stay >= {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["good_trials"]}')
     print(f'Number of trials with time of stay < {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["bad_trials"]}')
+
+    num_open_trials = 0
+    num_closed_trials = 0
+    print('-' * 30)
+
+    for arm in pseudotrials:
+        current_pseudotrials = pseudotrials[arm]
+        num_pseudotrials = len(current_pseudotrials)
+        if 'open' in arm:
+            num_open_trials += num_pseudotrials
+        elif 'closed' in arm:
+            num_closed_trials += num_pseudotrials
+        print(f'The arm {arm} has {num_pseudotrials} trials!')
+
+    print('\nTotals:')
+    print(f'Number of open arm trials: {num_open_trials}')
+    print(f'Number of closed arm trials: {num_closed_trials}')
 
 
 def find_region_transitions(animal_locations):
@@ -428,20 +445,20 @@ def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
 
 def get_true_bin_index(led_bins: np.ndarray, num_total_frames: int) -> list:
     """
-        Once we have multiple LED bins, we must find which one represents the LED turning on to mark the start of the experiment.
-        We first find the largest bin, as the "true" bin will be larger than any other bin. However, it is possible that the LED
-        is turned on a second time to mark the end of the experiment.
+    Once we have multiple LED bins, we must find which one represents the LED turning on to mark the start of the
+    experiment. We first find the largest bin, as the "true" bin will be larger than any other bin. However,
+    it is possible that the LED is turned on a second time to mark the end of the experiment.
 
-        If this is the case, there are two possible outcomes:
-            1) The "true" bin is larger than the "end" bin. If the largest bin occurs in the first half of the video, it is the "true" bin and returned.
-            2) The "end" bin is larger than the "true" bin. If the largest bin occurs in the second half of the video, it is the "end" bin. The "true"
-                bin must be the second-largest bin which is returned.
+        If this is the case, there are two possible outcomes: 1) The "true" bin is larger than the "end" bin. If the
+        largest bin occurs in the first half of the video, it is the "true" bin and returned. 2) The "end" bin is
+        larger than the "true" bin. If the largest bin occurs in the second half of the video, it is the "end" bin.
+        The "true" bin must be the second-largest bin which is returned.
 
-        Note: To determine if the bin is in the first or second half, the start of the bin is compared to the midpoint (1/2 the number of frames in the video).
+        Note: To determine if the bin is in the first or second half, the start of the bin is compared to the
+        midpoint (1/2 the number of frames in the video).
 
-    Args:
-        led_bins ([n x 2] ndarray): A ndarray containing n [1 x 2] rows. Each row contains a start index followed by an end index.
-        num_total_frames (int): Number of frames in the video
+    Args: led_bins ([n x 2] ndarray): A ndarray containing n [1 x 2] rows. Each row contains a start index followed
+    by an end index. num_total_frames (int): Number of frames in the video
 
     Returns:
         true_bin ([1 x 2] list): A [1 x 2] list containing the start and end index of the "true" LED bin
