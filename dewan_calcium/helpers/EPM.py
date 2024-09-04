@@ -72,11 +72,13 @@ def print_pseudotrial_stats(pseudotrials: dict, stats_dict: dict) -> None:
     median_good_time = round(np.mean(stats_dict['good_times']), 2)
     median_bad_time = round(np.mean(stats_dict['bad_times']), 2)
 
-    print(f'Mean trial time (all trials): {median_time}s')
-    print(f'Mean trial time (good trials): {median_good_time}s')
-    print(f'Mean trial time (bad trials): {median_bad_time}s')
-    print(f'Number of trials with time of stay >= {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["good_trials"]}')
-    print(f'Number of trials with time of stay < {stats_dict["PSEUDOTRIAL_LEN_S"]}s: {stats_dict["bad_trials"]}')
+    print('=== Stats for Visits ===')
+    print(f'Mean visit time (all trials): {median_time}s')
+    print(f'Mean visit time (good trials): {median_good_time}s')
+    print(f'Mean visit time (bad trials): {median_bad_time}s\n')
+    print('=== Stats for Pseudotrials ===')
+    print(f'Number of trials with time of stay >= {stats_dict["PSEUDOTRIAL_LEN_S"]}s (Good Trials): {stats_dict["good_trials"]}')
+    print(f'Number of trials with time of stay < {stats_dict["PSEUDOTRIAL_LEN_S"]}s (Bad Trials): {stats_dict["bad_trials"]}')
 
     num_open_trials = 0
     num_closed_trials = 0
