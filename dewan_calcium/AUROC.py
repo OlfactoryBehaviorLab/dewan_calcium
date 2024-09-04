@@ -18,7 +18,7 @@ from sklearn.model_selection import train_test_split
 # Import from local modules
 from .helpers import sliding_prob, trace_tools
 
-NUM_SHUFFLES = 100
+NUM_SHUFFLES = 1000
 
 
 def compute_percentile(auroc, auroc_shuffle) -> float:
@@ -76,11 +76,19 @@ def EPM_auroc(pseudotrial_means, groups, cell_names):
         bounds = np.percentile(auroc_shuffle, [1, 99])
         lower_bound, upper_bound = bounds
 
+        if auroc_value >= upper_bound:
+            significance = 1
+        elif auroc_value <= lower_bound:
+            significance = -1
+        else:
+            significance = 0
+
         cell_data = {
             'auroc': auroc_value,
             'lb': lower_bound,
             'ub': upper_bound,
-            'shuffle': auroc_shuffle
+            'shuffle': auroc_shuffle,
+            'significance': significance
         }
         auroc_values[cell] = cell_data
 
