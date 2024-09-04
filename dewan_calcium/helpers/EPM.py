@@ -8,7 +8,7 @@ from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
 
 
-def get_pseudotrials(center_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate):
+def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate):
 
     trials_per_arm = {
         'open1': [],
@@ -25,13 +25,15 @@ def get_pseudotrials(center_indexes, all_transitions, pseudotrial_len_s, endosco
         'bad_times': [],
     }
 
-    for i in center_indexes.index:
+    for i in arm_indexes.index:
         # If we are on the last item, stop
         if i == len(all_transitions) - 1:
             break
+        # Index 0 is always skipped b/c this is where the animal was placed to start the experiment
+        if i == 0:
+            continue
 
-        # i is the index of the current "center", so i+1 is the region the mouse entered
-        new_region = all_transitions.iloc[i + 1]
+        new_region = all_transitions.iloc[i]
         new_region_start = new_region['Region_Start']  # First frame of new region
         new_region_end = new_region['Region_End']  # Last frame of new region
         new_region_name = new_region['Location']  # Where the animal is at
@@ -125,9 +127,9 @@ def find_region_transitions(animal_locations):
 
     transition_locations = pd.DataFrame(transition_locations)
     # Find all "centers" as we only care about "center" -> {arm} transitions
-    center_indexes = transition_locations[transition_locations['Location'] == 'center']
+    arm_indexes = transition_locations[transition_locations['Location'] != 'center']
 
-    return transition_locations, center_indexes
+    return transition_locations, arm_indexes
 
 
 def find_index_bins(indices) -> np.array:
