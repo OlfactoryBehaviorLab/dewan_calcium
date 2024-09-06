@@ -227,10 +227,7 @@ def pooled_auroc_distributions(AUROC_data, cell_names, odor_list, project_folder
                 pbar.update()
 
 
-def plot_activity_heatmap(heatmap: np.array, line_coordinates, background_img, name, save_path: Path,  segments=20):
-    cmap = mpl.colormaps['hot'](np.linspace(0, 1, segments))[:-1]
-    cmap[0] = [0, 0, 0, 0]  # Hide all the lowest values
-    new_cmap = ListedColormap(cmap)
+def plot_animal_track(line_coordinates, background_img, project_folder):
 
     lc = LineCollection(line_coordinates, colors='dimgrey', alpha=0.8, linewidths=0.1)
 
@@ -238,13 +235,11 @@ def plot_activity_heatmap(heatmap: np.array, line_coordinates, background_img, n
     ax.set_axis_off()
     _ = ax.imshow(background_img)
     _ = ax.add_collection(lc)
-    _hm = ax.imshow(heatmap, cmap=new_cmap, zorder=2)
-    _ = fig.colorbar(_hm)
 
-    plt.suptitle(f'{name} Activity with Position')
+    plt.suptitle(f'Animal Track')
 
-    file_name = f'{name}_activity_heatmap.pdf'
-    file_path = save_path.joinpath(file_name)
+    file_name = f'animal_track.pdf'
+    file_path = project_folder.analysis_dir.figures_dir.path.joinpath(file_name)
 
     plt.tight_layout()
 
@@ -394,3 +389,67 @@ def get_polygon_coordinates(polygons):
         coordinates.append(list(polygon.exterior.coords)[:-1])  # Drop last point as it is a duplicate of the first
 
     return coordinates
+
+
+def plot_EPM_auroc_histograms(AUROC_results, project_folder):
+    auroc_vals = [AUROC_results[cell]['auroc'] for cell in AUROC_results]
+    auroc_vals = np.array(auroc_vals)
+    direction_indexes = 2 * (auroc_vals - 0.5)
+    fig, ax = plt.subplots(1, 2, figsize=(8, 3))
+    ax[0].hist(direction_indexes, bins=20)
+    ax[1].hist(auroc_vals, color='r', bins=20)
+    minmax = [min(direction_indexes), max(direction_indexes)]
+    minmax2 = [min(auroc_vals), max(auroc_vals)]
+
+    ax[0].set_xticks(np.linspace(-1, 1, 21))
+    ax[1].set_xticks(np.linspace(0, 1, 21))
+
+    ax[0].set_xlim(minmax)
+    ax[1].set_xlim(minmax2)
+
+    ax[0].tick_params(axis='x', labelrotation=50)
+    ax[1].tick_params(axis='x', labelrotation=50)
+
+    ax[0].set_title('Direction Indices')
+    ax[1].set_title('auROC Values')
+    plt.tight_layout()
+
+    fig_dir = project_folder.analysis_dir.figures_dir.subdir('AUROC')
+    fig_path = fig_dir.joinpath('auROC_distribution.pdf')
+    fig.savefig(fig_path, dpi=600)
+    plt.close(fig)
+
+
+def plot_epm_shuffles(AUROC_results, cell_names, project_folder):
+    for cell in tqdm(cell_names):
+        try:
+            results = AUROC_results[cell]
+            ub = results['ub']
+            lb = results['lb']
+            auroc = results['auroc']
+            shuffle = results['shuffle']
+            significance = results['significance']
+
+            relaxed_bounds = np.percentile(shuffle, [5, 95])
+            lb_r, ub_r = relaxed_bounds
+
+            fig, ax = plt.subplots()
+            ax.hist(shuffle, color='gray', bins=10)
+            ax.axvline(x=ub, color='blue')
+            ax.axvline(x=lb, color='blue')
+            ax.axvline(x=ub_r, color='green')
+            ax.axvline(x=lb_r, color='green')
+            ax.axvline(x=auroc, color='red')
+
+            if significance in (-1, 1):
+                ax.set_xlabel('Significant!')
+
+            fig.suptitle(f'{cell} - {round(auroc, 3)}')
+
+            save_dir = project_folder.analysis_dir.figures_dir.subdir('AUROC')
+            file_path = save_dir.joinpath(f'{cell}.pdf')
+            fig.savefig(file_path, dpi=600)
+            plt.close(fig)
+        except Exception as e:  # yes, this is bad; its okay
+            print(f'Error plotting {cell}')
+            print(e)
