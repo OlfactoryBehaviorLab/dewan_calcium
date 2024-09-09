@@ -19,7 +19,8 @@ dependencies = [
 'tqdm',
 'xlsxwriter',
 'cvxpy>=1.5.2',
-'tables'
+'tables',
+'shapely'
 ]
 
 [project.optional-dependencies]
