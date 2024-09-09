@@ -149,8 +149,6 @@ def save_pseudotrial_stats(pseudotrial_stats: dict, project_folder) -> None:
 
     pseudotrial_df.to_excel(excel_file_path)
 
-    
-    
 
 def find_region_transitions(animal_locations):
     # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
