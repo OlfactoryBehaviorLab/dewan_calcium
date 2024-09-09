@@ -136,6 +136,22 @@ def print_pseudotrial_stats(pseudotrial_stats: dict) -> None:
     print(f'Number of closed arm trials: {num_closed_trials}')
 
 
+def save_pseudotrial_stats(pseudotrial_stats: dict, project_folder) -> None:
+    arms = pseudotrial_stats.pop('arm_count')
+
+    pseudotrial_df = pd.DataFrame(pseudotrial_stats, columns=list(pseudotrial_stats.keys()), index=[0])
+
+    for arm in arms:
+        pseudotrial_df.insert(pseudotrial_df.shape[1], arm, arms[arm])
+
+    output_dir = project_folder.analysis_dir.output_dir.path
+    excel_file_path = output_dir.joinpath('pseudotrial_stats.xlsx')
+
+    pseudotrial_df.to_excel(excel_file_path)
+
+    
+    
+
 def find_region_transitions(animal_locations):
     # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
     # The transition from open1 -> center is a  transition
