@@ -66,23 +66,20 @@ def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_
     return trials_per_arm, trial_stats
 
 
-def print_pseudotrial_stats(pseudotrials: dict, stats_dict: dict) -> None:
+def calc_pseudotrial_stats(pseudotrials: dict, trial_stats_dict: dict) -> dict:
 
-    median_time = round(np.mean(stats_dict['all_times']), 2)
-    median_good_time = round(np.mean(stats_dict['good_times']), 2)
-    median_bad_time = round(np.mean(stats_dict['bad_times']), 2)
+    arm_count = {}
 
-    print('=== Stats for Visits ===')
-    print(f'Mean visit time (all trials): {median_time}s')
-    print(f'Mean visit time (good trials): {median_good_time}s')
-    print(f'Mean visit time (bad trials): {median_bad_time}s\n')
-    print('=== Stats for Pseudotrials ===')
-    print(f'Number of trials with time of stay >= {stats_dict["PSEUDOTRIAL_LEN_S"]}s (Good Trials): {stats_dict["good_trials"]}')
-    print(f'Number of trials with time of stay < {stats_dict["PSEUDOTRIAL_LEN_S"]}s (Bad Trials): {stats_dict["bad_trials"]}')
+    median_time = round(np.mean(trial_stats_dict['all_times']), 2)
+    median_good_time = round(np.mean(trial_stats_dict['good_times']), 2)
+    median_bad_time = round(np.mean(trial_stats_dict['bad_times']), 2)
+
+    num_good_trials = trial_stats_dict['good_trials']
+    num_bad_trials = trial_stats_dict['bad_trials']
+    pseudotrial_len = trial_stats_dict['PSEUDOTRIAL_LEN_S']
 
     num_open_trials = 0
     num_closed_trials = 0
-    print('-' * 30)
 
     for arm in pseudotrials:
         current_pseudotrials = pseudotrials[arm]
@@ -91,6 +88,47 @@ def print_pseudotrial_stats(pseudotrials: dict, stats_dict: dict) -> None:
             num_open_trials += num_pseudotrials
         elif 'closed' in arm:
             num_closed_trials += num_pseudotrials
+        arm_count[arm] = num_pseudotrials
+
+    stats = {
+        'median_time': median_time,
+        'median_good_time': median_good_time,
+        'median_bad_time': median_bad_time,
+        'num_good_trials': num_good_trials,
+        'num_bad_trials': num_bad_trials,
+        'num_open_trials': num_open_trials,
+        'num_closed_trials': num_closed_trials,
+        'trial_len': pseudotrial_len,
+        'arm_count': arm_count
+    }
+
+    return stats
+
+
+def print_pseudotrial_stats(pseudotrial_stats: dict) -> None:
+
+    median_time = pseudotrial_stats['median_time']
+    median_good_time = pseudotrial_stats['median_good_time']
+    median_bad_time = pseudotrial_stats['median_bad_time']
+    num_good_trials = pseudotrial_stats['num_good_trials']
+    num_bad_trials = pseudotrial_stats['num_bad_trials']
+    num_open_trials = pseudotrial_stats['num_open_trials']
+    num_closed_trials = pseudotrial_stats['num_closed_trials']
+    arm_counts = pseudotrial_stats['arm_count']
+    PSEUDOTRIAL_LEN_S = pseudotrial_stats['trial_len']
+
+    print('=== Stats for Pseudotrials ===')
+    print(f'Number of trials with time of stay >= {PSEUDOTRIAL_LEN_S}s (Good Trials): {num_good_trials}')
+    print(f'Number of trials with time of stay < {PSEUDOTRIAL_LEN_S}s (Bad Trials): {num_bad_trials}')
+    print('=== Stats for Visits ===')
+    print(f'Mean visit time (all trials): {median_time}s')
+    print(f'Mean visit time (good trials): {median_good_time}s')
+    print(f'Mean visit time (bad trials): {median_bad_time}s\n')
+
+    print('-' * 30)
+
+    for arm in arm_counts:
+        num_pseudotrials = arm_counts[arm]
         print(f'The arm {arm} has {num_pseudotrials} trials!')
 
     print('\nTotals:')
