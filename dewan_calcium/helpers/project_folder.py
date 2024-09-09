@@ -233,7 +233,7 @@ class InscopixDir(Dir):
         GPIO_file = list(self.path.glob('*GPIO*.csv'))
         max_projection_file = list(self.path.glob('*HD*MAX*.tiff'))
         cell_contours = list(self.path.glob('*CONTOURS*.json'))
-        cell_props = list(self.path.glob('*PROPS*.csv'))
+        cell_props = list(self.path.glob('*props*.csv'))
 
         if self._check_file_not_found(cell_trace_file, 'Cell Traces'):
             self.cell_trace_path = cell_trace_file[0]
