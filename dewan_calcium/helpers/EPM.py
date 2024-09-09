@@ -98,7 +98,7 @@ def calc_pseudotrial_stats(pseudotrials: dict, trial_stats_dict: dict) -> dict:
         'num_bad_trials': num_bad_trials,
         'num_open_trials': num_open_trials,
         'num_closed_trials': num_closed_trials,
-        'trial_len': pseudotrial_len,
+        'PSEUDOTRIAL_LEN_S': pseudotrial_len,
         'arm_count': arm_count
     }
 
@@ -115,7 +115,7 @@ def print_pseudotrial_stats(pseudotrial_stats: dict) -> None:
     num_open_trials = pseudotrial_stats['num_open_trials']
     num_closed_trials = pseudotrial_stats['num_closed_trials']
     arm_counts = pseudotrial_stats['arm_count']
-    PSEUDOTRIAL_LEN_S = pseudotrial_stats['trial_len']
+    PSEUDOTRIAL_LEN_S = pseudotrial_stats['PSEUDOTRIAL_LEN_S']
 
     print('=== Stats for Pseudotrials ===')
     print(f'Number of trials with time of stay >= {PSEUDOTRIAL_LEN_S}s (Good Trials): {num_good_trials}')
