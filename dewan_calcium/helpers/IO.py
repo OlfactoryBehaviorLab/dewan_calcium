@@ -1,8 +1,11 @@
+import os
 import pickle
 from pathlib import Path
 
 import pandas as pd
-from isx import make_output_file_path, make_output_file_paths
+
+if os.environ['ISX'] == '1':
+    from isx import make_output_file_path, make_output_file_paths
 
 
 def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, folder: Path) -> None:
