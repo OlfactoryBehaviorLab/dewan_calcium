@@ -58,48 +58,66 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
-def EPM_auroc(pseudotrial_means, groups, cell_names):
+def _EPM_auroc(pseudotrial_groups):
 
-    auroc_values = {}
+    group_1, group_2 = pseudotrial_groups
 
-    group_1, group_2 = prep_EPM_data(pseudotrial_means, groups)
+    cell, g1_data = group_1
+    _, g2_data = group_2
 
-    for cell in tqdm(cell_names):
-        group_1_cell = group_1[cell]
-        group_2_cell = group_2[cell]
+    auroc_value = compute_auc(g1_data, g2_data)
 
-        auroc_value = compute_auc(group_1_cell, group_2_cell)
+    # # # GET SHUFFLED DISTRIBUTION # # #
+    all_means = pd.concat((g1_data, g2_data), ignore_index=True)
+    auroc_shuffle = shuffled_distribution(all_means, len(g1_data))
+    bounds = np.percentile(auroc_shuffle, [1, 99])
+    lower_bound, upper_bound = bounds
 
-        # # # GET SHUFFLED DISTRIBUTION # # #
-        all_means = pd.concat((group_1_cell, group_2_cell), ignore_index=True)
-        auroc_shuffle = shuffled_distribution(all_means, len(group_1_cell))
-        bounds = np.percentile(auroc_shuffle, [1, 99])
-        lower_bound, upper_bound = bounds
+    if auroc_value >= upper_bound:
+        significance = 1
+    elif auroc_value <= lower_bound:
+        significance = -1
+    else:
+        significance = 0
 
-        if auroc_value >= upper_bound:
-            significance = 1
-        elif auroc_value <= lower_bound:
-            significance = -1
-        else:
-            significance = 0
+    cell_data = {
+        'name': cell,
+        'auroc': auroc_value,
+        'lb': lower_bound,
+        'ub': upper_bound,
+        'shuffle': auroc_shuffle,
+        'significance': significance
+    }
+    return cell_data
 
-        cell_data = {
-            'auroc': auroc_value,
-            'lb': lower_bound,
-            'ub': upper_bound,
-            'shuffle': auroc_shuffle,
-            'significance': significance
-        }
-        auroc_values[cell] = cell_data
 
-    return auroc_values
+def EPM_generator(group1, group2):
+    g1_iterable = group1.items()
+    g2_iterable = group2.items()
 
-def prep_EPM_data(means, groups):
+    return zip(g1_iterable, g2_iterable)
+
+
+def pooled_EPM_auroc(pseudotrial_means, groups, num_workers=8):
+    group1, group2 = _prep_EPM_data(pseudotrial_means, groups)
+
+    EPM_iterable = EPM_generator(group1, group2)
+
+    return_dicts = process_map(_EPM_auroc, EPM_iterable, max_workers=num_workers,
+                               desc="Calculating auROC Statistics for EPM Cells", total=len(group1.columns))
+
+    return return_dicts
+
+
+def _prep_EPM_data(means, groups):
     group1, group2 = groups
     group1_data = [means[arm] for arm in group1]
     group2_data = [means[arm] for arm in group2]
     group1_data = pd.concat(group1_data)
     group2_data = pd.concat(group2_data)
+
+    group1_data = group1_data.reset_index(drop=True)
+    group2_data = group2_data.reset_index(drop=True)
 
     return group1_data, group2_data
 
