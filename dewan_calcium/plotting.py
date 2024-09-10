@@ -392,7 +392,7 @@ def get_polygon_coordinates(polygons):
 
 
 def plot_EPM_auroc_histograms(AUROC_results, project_folder):
-    auroc_vals = [AUROC_results[cell]['auroc'] for cell in AUROC_results]
+    auroc_vals = [cell['auroc'] for cell in AUROC_results]
     auroc_vals = np.array(auroc_vals)
     direction_indexes = 2 * (auroc_vals - 0.5)
     fig, ax = plt.subplots(1, 2, figsize=(8, 3))
@@ -420,15 +420,15 @@ def plot_EPM_auroc_histograms(AUROC_results, project_folder):
     plt.close(fig)
 
 
-def plot_epm_shuffles(AUROC_results, cell_names, project_folder):
-    for cell in tqdm(cell_names):
+def plot_epm_shuffles(AUROC_results, project_folder):
+    for cell in tqdm(AUROC_results):
         try:
-            results = AUROC_results[cell]
-            ub = results['ub']
-            lb = results['lb']
-            auroc = results['auroc']
-            shuffle = results['shuffle']
-            significance = results['significance']
+            cell_name = cell['name']
+            ub = cell['ub']
+            lb = cell['lb']
+            auroc = cell['auroc']
+            shuffle = cell['shuffle']
+            significance = cell['significance']
 
             relaxed_bounds = np.percentile(shuffle, [5, 95])
             lb_r, ub_r = relaxed_bounds
@@ -444,10 +444,10 @@ def plot_epm_shuffles(AUROC_results, cell_names, project_folder):
             if significance in (-1, 1):
                 ax.set_xlabel('Significant!')
 
-            fig.suptitle(f'{cell} - {round(auroc, 3)}')
+            fig.suptitle(f'{cell_name} - {round(auroc, 3)}')
 
             save_dir = project_folder.analysis_dir.figures_dir.subdir('AUROC')
-            file_path = save_dir.joinpath(f'{cell}.pdf')
+            file_path = save_dir.joinpath(f'{cell_name}.pdf')
             fig.savefig(file_path, dpi=600)
             plt.close(fig)
         except Exception as e:  # yes, this is bad; its okay
