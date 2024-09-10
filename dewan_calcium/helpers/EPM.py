@@ -8,7 +8,7 @@ from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
 
 
-def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate):
+def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate) -> tuple:
 
     trials_per_arm = {
         'open1': [],
@@ -150,7 +150,7 @@ def save_pseudotrial_stats(pseudotrial_stats: dict, project_folder) -> None:
     pseudotrial_df.to_excel(excel_file_path)
 
 
-def find_region_transitions(animal_locations):
+def find_region_transitions(animal_locations) -> tuple:
     # Find locations where the location transitions/changes e.g. [..., open1, open1, center, ...]
     # The transition from open1 -> center is a  transition
 
@@ -159,7 +159,6 @@ def find_region_transitions(animal_locations):
         'Region_End': [],
         'Location': [],
     }
-    start_time = []
 
     for i, location in enumerate(animal_locations):
         # If we are at the last item, stop
@@ -216,7 +215,7 @@ def find_index_bins(indices) -> np.array:
     return bins
 
 
-def replace_the_void(coordinate_locations, region_indexes, void_index_bins):
+def replace_the_void(coordinate_locations, region_indexes, void_index_bins) -> tuple:
     for index_bin in void_index_bins:
         bin_start, bin_end = index_bin
 
@@ -242,7 +241,7 @@ def replace_the_void(coordinate_locations, region_indexes, void_index_bins):
     return coordinate_locations, region_indexes
 
 
-def get_arm_rois(image):
+def get_arm_rois(image) -> np.array:
     fig, ax = plt.subplots()
     ax.imshow(image)
     arms = MultiRoi(fig, ax, ['Open', 'Closed'])
@@ -258,7 +257,7 @@ def get_arm_rois(image):
     return arm_coordinates
 
 
-def display_roi_instructions():
+def display_roi_instructions() -> None:
     from IPython.display import display, HTML
 
     # Define the HTML content for the alert box
@@ -348,7 +347,7 @@ def approximate_rectangle_dimensions(polygon: shapely.Polygon) -> tuple[float, f
     return width, length
 
 
-def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shape: tuple):
+def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shape: tuple) -> tuple:
     image_x, image_y, _ = image_shape
 
     combined_spike_heatmap = np.zeros((image_x, image_y))
@@ -366,7 +365,7 @@ def generate_activity_heatmap(coordinates, spike_indexes, cell_names, image_shap
     return combined_spike_heatmap, cell_heatmaps
 
 
-def generate_position_lines(coordinates, threshold=70):
+def generate_position_lines(coordinates, threshold=70) -> list:
     from shapely import LineString
     line_coordinates = []
     for i in range(len(coordinates) - 1):
@@ -383,7 +382,7 @@ def generate_position_lines(coordinates, threshold=70):
     return line_coordinates
 
 
-def get_regions(animal_coordinates: pd.Series, individual_regions: pd.DataFrame):
+def get_regions(animal_coordinates: pd.Series, individual_regions: pd.DataFrame) -> tuple[list, list]:
     location_name = []
     location_index = []
     names = individual_regions.index.values
@@ -414,7 +413,7 @@ def get_regions(animal_coordinates: pd.Series, individual_regions: pd.DataFrame)
     return location_name, location_index
 
 
-def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list):
+def get_distances(individual_regions: pd.DataFrame, coordinate_pairs: list) -> np.array:
     distances = []
 
     for pair in coordinate_pairs:
@@ -467,7 +466,7 @@ def normalize_distance(individual_regions, coordinate_locations, distances, is_p
     return new_distances
 
 
-def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None):
+def interpolate_DLC_coordinates(coordinates, percentile=95, threshold=None) -> tuple[float, int, np.array]:
     """
     Function that finds points where adjacent coordinates are separated by an euclidian distance greater than some
     threshold. If the distance >= the threshold, the later coordinate is replaced with the former. This effectively
