@@ -3,11 +3,13 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False, existing_app=None):
+    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False, existing_app=None,
+                 suppress_filenotfound=False):
         self.project_type = project_type
 
         self.path = None
         self.search_root_dir = None
+        self.suppress_filenotfound = suppress_filenotfound
 
         self.raw_data_dir: RawDataDir = None
         self.inscopix_dir: InscopixDir = None
@@ -117,7 +119,8 @@ class Dir:
 
     def _check_file_not_found(self, file_list, filename: str):
         if not len(file_list) > 0:
-            print(f"{{{filename}}} not found in {self.path}")
+            if not self.parent.suppress_filenotfound:
+                print(f"{{{filename}}} not found in {self.path}")
             return False
         return True
 
