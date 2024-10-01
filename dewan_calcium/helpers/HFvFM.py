@@ -59,7 +59,6 @@ def get_trial_labels(num_trials, HF_first):
 
     return trial_labels
 
-
 def average_pseudotrials(pseudotrials_dff, cell_names, trial_labels):
     avg_pseudotrial_dff = {}
 

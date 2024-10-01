@@ -51,13 +51,13 @@ def find_peaks(smoothed_data: dict, cell_names, ENDOSCOPE_FRAMERATE, INTER_SPIKE
     return transient_indexes
 
 
-def calc_smoothing_params(endoscope_framerate=10, decay_time_s=0.4, rise_time_s=0.08):
+def calc_smoothing_params(endoscope_framerate, decay_time_s, rise_time_s):
     """
 
     Args:
-        endoscope_framerate: Frame rate in seconds of the micro-endoscope (10Hz)
-        decay_time_s: Time in seconds for the decay of 10 action potentials (0.4 for gcamp6f)
-        rise_time_s: Time in seconds for the rise to peak of 10 action potentials (0.08 for gcamp6f)
+        endoscope_framerate: Frame rate in seconds of the micro-endoscope
+        decay_time_s: Time in seconds for the decay of 10 action potentials
+        rise_time_s: Time in seconds for the rise to peak of 10 action potentials
 
     Returns:
         g1: kernel component 1
@@ -120,6 +120,7 @@ def pooled_deconvolution(combined_data, smoothing_kernel, workers=8):
     return_dicts = process_map(partial_function, iterable, max_workers=workers)
 
     return _repackage_return(return_dicts)
+
 
 def _repackage_return(return_dicts):
     new_return_dicts = {}
