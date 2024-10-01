@@ -1,7 +1,10 @@
 import numpy as np
+import sys
 
-def get_pseudotrials(cell_trace_indices, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
-    pseudotrial_indices = []
+if 'ipykernel' in sys.modules:
+    from tqdm.notebook import tqdm
+else: from tqdm import tqdm
+
 def get_pseudotrial_pairs(trial_length, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
 
     pseudotrial_length_frames = PSEUDOTRIAL_LEN_S * ENDOSCOPE_FRAMERATE
@@ -11,7 +14,32 @@ def get_pseudotrial_pairs(trial_length, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
 
     return frame_pairs
 
-    return pseudotrial_indices
+def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
+    # This is a monstrosity, I'm sorry.
+    pseudotrial_dff_per_cell = {}
+
+    for cell in tqdm(cell_names, desc='Cell: '):  # Loop through each cell
+        trial_dff_pseudotrials = {}
+        cell_dff_data = combined_data[cell]
+
+        for trial in trial_labels:  # Loop through each trial
+            pseudotrial_dff = []
+            trial_dff_values = cell_dff_data[trial]
+            pseudotrial_pairs = get_pseudotrial_pairs(len(trial_dff_values), PSEUDOTRIAL_LEN_S,
+                                                            ENDOSCOPE_FRAMERATE)
+            # Get the pseudotrial pairings for this trial
+
+            for pair in pseudotrial_pairs:  # Loop through each pair
+                pseudotrial_dff_values = trial_dff_values.iloc[pair[0]:pair[1]].values  # Get df/F Values
+
+                if not np.any(np.isnan(
+                        pseudotrial_dff_values)):  # If the trial is cut short for any reason, we'll skip rows with nan
+                    pseudotrial_dff.append(pseudotrial_dff_values)
+
+            trial_dff_pseudotrials[trial] = pseudotrial_dff
+        pseudotrial_dff_per_cell[cell] = trial_dff_pseudotrials
+
+    return pseudotrial_dff_per_cell
 
 def get_trial_labels(num_trials, HF_first):
     import math
