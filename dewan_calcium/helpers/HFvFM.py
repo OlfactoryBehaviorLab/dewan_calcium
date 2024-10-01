@@ -58,3 +58,23 @@ def get_trial_labels(num_trials, HF_first):
         trial_labels = trial_labels[:-1]
 
     return trial_labels
+
+
+def average_pseudotrials(pseudotrials_dff, cell_names, trial_labels):
+    avg_pseudotrial_dff = {}
+
+    for cell in tqdm(cell_names, desc='Cell: '):
+        avg_trial_data = {}
+        cell_data = pseudotrials_dff[cell]
+
+        for trial in trial_labels:
+            mean_values = []
+            pseudotrials = cell_data[trial]
+            for pseudotrial in pseudotrials:
+                mean_values.append(np.mean(pseudotrial))
+
+            avg_trial_data[trial] = mean_values
+
+        avg_pseudotrial_dff[cell] = avg_trial_data
+
+    return avg_pseudotrial_dff
