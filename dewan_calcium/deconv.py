@@ -1,9 +1,11 @@
 import numpy as np
-import pandas as pd
 from scipy import signal
 from oasis.functions import deconvolve  # install using conda install to avoid having to build
-from tqdm import tqdm
 
+import sys
+if 'ipykernel' in sys.modules:
+    from tqdm.notebook import tqdm
+else: import tqdm
 
 def z_score_data(trace_data: pd.DataFrame, cell_names) -> pd.DataFrame:
     # Function is given a Cells x Trials array
