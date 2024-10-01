@@ -27,9 +27,10 @@ def get_session_settings(json_file_path: Path) -> tuple:
 
     gain = microscope['gain']  # Recording Gain
     led_power = microscope['led']['exPower']  # LED Power
+    fps = microscope['fps']['fps']
     focal_planes = get_focal_planes(microscope)  # Get the one, or multiple, focal planes
 
-    return gain, led_power, focal_planes
+    return gain, led_power, fps, focal_planes
 
 
 def get_focal_planes(microscope: dict) -> list:
