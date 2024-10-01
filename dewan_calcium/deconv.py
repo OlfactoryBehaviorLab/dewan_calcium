@@ -7,21 +7,24 @@ if 'ipykernel' in sys.modules:
     from tqdm.notebook import tqdm
 else: import tqdm
 
-def z_score_data(trace_data: pd.DataFrame, cell_names) -> pd.DataFrame:
+
+def z_score_data(smoothed_data: dict, cell_names) -> dict:
     # Function is given a Cells x Trials array
-    # Zscores each trial and then returns the array
+    # Z-scores each trial and then returns the array
 
     from scipy.stats import zscore
 
-    z_scored_data = pd.DataFrame()
+    z_scored_data = dict()
 
     for cell in cell_names:
+        cell_data_zscore = dict()
+        cell_data = smoothed_data[cell]
+        for trial in cell_data.keys():
+            trial_dff = cell_data[trial]
+            z_score = zscore(trial_dff)
+            cell_data_zscore[trial] = z_score
 
-        fluorescence_values = trace_data[cell].values
-        z_score = zscore(fluorescence_values)
-
-        z_score = pd.Series(z_score, name=cell)
-        z_scored_data = pd.concat((z_scored_data, z_score), axis=1)
+        z_scored_data[cell] = cell_data_zscore
 
     return z_scored_data
 
