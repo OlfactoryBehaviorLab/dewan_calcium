@@ -65,13 +65,8 @@ def calc_smoothing_params(endoscope_framerate=10, decay_time_s=0.4, rise_time_s=
     return g1, g2
 
 
-def smooth_data(calc_kernel, trace_data) -> tuple[str, np.ndarray]:
+def _run_deconv(trace, g1, g2):
     import warnings
-
-    name, trace = trace_data
-    trace = trace.values
-
-    g1, g2 = calc_kernel
 
     warnings.simplefilter("ignore", category=UserWarning)
     warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -79,4 +74,51 @@ def smooth_data(calc_kernel, trace_data) -> tuple[str, np.ndarray]:
     deconv_data = deconvolve(trace, (g1, g2))
     smoothed_trace = deconv_data[0]
 
-    return name, smoothed_trace
+    return smoothed_trace
+
+
+def smooth_data(smoothing_kernel, trace_data) -> dict:
+
+    cell_smoothed_traces = {}
+
+    name, cell_data = trace_data
+    cell_data = cell_data.T
+    g1, g2 = smoothing_kernel
+
+    for trial in cell_data.columns:
+        _, trial_name = trial
+        trace = cell_data[trial].values
+
+        nan_vals = np.where(np.isnan(trace))[0]
+
+        if len(nan_vals) > 0:
+            trace = trace[:nan_vals[0]]
+
+        smoothed_trace = _run_deconv(trace, g1, g2)
+        cell_smoothed_traces[trial_name] = smoothed_trace
+
+    cell_smoothed_traces['name'] = name
+
+    return cell_smoothed_traces
+
+
+def pooled_deconvolution(combined_data, smoothing_kernel, workers=8):
+    from functools import partial
+    from tqdm.contrib.concurrent import process_map
+
+    iterable = combined_data.T.groupby(level=0)
+    partial_function = partial(smooth_data, smoothing_kernel)
+
+    return_dicts = process_map(partial_function, iterable, max_workers=workers)
+
+    return _repackage_return(return_dicts)
+
+def _repackage_return(return_dicts):
+    new_return_dicts = {}
+
+    for cell in return_dicts:
+        cell_name = cell['name']
+        cell.pop('name', None)
+        new_return_dicts[cell_name] = cell
+
+    return new_return_dicts
