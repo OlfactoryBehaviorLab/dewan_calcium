@@ -29,21 +29,24 @@ def z_score_data(smoothed_data: dict, cell_names) -> dict:
     return z_scored_data
 
 
-def find_peaks(smoothed_data: pd.DataFrame, cell_names, framerate: int, peak_args: dict) -> dict:
-    width_time = peak_args['decay']
-    inter_spike_time = peak_args['ISI']
-    peak_height = peak_args['height']
+def find_peaks(smoothed_data: dict, cell_names, ENDOSCOPE_FRAMERATE, INTER_SPIKE_INTERVAL, PEAK_MIN_DUR_S, height=1) -> dict:
 
-    peak_width_distance = framerate * (width_time / 1000)
-    inter_transient_distance = framerate * (inter_spike_time / 1000)
+
+    peak_width = ENDOSCOPE_FRAMERATE * PEAK_MIN_DUR_S
+    inter_transient_distance = ENDOSCOPE_FRAMERATE * INTER_SPIKE_INTERVAL
 
     transient_indexes = dict()
 
-    for name, trace in tqdm(smoothed_data[cell_names].items(), desc="Find Transient Indexes: ", total=len(cell_names)):
-        peaks = signal.find_peaks(trace, height=peak_height, width=peak_width_distance,
-                                  distance=inter_transient_distance)
-        peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
-        transient_indexes[name] = peaks
+    for cell_name in tqdm(cell_names, desc="Find Transient Indexes: "):
+        cell_data = smoothed_data[cell_name]
+        trial_indexes = dict()
+        for trial in cell_data.keys():
+            trace_data = cell_data[trial]
+            peaks = signal.find_peaks(trace_data, height=height, width=peak_width,
+                                      distance=inter_transient_distance)
+            peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
+            trial_indexes[trial] = peaks
+        transient_indexes[cell_name] = trial_indexes
 
     return transient_indexes
 
