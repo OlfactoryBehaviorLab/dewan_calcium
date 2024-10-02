@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import sys
 
 if 'ipykernel' in sys.modules:
@@ -90,3 +91,23 @@ def calc_transient_stats(cell_data, trial_labels):
                        'FM:Total': round(num_FM_indices / total_num_indices, 4)}
 
     return transient_stats
+
+def stack_trial_indices(trial_labels, cell_names, transient_indexes):
+    stacked_indexes = {}
+
+    for trial in trial_labels:
+        stacked_indexes[trial] = pd.DataFrame()
+
+    for cell in cell_names:
+        cell_data = transient_indexes[cell]
+        for trial in trial_labels:
+            trial_data = cell_data[trial]
+            trial_data = pd.Series(trial_data)
+            stacked_indexes[trial] = pd.concat((stacked_indexes[trial], trial_data), axis=1)
+
+
+def add_if_num(increment, value):
+    if np.isnan(value):
+        return value
+    else:
+       return value + increment
