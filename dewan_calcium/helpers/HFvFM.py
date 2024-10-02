@@ -77,3 +77,16 @@ def average_pseudotrials(pseudotrials_dff, cell_names, trial_labels):
         avg_pseudotrial_dff[cell] = avg_trial_data
 
     return avg_pseudotrial_dff
+
+def calc_transient_stats(cell_data, trial_labels):
+    HF_columns = [label for label in trial_labels if 'HF' in label]
+    FM_columns = [label for label in trial_labels if 'FM' in label]
+
+    num_HF_indices = len(np.hstack([cell_data[col] for col in HF_columns]))
+    num_FM_indices = len(np.hstack([cell_data[col] for col in FM_columns]))
+
+    total_num_indices = num_HF_indices + num_FM_indices
+    transient_stats = {'HF:Total': round(num_HF_indices / total_num_indices, 4),
+                       'FM:Total': round(num_FM_indices / total_num_indices, 4)}
+
+    return transient_stats
