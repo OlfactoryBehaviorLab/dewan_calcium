@@ -93,18 +93,19 @@ def calc_transient_stats(cell_data, trial_labels):
     return transient_stats
 
 def stack_trial_indices(trial_labels, cell_names, transient_indexes):
-    stacked_indexes = {}
+    stacked_indices = {}
 
     for trial in trial_labels:
-        stacked_indexes[trial] = pd.DataFrame()
+        stacked_indices[trial] = pd.DataFrame()
 
     for cell in cell_names:
         cell_data = transient_indexes[cell]
         for trial in trial_labels:
             trial_data = cell_data[trial]
             trial_data = pd.Series(trial_data)
-            stacked_indexes[trial] = pd.concat((stacked_indexes[trial], trial_data), axis=1)
+            stacked_indices[trial] = pd.concat((stacked_indices[trial], trial_data), axis=1)
 
+    return stacked_indices
 
 def add_if_num(increment, value):
     if np.isnan(value):
