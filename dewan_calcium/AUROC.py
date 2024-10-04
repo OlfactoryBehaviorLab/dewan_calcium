@@ -58,37 +58,40 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
     return np.array(shuffled_auroc)
 
 
-def _EPM_auroc(pseudotrial_groups):
-
+def _pseudotrial_auroc(pseudotrial_groups):
     group_1, group_2 = pseudotrial_groups
-
     cell, g1_data = group_1
     _, g2_data = group_2
 
-    auroc_value = compute_auc(g1_data, g2_data)
+    try:
 
-    # # # GET SHUFFLED DISTRIBUTION # # #
-    all_means = pd.concat((g1_data, g2_data), ignore_index=True)
-    auroc_shuffle = shuffled_distribution(all_means, len(g1_data))
-    bounds = np.percentile(auroc_shuffle, [1, 99])
-    lower_bound, upper_bound = bounds
+        auroc_value = compute_auc(g1_data, g2_data)
 
-    if auroc_value >= upper_bound:
-        significance = 1
-    elif auroc_value <= lower_bound:
-        significance = -1
-    else:
-        significance = 0
+        # # # GET SHUFFLED DISTRIBUTION # # #
+        all_means = pd.concat((g1_data, g2_data), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, len(g1_data))
+        bounds = np.percentile(auroc_shuffle, [1, 99])
+        lower_bound, upper_bound = bounds
 
-    cell_data = {
-        'name': cell,
-        'auroc': auroc_value,
-        'lb': lower_bound,
-        'ub': upper_bound,
-        'shuffle': auroc_shuffle,
-        'significance': significance
-    }
-    return cell_data
+        if auroc_value >= upper_bound:
+            significance = 1
+        elif auroc_value <= lower_bound:
+            significance = -1
+        else:
+            significance = 0
+
+        cell_data = {
+            'name': cell,
+            'auroc': auroc_value,
+            'lb': lower_bound,
+            'ub': upper_bound,
+            'shuffle': auroc_shuffle,
+            'significance': significance
+        }
+
+        return cell_data
+    except ValueError:  # Yes, this is not the proper way to do this
+        return {'name': cell, 'error': 'error'}
 
 
 def EPM_generator(group1, group2):
