@@ -94,22 +94,45 @@ def _pseudotrial_auroc(pseudotrial_groups):
         return {'name': cell, 'error': 'error'}
 
 
-def EPM_generator(group1, group2):
+def _EPM_generator(group1, group2):
     g1_iterable = group1.items()
     g2_iterable = group2.items()
 
     return zip(g1_iterable, g2_iterable)
 
+def _HFFM_generator(group1, group2):
+    g1_iterable = group1.iterrows()
+    g2_iterable = group2.iterrows()
+
+    return zip(g1_iterable, g2_iterable)
 
 def pooled_EPM_auroc(pseudotrial_means, groups, num_workers=8):
     group1, group2 = _prep_EPM_data(pseudotrial_means, groups)
 
-    EPM_iterable = EPM_generator(group1, group2)
+    EPM_iterable = _EPM_generator(group1, group2)
 
-    return_dicts = process_map(_EPM_auroc, EPM_iterable, max_workers=num_workers,
+    return_dicts = process_map(_pseudotrial_auroc, EPM_iterable, max_workers=num_workers,
                                desc="Calculating auROC Statistics for EPM Cells", total=len(group1.columns))
 
     return return_dicts
+
+def pooled_HFFM_auroc(pseudotrial_means, groups, num_workers=8):
+    group1, group2 = _prep_HFFM_data(pseudotrial_means, groups)
+    HFFM_iterable = _HFFM_generator(group1, group2)
+
+    return_dicts = process_map(_pseudotrial_auroc, HFFM_iterable, max_workers=num_workers,
+                               desc="Calculating auROC Statistics for HF_FM Cells", total=len(group1.index))
+
+    return return_dicts
+
+def _prep_HFFM_data(means, groups):
+    group1, group2 = groups
+    group1_data = [means[arm] for arm in group1]
+    group2_data = [means[arm] for arm in group2]
+    group1_data = pd.concat(group1_data, axis=1)
+    group2_data = pd.concat(group2_data, axis=1)
+
+    return group1_data, group2_data
 
 
 def _prep_EPM_data(means, groups):
