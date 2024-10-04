@@ -73,18 +73,6 @@ def calc_smoothing_params(endoscope_framerate, decay_time_s, rise_time_s):
     return g1, g2
 
 
-def _run_deconv(trace, g1, g2):
-    import warnings
-
-    warnings.simplefilter("ignore", category=UserWarning)
-    warnings.simplefilter("ignore", category=RuntimeWarning)
-
-    deconv_data = deconvolve(trace, (g1, g2))
-    smoothed_trace = deconv_data[0]
-
-    return smoothed_trace
-
-
 def smooth_data(smoothing_kernel, trace_data) -> dict:
 
     cell_smoothed_traces = {}
@@ -131,3 +119,16 @@ def _repackage_return(return_dicts):
         new_return_dicts[cell_name] = cell
 
     return new_return_dicts
+
+
+def _run_deconv(trace, g1, g2):
+    import warnings
+    try:
+        warnings.simplefilter("ignore", category=UserWarning)
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+
+        deconv_data = deconvolve(trace, (g1, g2))
+        smoothed_trace = deconv_data[0]
+    except UnboundLocalError:
+        return None
+    return smoothed_trace
