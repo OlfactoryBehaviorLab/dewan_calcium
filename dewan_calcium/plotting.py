@@ -391,7 +391,7 @@ def get_polygon_coordinates(polygons):
     return coordinates
 
 
-def plot_EPM_auroc_histograms(AUROC_results, project_folder):
+def plot_auroc_distribution(AUROC_results, project_folder):
     auroc_vals = [cell['auroc'] for cell in AUROC_results]
     auroc_vals = np.array(auroc_vals)
     direction_indexes = 2 * (auroc_vals - 0.5)
@@ -420,7 +420,7 @@ def plot_EPM_auroc_histograms(AUROC_results, project_folder):
     plt.close(fig)
 
 
-def plot_epm_shuffles(AUROC_results, project_folder):
+def plot_auroc_shuffles(AUROC_results, project_folder):
     for cell in tqdm(AUROC_results):
         try:
             cell_name = cell['name']
