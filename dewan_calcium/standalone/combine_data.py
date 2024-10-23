@@ -1,12 +1,13 @@
 from pathlib import Path
 import pandas as pd
 
-folder = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\2_Identity')
+input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\1_Concentration')
+output_dir = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\1_OdorAnalysis\\1_Concentration\\')
 
 
 def find_data_files():
     print('Searching for data files, this may take a while...')
-    data_files = folder.glob('*\\Analysis\\Output\\combined\\*combined_data_shift.pickle')
+    data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data_shift.pickle')
     if not data_files:
         print('No data files found.')
         return None
@@ -17,6 +18,9 @@ def find_data_files():
 
 
 def main():
+    if not output_dir.exists():
+        output_dir.mkdir()
+
     data_files = find_data_files()
 
     combined_data = pd.DataFrame()
@@ -42,6 +46,9 @@ def main():
         total_num_cells += num_new_cells
 
     update_cell_names(combined_data)
+
+    output_path = output_dir.joinpath('combined.pickle')
+    pd.to_pickle(combined_data, output_path)
 
 
 def update_cell_names(combined_data):
