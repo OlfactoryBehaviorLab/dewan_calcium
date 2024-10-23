@@ -16,9 +16,16 @@ def find_data_files():
         print(f'Found {len(data_files)} data files.')
         return list(data_files)
 
+
 def main():
     data_files = find_data_files()
-
+    combined_data = pd.DataFrame()
+    for file in data_files:
+        new_data = pd.read_pickle(file)
+        cells = len(np.unique([tup[0] for tup in new_data.columns]))
+        print(cells)
+        combined_data = pd.concat([combined_data, pd.read_pickle(file)], axis=1)
+    print(len(np.unique([tup[0] for tup in combined_data.columns])))
 
 
 if __name__ == "__main__":
