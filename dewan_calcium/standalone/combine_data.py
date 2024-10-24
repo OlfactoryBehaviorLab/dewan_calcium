@@ -2,8 +2,8 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\2_Identity')
-output_dir_root = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\')
+input_dir = Path(r'R:\2_Inscopix\1_DTT\2_HFvFM')
+output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined')
 
 
 def combine_data(data_files: list[Path], exp_type: str):
