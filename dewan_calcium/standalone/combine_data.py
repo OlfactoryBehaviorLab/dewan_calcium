@@ -1,26 +1,27 @@
 from pathlib import Path
 import pandas as pd
+from tqdm import tqdm
 
 input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\2_Identity')
 output_dir_root = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\')
 
 
-def combine_odor_data(data_files: list[pd.DataFrame]):
+def combine_data(data_files: list[Path], exp_type: str):
     combined_data = pd.DataFrame()
 
     total_num_cells = 0
 
-    for file in data_files:
+    for file in tqdm(data_files, desc='Processing files: '):
         new_data = pd.read_pickle(str(file))
         current_cell_names = new_data.columns.levels[0].values  # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = new_data[current_cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
 
-        new_names = generate_new_numbers(num_new_cells, total_num_cells)
+        new_numbers = generate_new_numbers(num_new_cells, total_num_cells)
         # Generate new labels for this set of cells
 
-        new_multiindex = pd.MultiIndex.from_product([new_names, trial_order], sortorder=None, names=['Cells', 'Frames'])
+        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order], sortorder=None, names=['Cells', 'Trials'])
         new_data.columns = new_multiindex
         # Create new multiindex with new cell labels and apply it to the new data
 
@@ -74,7 +75,7 @@ def update_cell_names(combined_data):
     notebooks. This is necessitated by how strings are sorted when dataframes are concatenated.
     Args:
         combined_data (pd.DataFrame): Reference to a Dataframe containing the combined data from n number of
-        experiments. This dataframe is indexed by a MultiIndex that is size cells x (odorants * # of trials)
+        experiments. This dataframe is indexed by a MultiIndex that is size cells x (number of conditions * # of trials)
         Cells are represented by integers instead of labels of type string.
 
     Returns:
