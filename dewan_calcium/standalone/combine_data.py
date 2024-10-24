@@ -98,19 +98,10 @@ def main():
     exp_type = get_exp_type()
     data_files = find_data_files(exp_type)
 
-    if exp_type == 'CONC':
-        output_dir = output_dir_root.joinpath('Concentration')
-        combined_data = combine_odor_data(data_files)
-    elif exp_type == 'ID':
-        output_dir = output_dir_root.joinpath('Identity')
-        combined_data = combine_odor_data(data_files)
-    elif exp_type == 'EPM':
-        output_dir = output_dir_root.joinpath('EPM')
-    elif exp_type == 'HFvFM':
-        output_dir = output_dir_root.joinpath('HFvFM')
-
+    combined_data = combine_data(data_files, exp_type)
 
     output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
+    output_dir = output_dir_root.joinpath(exp_type)
 
     if not output_dir.exists():
         output_dir.mkdir()
