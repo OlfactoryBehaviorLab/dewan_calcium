@@ -2,8 +2,8 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-input_dir = Path(r'R:\2_Inscopix\1_DTT\2_HFvFM')
-output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined')
+input_dir = Path(r'R:/2_Inscopix/1_DTT/2_HFvFM')
+output_dir_root = Path(r'C:/Projects/Test_Data/4_Combined')
 
 
 def combine_data(data_files: list[Path], exp_type: str):
@@ -57,11 +57,11 @@ def find_data_files(exp_type: str):
 
     data_files = []
     if exp_type == 'CONC' or exp_type == 'ID':
-        data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data_shift.pickle')
+        data_files = input_dir.glob('*/Analysis/Output/combined/*combined_data_shift.pickle')
     elif exp_type == 'EPM':
-        data_files = input_dir.glob('*\\Analysis\\Output\\pseudotrials\\*pseudotrial_traces.pickle')
+        data_files = input_dir.glob(r'*/Analysis/Output/pseudotrials/*pseudotrial_traces.pickle')
     elif exp_type == 'HFvFM':
-        data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data.pickle')
+        data_files = input_dir.glob(r'*/Analysis/Output/combined/*combined_data.pickle')
 
     data_files = list(data_files)
 
