@@ -104,7 +104,7 @@ def main():
     output_path = output_dir.joinpath(f'{exp_type}-combined.parq')
 
     if not output_dir.exists():
-        output_dir.mkdir()
+        output_dir.mkdir(parents=True)
 
     print('Writing file to disk...')
     combined_data.to_parquet(str(output_path))
