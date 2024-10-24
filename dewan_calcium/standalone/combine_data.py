@@ -39,9 +39,9 @@ def get_exp_type():
     elif 'HFvFM' in str(input_dir):
         experiment_type = 'HFvFM'
     elif 'Concentration' in str(input_dir):
-        experiment_type = 'CONC'
+        experiment_type = 'Concentration'
     elif 'Identity' in str(input_dir):
-        experiment_type = 'ID'
+        experiment_type = 'Identity'
     else:
         raise RuntimeError('Input folder is not a known experiment type!')
 
