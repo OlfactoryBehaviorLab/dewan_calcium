@@ -60,12 +60,13 @@ def find_data_files(exp_type: str):
     elif exp_type == 'HFvFM':
         data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data.pickle')
 
+    data_files = list(data_files)
+
     if not data_files:
         raise FileNotFoundError(f'No data files found in {input_dir}')
     else:
-        data_files = list(data_files)
         print(f'Found {len(data_files)} data files.')
-        return list(data_files)
+        return data_files
 
 
 def update_cell_names(combined_data):
