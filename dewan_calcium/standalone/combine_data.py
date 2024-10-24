@@ -56,7 +56,7 @@ def find_data_files(exp_type: str):
     print('Searching for data files, this may take a while...')
 
     data_files = []
-    if exp_type == 'CONC' or exp_type == 'ID':
+    if exp_type == 'Concentration' or exp_type == 'Identity':
         data_files = input_dir.glob('*/Analysis/Output/combined/*combined_data_shift.pickle')
     elif exp_type == 'EPM':
         data_files = input_dir.glob(r'*/Analysis/Output/pseudotrials/*pseudotrial_traces.pickle')
