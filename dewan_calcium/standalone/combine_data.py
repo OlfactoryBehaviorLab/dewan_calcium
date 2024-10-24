@@ -50,6 +50,9 @@ def get_exp_type():
 
 
 def find_data_files(exp_type: str):
+    if not input_dir.exists():
+        raise FileNotFoundError(f'Input directory {input_dir} does not exist!')
+
     print('Searching for data files, this may take a while...')
 
     data_files = []
