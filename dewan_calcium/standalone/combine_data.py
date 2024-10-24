@@ -100,13 +100,13 @@ def main():
 
     combined_data = combine_data(data_files, exp_type)
 
-    output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
     output_dir = output_dir_root.joinpath(exp_type)
+    output_path = output_dir.joinpath(f'{exp_type}-combined.parq')
 
     if not output_dir.exists():
         output_dir.mkdir()
 
-    pd.to_pickle(combined_data, output_path)
+    combined_data.to_parquet(str(output_path))
 
 
 if __name__ == "__main__":
