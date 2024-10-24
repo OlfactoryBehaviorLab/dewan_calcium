@@ -1,34 +1,18 @@
 from pathlib import Path
 import pandas as pd
 
-input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\1_Concentration')
-output_dir = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\1_OdorAnalysis\\1_Concentration\\')
+input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\2_Identity')
+output_dir_root = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\')
 
 
-def find_data_files():
-    print('Searching for data files, this may take a while...')
-    data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data_shift.pickle')
-    if not data_files:
-        print('No data files found.')
-        return None
-    else:
-        data_files = list(data_files)
-        print(f'Found {len(data_files)} data files.')
-        return list(data_files)
 
-
-def main():
-    if not output_dir.exists():
-        output_dir.mkdir()
-
-    data_files = find_data_files()
-
+def combine_odor_data(data_files: list[pd.DataFrame]):
     combined_data = pd.DataFrame()
 
     total_num_cells = 0
 
     for file in data_files:
-        new_data = pd.read_pickle(file)
+        new_data = pd.read_pickle(str(file))
         current_cell_names = new_data.columns.levels[0].values  # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = new_data[current_cell_names[0]].columns.values
@@ -47,8 +31,9 @@ def main():
 
     update_cell_names(combined_data)
 
-    output_path = output_dir.joinpath('combined.pickle')
-    pd.to_pickle(combined_data, output_path)
+    return combined_data
+
+
 def get_exp_type():
     if 'EPM' in str(input_dir):
         experiment_type = 'EPM'
@@ -81,6 +66,26 @@ def find_data_files(exp_type: str):
         data_files = list(data_files)
         print(f'Found {len(data_files)} data files.')
         return list(data_files)
+
+
+def main():
+    output_dir = []
+    combine_data = []
+
+    exp_type = get_exp_type()
+    data_files = find_data_files(exp_type)
+
+    if exp_type == 'CONC':
+        output_dir = output_dir_root.joinpath('Concentration')
+        combined_data = combine_odor_data(data_files)
+
+
+    # output_path = output_dir.joinpath('combined.pickle')
+    if not output_dir.exists():
+        output_dir.mkdir()
+    # pd.to_pickle(combined_data, output_path)
+
+
 def update_cell_names(combined_data):
     """
     Function which will take each cell number, and add it to a string prepended with a 'C.' The dataframe can then be
