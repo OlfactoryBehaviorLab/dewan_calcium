@@ -64,6 +64,23 @@ def get_exp_type():
     return experiment_type
 
 
+def find_data_files(exp_type: str):
+    print('Searching for data files, this may take a while...')
+
+    data_files = []
+    if exp_type == 'CONC' or exp_type == 'ID':
+        data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data_shift.pickle')
+    elif exp_type == 'EPM':
+        data_files = input_dir.glob('*\\Analysis\\Output\\pseudotrials\\*pseudotrial_traces.pickle')
+    elif exp_type == 'HFvFM':
+        data_files = input_dir.glob('*\\Analysis\\Output\\combined\\*combined_data.pickle')
+
+    if not data_files:
+        raise FileNotFoundError(f'No data files found in {input_dir}')
+    else:
+        data_files = list(data_files)
+        print(f'Found {len(data_files)} data files.')
+        return list(data_files)
 def update_cell_names(combined_data):
     """
     Function which will take each cell number, and add it to a string prepended with a 'C.' The dataframe can then be
