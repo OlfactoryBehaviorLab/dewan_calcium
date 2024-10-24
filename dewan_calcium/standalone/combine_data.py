@@ -5,7 +5,6 @@ input_dir = Path('R:\\2_Inscopix\\1_DTT\\1_OdorAnalysis\\2_Identity')
 output_dir_root = Path('R:\\2_Inscopix\\1_DTT\\4_Combined\\')
 
 
-
 def combine_odor_data(data_files: list[pd.DataFrame]):
     combined_data = pd.DataFrame()
 
@@ -78,9 +77,12 @@ def main():
     if exp_type == 'CONC':
         output_dir = output_dir_root.joinpath('Concentration')
         combined_data = combine_odor_data(data_files)
+    elif exp_type == 'ID':
+        output_dir = output_dir_root.joinpath('Identity')
+        combined_data = combine_odor_data(data_files)
 
 
-    # output_path = output_dir.joinpath('combined.pickle')
+# output_path = output_dir.joinpath('combined.pickle')
     if not output_dir.exists():
         output_dir.mkdir()
     # pd.to_pickle(combined_data, output_path)
