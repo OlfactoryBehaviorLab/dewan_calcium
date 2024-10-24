@@ -49,6 +49,19 @@ def main():
 
     output_path = output_dir.joinpath('combined.pickle')
     pd.to_pickle(combined_data, output_path)
+def get_exp_type():
+    if 'EPM' in str(input_dir):
+        experiment_type = 'EPM'
+    elif 'HFvFM' in str(input_dir):
+        experiment_type = 'HFvFM'
+    elif 'Concentration' in str(input_dir):
+        experiment_type = 'CONC'
+    elif 'Identity' in str(input_dir):
+        experiment_type = 'ID'
+    else:
+        raise RuntimeError('Input folder is not a known experiment type!')
+
+    return experiment_type
 
 
 def update_cell_names(combined_data):
