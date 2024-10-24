@@ -106,8 +106,9 @@ def main():
     if not output_dir.exists():
         output_dir.mkdir()
 
+    print('Writing file to disk...')
     combined_data.to_parquet(str(output_path))
-
+    print(f'Combined data for {exp_type} successfully written to disk!')
 
 if __name__ == "__main__":
     main()
