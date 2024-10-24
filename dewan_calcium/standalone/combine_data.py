@@ -69,7 +69,7 @@ def find_data_files(exp_type: str):
 
 def main():
     output_dir = []
-    combine_data = []
+    combined_data = []
 
     exp_type = get_exp_type()
     data_files = find_data_files(exp_type)
@@ -80,12 +80,18 @@ def main():
     elif exp_type == 'ID':
         output_dir = output_dir_root.joinpath('Identity')
         combined_data = combine_odor_data(data_files)
+    elif exp_type == 'EPM':
+        output_dir = output_dir_root.joinpath('EPM')
+    elif exp_type == 'HFvFM':
+        output_dir = output_dir_root.joinpath('HFvFM')
 
 
-# output_path = output_dir.joinpath('combined.pickle')
+    output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
+
     if not output_dir.exists():
         output_dir.mkdir()
-    # pd.to_pickle(combined_data, output_path)
+
+    pd.to_pickle(combined_data, output_path)
 
 
 def update_cell_names(combined_data):
