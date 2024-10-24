@@ -105,13 +105,13 @@ def main():
     combined_data = combine_data(data_files, exp_type)
 
     output_dir = output_dir_root.joinpath(exp_type)
-    output_path = output_dir.joinpath(f'{exp_type}-combined.parq')
+    output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
 
     print('Writing file to disk...')
-    combined_data.to_parquet(str(output_path))
+    combined_data.to_pickle(str(output_path), compression={'method': 'xz'})
     print(f'Combined data for {exp_type} successfully written to disk!')
 
 if __name__ == "__main__":
