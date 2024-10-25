@@ -3,10 +3,10 @@ from pathlib import Path
 
 
 class ProjectFolder:
-    def __init__(self, project_type, project_dir=None, root_dir=None, select_dir=False, existing_app=None,
+    def __init__(self, project_type, project_dir=None, root_dir=None, combined=False, select_dir=False, existing_app=None,
                  suppress_filenotfound=False):
         self.project_type = project_type
-
+        self.combined = combined
         self.path = None
         self.search_root_dir = None
         self.suppress_filenotfound = suppress_filenotfound
@@ -20,9 +20,12 @@ class ProjectFolder:
         self._create_subfolders()  # Create or acquire folders
 
     def get_data(self):
-        self.raw_data_dir._get_files()
-        self.inscopix_dir._get_files()
-        self.analysis_dir._get_files()
+        if self.raw_data_dir:
+            self.raw_data_dir._get_files()
+        if self.inscopix_dir:
+            self.inscopix_dir._get_files()
+        if self.analysis_dir:
+            self.analysis_dir._get_files()
 
     def _set_root_dir(self, root_dir):
         cwd = Path(os.getcwd())
@@ -60,8 +63,10 @@ class ProjectFolder:
                     self.path = user_project_dir
 
     def _create_subfolders(self):
+        if not self.combined:
+            self.inscopix_dir = InscopixDir(self)
+
         self.raw_data_dir = RawDataDir(self)
-        self.inscopix_dir = InscopixDir(self)
         self.analysis_dir = AnalysisDir(self)
 
     def _folder_selection(self, existing_app) -> list:
@@ -146,17 +151,18 @@ class FigureDir(Dir):
     def __init__(self, parent_folder, name='Figures'):
         super().__init__(parent_folder, name)
 
-        # There shouldn't be anything placed in these folders, so we'll just mark them private
-        self._traces_dir = Dir(self, 'traces')
-        self._scatter_dir = Dir(self, 'scatter')
         self._auroc_dir = Dir(self, 'auroc')
-
         self.ontime_auroc_dir = Dir(self._auroc_dir, 'ontime_auroc')
         self.latent_auroc_dir = Dir(self._auroc_dir, 'latent_auroc')
-        self.ontime_traces_dir = Dir(self._traces_dir, 'ontime_traces')
-        self.latent_traces_dir = Dir(self._traces_dir, 'latent_traces')
-        self.ontime_trial_scatter_dir = Dir(self._scatter_dir, 'ontime_trial_scatter')
-        self.latent_trial_scatter_dir = Dir(self._scatter_dir, 'latent_trial_scatter')
+
+        # This is a sub folder in a sub folder
+        if not self.parent.parent.combined:
+            self._traces_dir = Dir(self, 'traces')
+            self._scatter_dir = Dir(self, 'scatter')
+            self.ontime_traces_dir = Dir(self._traces_dir, 'ontime_traces')
+            self.latent_traces_dir = Dir(self._traces_dir, 'latent_traces')
+            self.ontime_trial_scatter_dir = Dir(self._scatter_dir, 'ontime_trial_scatter')
+            self.latent_trial_scatter_dir = Dir(self._scatter_dir, 'latent_trial_scatter')
 
 
 class RawDataDir(Dir):
@@ -175,6 +181,9 @@ class RawDataDir(Dir):
         # Raw DLC Files
         self.labeled_video_path = None
         self.points_h5_path = None
+
+        if self.parent.combined:
+            self.combined_data_path = None
 
         if not self._new_dir:
             self._get_files()
@@ -195,25 +204,30 @@ class RawDataDir(Dir):
             if self._check_file_not_found(labeled_video, 'Labeled Video'):
                 self.labeled_video_path = labeled_video[0]
         elif self.parent.project_type == 'HFvFM':
-            pass  # No HFvFM specific files right now, will leave this here incase it is needed
+            pass # There's nothing here yet
         else:
             raise ValueError((f'{{{self.parent.project_type}}} is not a valid project type. '
                               f'Please select from the following list: [\'ODOR\', \'EPM\', \'HFvFM\']'))
 
-        # General Files for all project types
-        json_file = list(self.path.glob('*session*.json'))
-        raw_GPIO = list(self.path.glob('*.gpio'))
-        raw_recordings = list(self.path.glob('*.isxd'))
-        exp_h5_file = list(self.path.glob('*mouse*.h5'))
+        if not self.parent.combined:
+            # General Files for all non-combined project types
+            json_file = list(self.path.glob('*session*.json'))
+            raw_GPIO = list(self.path.glob('*.gpio'))
+            raw_recordings = list(self.path.glob('*.isxd'))
+            exp_h5_file = list(self.path.glob('*mouse*.h5'))
 
-        if self._check_file_not_found(json_file, 'session.json'):
-            self.session_json_path = json_file[0]
-        if self._check_file_not_found(raw_GPIO, 'Raw GPIO'):
-            self.raw_GPIO_path = raw_GPIO[0]
-        if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
-            self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
-        if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
-            self.exp_h5_path = exp_h5_file[0]
+            if self._check_file_not_found(json_file, 'session.json'):
+                self.session_json_path = json_file[0]
+            if self._check_file_not_found(raw_GPIO, 'Raw GPIO'):
+                self.raw_GPIO_path = raw_GPIO[0]
+            if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
+                self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
+            if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
+                self.exp_h5_path = exp_h5_file[0]
+        else:
+            combined_data_path = list(self.path.glob('*combined*.pickle'))
+            if self._check_file_not_found(combined_data_path, 'Combined Data'):
+                self.combined_data_path = combined_data_path[0]
 
 
 class InscopixDir(Dir):
@@ -256,11 +270,13 @@ class AnalysisDir(Dir):
 
         #  Main Directories
         self.figures_dir = FigureDir(self)
-        self.preprocess_dir = Dir(self, 'Preprocessed')
         self.output_dir = Dir(self, 'Output')
 
-        #  Output Subdirectories
-        self.combined_dir = Dir(self.output_dir, 'combined')
+        if not self.parent.combined:
+            self.preprocess_dir = Dir(self, 'Preprocessed')
+
+            #  Output Subdirectories
+            self.combined_dir = Dir(self.output_dir, 'combined')
 
         if not self._new_dir:
             self._get_files()
