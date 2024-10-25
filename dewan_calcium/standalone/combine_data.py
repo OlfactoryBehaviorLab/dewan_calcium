@@ -34,6 +34,25 @@ def combine_data(data_files: list[Path], exp_type: str):
     return combined_data
 
 
+def combine_EPM_data(data_files: list[Path]):
+    """
+    Apparently the EPM data is in a different format. Why I did that, not entirely sure...
+    Args:
+        data_files:
+
+    Returns:
+
+    """
+    combined_data = []
+    total_num_cells = 0
+
+    for file in tqdm(data_files, desc='Processing files: '):
+        new_data = pd.read_pickle(str(file))
+        print(new_data)
+        return
+
+    return combined_data
+
 def get_exp_type():
     if 'EPM' in str(input_dir):
         experiment_type = 'EPM'
@@ -104,6 +123,10 @@ def main():
 
     combined_data = combine_data(data_files, exp_type)
 
+    if exp_type == 'EPM':
+        combined_data = combine_EPM_data(data_files)
+    else:
+        combined_data = combine_data(data_files, exp_type)
     output_dir = output_dir_root.joinpath(exp_type)
     output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
 
