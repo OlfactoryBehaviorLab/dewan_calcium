@@ -1,3 +1,5 @@
+from typing import Union
+
 import shapely
 from matplotlib import pyplot as plt
 from roipoly import MultiRoi
@@ -6,6 +8,27 @@ import numpy as np
 
 from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
+
+
+def subsample_pseudotrials(pseudotrials: dict, NUM_PSEUDOTRIALS: int, seed: Union[None, np.random.SeedSequence]):
+    rng_generator = np.random.default_rng(seed)
+    trials = pseudotrials.keys()
+
+    subsampled_pseudotrials = {}
+
+    for trial in trials:
+        trial_pseudotrials = pseudotrials[trial]
+        _num_pseudotrials = len(trial_pseudotrials)
+
+        if _num_pseudotrials < NUM_PSEUDOTRIALS:  # We do not want to select the same trial more than once
+            _num_pseudotrials = NUM_PSEUDOTRIALS
+
+        subsample = rng_generator.choice(trial_pseudotrials, _num_pseudotrials, replace=False, shuffle=False)
+
+        subsampled_pseudotrials[trial] = subsample
+
+    del rng_generator
+    return subsampled_pseudotrials
 
 
 def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_framerate) -> tuple:
