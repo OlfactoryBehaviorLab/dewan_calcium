@@ -1,5 +1,6 @@
+import sys
 from typing import Union
-
+import os
 import shapely
 from matplotlib import pyplot as plt
 from roipoly import MultiRoi
@@ -8,6 +9,10 @@ import numpy as np
 
 from shapely import Polygon, Point, intersection, symmetric_difference_all
 from sklearn.metrics.pairwise import paired_distances
+if 'ipykernel' in sys.modules:
+    from tqdm.notebook import tqdm
+else:
+    from tqdm import tqdm
 
 
 def subsample_pseudotrials(pseudotrials: dict, NUM_PSEUDOTRIALS: int, seed: Union[None, np.random.SeedSequence]):
@@ -183,7 +188,7 @@ def find_region_transitions(animal_locations) -> tuple:
         'Location': [],
     }
 
-    for i, location in enumerate(animal_locations):
+    for i, location in enumerate(tqdm(animal_locations)):
         # If we are at the last item, stop
         if i == len(animal_locations) - 1:
             break
