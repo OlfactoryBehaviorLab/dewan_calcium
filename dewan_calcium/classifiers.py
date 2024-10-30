@@ -66,3 +66,35 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
     cm = confusion_matrix(true_label, pred_label, normalize='true')
 
     return split_scores, cm
+
+
+def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
+    cell_names = combined_data.columns.get_level_values(0)
+    num_labels = np.unique(combined_data.columns.get_level_values(1))
+    num_cells = len(cell_names)
+
+    scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
+    all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
+    mean_svm_scores = []
+
+    for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
+        cell_data = combined_data[cell]
+        correct_labels = cell_data.index.to_series(name='correct_labels')
+
+        svm_scores, confusion_mat = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
+                                            num_splits=num_splits)
+
+        svm_score_average = np.mean(svm_scores)
+        mean_svm_scores.append(svm_score_average)
+
+        scores[cell_i, :] = svm_scores
+        all_confusion_mats[cell_i, :, :] = confusion_mat
+
+    # Make the dataframes to return
+    mean_score_dict = {'Cell': cell_names, 'Overall SVM Score': mean_svm_scores}
+    mean_score_df = pd.DataFrame(mean_score_dict)
+
+    split_score_df = pd.DataFrame(scores, columns=range(num_splits))
+    split_score_df.index = cell_names
+
+    return mean_score_df, split_score_df, all_confusion_mats
