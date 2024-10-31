@@ -70,7 +70,7 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
 
 def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
     cell_names = combined_data.columns.get_level_values(0)
-    num_labels = np.unique(combined_data.columns.get_level_values(1))
+    num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
     num_cells = len(cell_names)
 
     scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
