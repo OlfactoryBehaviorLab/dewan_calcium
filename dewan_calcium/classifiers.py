@@ -66,27 +66,24 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
 
     cm = confusion_matrix(true_label, pred_label, normalize='true')
 
-    return split_scores, cm
+    return split_scores, cm, true_label, pred_label
 
 
 def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
     cell_names = np.unique(combined_data.columns.get_level_values(0))
     num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
     num_cells = len(cell_names)
+
     scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
     all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
     mean_svm_scores = []
+
     for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
-        cell_data = combined_data[cell].T
-        correct_labels = cell_data.index.to_series(name='correct_labels')
-        cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
+        svm_score_avg, svm_scores, confusion_mat, y_vals = decode_single_neuron(cell, combined_data, num_splits,
+                              #TODO: send y_vals back in the return of this function
+                            # Can now be used with the avg ensemble decoder
 
-        svm_scores, confusion_mat = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
-                                            num_splits=num_splits)
-
-        svm_score_average = np.mean(svm_scores)
-        mean_svm_scores.append(svm_score_average)
-
+        mean_svm_scores.append(svm_score_avg)
         scores[cell_i, :] = svm_scores
         all_confusion_mats[cell_i, :, :] = confusion_mat
 
@@ -98,3 +95,15 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     split_score_df.index = cell_names
 
     return mean_score_df, split_score_df, all_confusion_mats
+
+
+def decode_single_neuron(cell, combined_data, num_splits, test_percentage):
+    cell_data = combined_data[cell].T
+    correct_labels = cell_data.index.to_series(name='correct_labels')
+    cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
+
+    svm_scores, confusion_mat, y_true, y_pred = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
+                                        num_splits=num_splits)
+    svm_score_average = np.mean(svm_scores)
+
+    return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
