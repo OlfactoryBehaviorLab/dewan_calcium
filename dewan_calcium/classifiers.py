@@ -107,3 +107,131 @@ def decode_single_neuron(cell, combined_data, num_splits, test_percentage):
     svm_score_average = np.mean(svm_scores)
 
     return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
+
+
+
+def ensemble_decoding(combined_data, ensemble_averaging=False,
+                      n_trial_pairings=50, test_percentage=.2, num_splits=20, class_labels=None):
+    data_len = combined_data.shape[1]
+    cells = np.unique(combined_data.columns.get_level_values(0))
+    num_cells = len(cells)
+    unique_odorants = combined_data.columns.get_level_values(1).unique().values
+
+    # If ensemble_averaging is set to True, then we just average the individual SVM scores for each neuron.
+    if ensemble_averaging:
+
+        mean_score_df, split_score_df, all_confusion_mats = single_neuron_decoding(combined_data, test_percentage=test_percentage, num_splits=num_splits)
+
+
+        if plot_confusion_matrix:
+            disp = ConfusionMatrixDisplay.from_predictions(
+                y_true,
+                y_pred,
+                display_labels=class_labels,
+                normalize='true',
+                im_kw={'vmin': 0, 'vmax': 1}
+            )
+            if cm_plot_title == None:
+                cm_plot_title = f'Ensemble Averaged across {nNeurons} Neurons'
+            disp.ax_.set_title(cm_plot_title)
+            disp.figure_.set_size_inches(10, 10)
+            plt.show()
+
+        # Set up the dataframes to return
+        mean_score_dict = {'Neuron': f'Average of {nNeurons} Neurons', ' Overall SVM Score': np.mean(mean_SVM_scores)}
+        mean_score_df = pd.DataFrame(mean_score_dict, index=[0])
+
+        split_score_df = pd.DataFrame(splits_SVM_scores, columns=range(num_splits))
+        split_score_df.insert(0, 'Neuron', cells)
+
+        return mean_score_df, split_score_df
+
+    else:
+
+        # Figure out the minimum number of trials a neuron has for each taste
+        taste_mins = []
+
+        for taste in tastes:
+            taste_trials = []
+            for neuron in cells:
+                ntdf = dataFrame[(dataFrame['Neuron'] == neuron) & (dataFrame['Taste'] == taste)]
+                taste_trials.append(ntdf.shape[0])
+            taste_mins.append(min(taste_trials))
+
+        # Set up arrays for recording results
+        y_true = np.array([], dtype=int)
+        y_pred = np.array([], dtype=int)
+        split_scores = []
+        pairing_split_scores = np.zeros(shape=(n_trial_pairings, num_splits))
+
+        # Repeat sampling of trials
+        for T in range(n_trial_pairings):
+
+            y = np.repeat(tastes, taste_mins)
+            # X is the concatenated dataframe. Each row will represent a trial, and the neural spike trains will be stacked horizonatally.
+            X = np.zeros(shape=(len(y), nNeurons * data_len))
+
+            # Iterate through each neuron
+            for nindex, neuron in enumerate(cells):
+                trialindex = 0
+                # Iterate through each taste and select the appropriate number of trials
+                for tindex, taste in enumerate(tastes):
+                    ntdf = dataFrame[(dataFrame['Neuron'] == neuron) & (dataFrame['Taste'] == taste)]
+                    trials = np.array(ntdf['Trial'])
+                    selected_trials = np.random.choice(trials, taste_mins[tindex], replace=False)
+                    for trial in selected_trials:
+                        # Put it into X
+                        X[trialindex, (nindex * data_len):(nindex * data_len) + data_len] = np.array(
+                            ntdf[ntdf['Trial'] == trial].iloc[:, start_index:])
+                        trialindex += 1
+
+            # Now we have our concatenated data and labels. Let's run SVM.
+
+            n_samples = X.shape[0] * (1 - test_size)  # Number of spike trains in the training set
+            n_features = X.shape[1]  # Number of time points in the spike trains
+            dual_param = (n_samples < n_features)
+
+            # Define the SVM model
+            model_SVM = LinearSVC(dual=dual_param, max_iter=10000, random_state=651)
+
+            for j in range(num_splits):  # Use several splits of training and testing sets for robustness
+
+                X_train, X_test, y_train, y_test = train_test_split(X, y,  # This function is from sklearn
+                                                                    test_size=test_size,
+                                                                    # Default: 2/3 of data to train and 1/3 to test
+                                                                    shuffle=True,
+                                                                    stratify=y)  # Sample from each taste
+
+                model_SVM.fit(X_train, y_train)  # Re-fit the classifier with the training set
+                s_score = model_SVM.score(X_test, y_test)  # Fit the testing set
+                split_scores.append(s_score)  # record score
+                pairing_split_scores[T, j] = s_score
+
+                if plot_confusion_matrix:
+                    y_true = np.concatenate((y_true, y_test))  # Record the 'true' taste
+                    y_pred = np.concatenate((y_pred, model_SVM.predict(X_test)))  # Record the predicted taste
+
+        # Plot the confusion matrix if applicable
+        if plot_confusion_matrix:
+            disp = ConfusionMatrixDisplay.from_predictions(
+                y_true,
+                y_pred,
+                display_labels=class_labels,
+                normalize='true',
+                im_kw={'vmin': 0, 'vmax': 1}
+            )
+
+            if cm_plot_title == None:
+                cm_plot_title = f'Ensemble of {nNeurons} Neurons'
+            disp.ax_.set_title(cm_plot_title)
+            disp.figure_.set_size_inches(10, 10)
+            plt.show()
+
+        # Make the dataframe to return
+        mean_SVM_dict = {'Neuron': f'Ensemble of {nNeurons} Neurons', 'Overall SVM Score': np.mean(split_scores)}
+        mean_SVM_df = pd.DataFrame(mean_SVM_dict, index=[0])
+
+        splits_SVM_df = pd.DataFrame(pairing_split_scores, columns=range(num_splits))
+        splits_SVM_df.insert(0, 'Trial Pairing', range(n_trial_pairings))
+
+        return mean_SVM_df, splits_SVM_df
