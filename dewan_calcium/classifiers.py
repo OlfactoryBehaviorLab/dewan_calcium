@@ -48,7 +48,8 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
     pred_label = np.array([], dtype=int)
     split_scores = []
 
-    for _ in trange(num_splits, desc='Running SVM splits: '):
+    # for _ in trange(num_splits, desc='Running SVM splits: '):
+    for _ in range(num_splits):
 
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, correct_labels, test_size=test_percentage, shuffle=True, stratify=correct_labels)
@@ -69,17 +70,16 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
 
 
 def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
-    cell_names = combined_data.columns.get_level_values(0)
+    cell_names = np.unique(combined_data.columns.get_level_values(0))
     num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
     num_cells = len(cell_names)
-
     scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
     all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
     mean_svm_scores = []
-
     for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
-        cell_data = combined_data[cell]
+        cell_data = combined_data[cell].T
         correct_labels = cell_data.index.to_series(name='correct_labels')
+        cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
 
         svm_scores, confusion_mat = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
                                             num_splits=num_splits)
