@@ -20,6 +20,7 @@ Special thanks to Roberto Vincis for the frameworks of several functions include
 
 ## Troubleshooting and Setup
 
+- OASIS will need to be built from source using a new version of numpy so pandas is happy
 - If you receive an error regarding libGL reference the following link: [Stack Overflow](https://stackoverflow.com/questions/55313610/importerror-libgl-so-1-cannot-open-shared-object-file-no-such-file-or-directo)
 - Additionally, you will need to add the ISX library path to the LD_LIBRARY_PATH; see the following link for instructions to tie this to the conda library [Stack Overflow](https://stackoverflow.com/questions/46826497/conda-set-ld-library-path-for-env-only)
   - You can also symlink the inscopix library path to the environment lib path {miniforge_path}/envs/{env_name}/lib
