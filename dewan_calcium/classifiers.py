@@ -210,3 +210,41 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
         splits_v_repeat_df = pd.DataFrame(all_split_scores, columns=range(num_splits))
 
         return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
+
+
+def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20):
+
+    true_labels = np.array([], dtype=int)
+    pred_labels = np.array([], dtype=int)
+    all_split_scores = {}
+    all_confusion_mats = {}
+    mean_svm_scores = {}
+
+    cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
+    num_cells = len(cells)
+    odors = z_scored_combined_data.columns.get_level_values(1).unique().values
+
+    data_size = z_scored_combined_data.shape[0]
+    windows = get_windows(data_size, window_size)
+    odor_mins = _get_minimum_trials(z_scored_combined_data, cells, odors)
+    combined_data_index = _generate_dataframe_index(odor_mins)
+
+    for window in tqdm(windows, desc='Sliding Window Ensemble Decoding', leave=True, position=0):
+        cropped_data_per_trial = randomly_sample_trials(z_scored_combined_data,
+                                                        combined_data_index, cells, odors, odor_mins, window=window)
+
+        correct_labels = cropped_data_per_trial.index.to_series()
+
+        split_scores, cm, true_label, pred_label = run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
+        avg_score = np.mean(split_scores)
+        mean_svm_scores[window] = avg_score
+
+        all_split_scores[window] = split_scores
+        all_confusion_mats[window] = cm
+        true_labels = np.concatenate((true_labels, true_label))  # Record the 'true' taste
+        pred_labels = np.concatenate((pred_labels, pred_label))  # Record the predicted taste
+
+    splits_v_repeat_df = pd.DataFrame(all_split_scores)
+
+    return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
+
