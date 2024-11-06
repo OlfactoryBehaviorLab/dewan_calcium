@@ -27,7 +27,6 @@ def convert(path):
 
 def old_to_new(data_folder: Path):
 
-
     if isinstance(data_folder, dict):
         new_paths = {}
         for key in data_folder.keys():

@@ -6,7 +6,29 @@ from tqdm import tqdm
 from old_to_new import old_to_new
 
 input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity')
-output_dir_root = Path(r'C:/Projects/Test_Data/')
+output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined\Identity\Raw_Data')
+
+
+def fix_odors(odor_data):
+    new_odor_data = []
+    for odor in odor_data:
+        if '-' in odor:
+            print('Dashes present, returning!')
+            return odor_data
+        try:
+            first_val = int(odor[0])
+            if first_val == 2:
+                new_odor = '-'.join([odor[1:2], odor[2:]])
+            else:
+                new_odor = '-'.join([odor[0], odor[1:]])
+            new_odor_data.append(new_odor)
+            continue
+        except Exception:
+            pass
+
+        new_odor_data.append(odor)
+
+    return new_odor_data
 
 
 def combine_data(data_files: list[Path], exp_type: str, class_name=None):
@@ -23,12 +45,13 @@ def combine_data(data_files: list[Path], exp_type: str, class_name=None):
         current_cell_names = new_data.columns.levels[0].values  # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = new_data[current_cell_names[0]].columns.values
+        fixed_odors = fix_odors(trial_order)
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
 
         new_numbers = generate_new_numbers(num_new_cells, total_num_cells)
         # Generate new labels for this set of cells
 
-        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order], sortorder=None, names=['Cells', 'Trials'])
+        new_multiindex = pd.MultiIndex.from_product([new_numbers, fixed_odors], sortorder=None, names=['Cells', 'Trials'])
         new_data.columns = new_multiindex
         # Create new multiindex with new cell labels and apply it to the new data
 
