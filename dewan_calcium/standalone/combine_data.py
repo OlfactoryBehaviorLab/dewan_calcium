@@ -1,8 +1,11 @@
+import numpy as np
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\1_Concentration')
+from old_to_new import old_to_new
+
+input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity')
 output_dir_root = Path(r'C:/Projects/Test_Data/')
 
 
@@ -60,30 +63,39 @@ def find_data_files(exp_type: str, classes: list[str]=None):
     print('Searching for data files, this may take a while...')
 
     data_files = []
+    old_data_files = []
     files_by_class = {}
+    old_files_by_class = {}
     if exp_type == 'Concentration' or exp_type == 'Identity':
         data_files = input_dir.glob('*/Analysis/Output/combined/*combined_data_shift.pickle')
+        old_data_files = input_dir.glob('*/ImagingAnalysis/CombinedData/*CombinedData.pickle')
     elif exp_type == 'EPM':
         data_files = input_dir.glob(r'*/Analysis/Output/pseudotrials/*pseudotrial_traces.pickle')
     elif exp_type == 'HFvFM':
         data_files = input_dir.glob(r'*/Analysis/Output/combined/*combined_data.pickle')
 
     data_files = list(data_files)
+    old_data_files = list(old_data_files)
 
-    if not data_files:
+    if not data_files and not old_data_files:
         raise FileNotFoundError(f'No data files found in {input_dir}')
     else:
         if classes:
             for _class in classes:
                 files_by_class[_class] = []
+                old_files_by_class[_class] = []
                 for file in data_files:
                     if _class.lower() in str(file).lower():
                         files_by_class[_class].append(file)
-                print(f'Found {len(files_by_class[_class])} files for class {_class}.')
-            return files_by_class
+                for file in old_data_files:
+                    if _class.lower() in str(file).lower():
+                        old_files_by_class[_class].append(file)
+                print(f'Found {len(files_by_class[_class])} new files for class {_class}.')
+                print(f'Found {len(old_files_by_class[_class])} old files for class {_class}.')
+            return files_by_class, old_files_by_class
         else:
             print(f'Found {len(data_files)} data files.')
-            return data_files
+            return data_files, old_data_files
 
 
 def update_cell_names(combined_data):
@@ -145,11 +157,15 @@ def main():
     collected_data = []
 
     exp_type = get_exp_type()
-    data_files = find_data_files(exp_type, ['VGLUT', 'VGAT'])
+    data_files, old_data_files = find_data_files(exp_type, ['VGLUT', 'VGAT'])
+
+    new_paths = old_to_new(old_data_files)
 
     if isinstance(data_files, dict):
         for _class in data_files:
             class_files = data_files[_class]
+            new_class_files = new_paths[_class]
+            class_files = np.hstack((class_files, new_class_files))
             combine_and_save(class_files, exp_type, class_name=_class)
     else:
         collected_data = combine_data(data_files, exp_type)
