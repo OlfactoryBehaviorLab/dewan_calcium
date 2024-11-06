@@ -49,7 +49,7 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
     split_scores = []
 
     # for _ in trange(num_splits, desc='Running SVM splits: '):
-    for _ in range(num_splits):
+    for _ in trange(num_splits, desc='Running SVM Split', leave=False):
 
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, correct_labels, test_size=test_percentage, shuffle=True, stratify=correct_labels)
