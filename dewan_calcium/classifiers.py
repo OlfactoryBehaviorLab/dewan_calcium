@@ -154,6 +154,17 @@ def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_name
     return data_per_trial
 
 
+def get_windows(data_size, steps):
+    windows = np.arange(steps, data_size, steps)
+    final_index = data_size - 1
+
+    dangling_frames = final_index % steps
+    if dangling_frames > 0:
+        windows = np.hstack([windows, final_index])
+
+    return windows
+
+
 def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
                       n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
     data_len = z_scored_combined_data.shape[1]
