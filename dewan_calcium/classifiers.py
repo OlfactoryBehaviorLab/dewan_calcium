@@ -134,11 +134,16 @@ def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_name
     for cell_i, cell in enumerate(tqdm(cell_names, desc=f'Randomly Sampling Cells for window size {window}', leave=False, position=2)):
         trial_num = 0
         cell_data = pd.DataFrame()
+
+        if window:
+            start_frame, end_frame = window
+
         # Iterate through each taste and select the appropriate number of trials
         for odor_i, odor in enumerate(trial_labels):
             cell_odor_data = z_score_combined_data[cell][odor].T
+
             if window:
-                cell_odor_data = cell_odor_data.iloc[:, :window]
+                cell_odor_data = cell_odor_data.iloc[:, start_frame:end_frame]
             random_trials = cell_odor_data.sample(odor_mins[odor], axis=0)
             cell_data = pd.concat([cell_data, random_trials], ignore_index=True)
 
@@ -152,14 +157,16 @@ def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_name
 
 
 def get_windows(data_size, steps):
-    windows = np.arange(steps, data_size, steps)
+    windows_end = np.arange(steps, data_size, steps)
     final_index = data_size - 1
 
     dangling_frames = final_index % steps
     if dangling_frames > 0:
-        windows = np.hstack([windows, final_index])
+        windows_end = np.hstack([windows_end, final_index])
 
-    return windows
+    windows_start = windows_end - steps
+
+    return list(zip(windows_start, windows_end))
 
 
 def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
