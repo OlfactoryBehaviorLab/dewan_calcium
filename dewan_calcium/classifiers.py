@@ -69,6 +69,18 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
     return split_scores, cm, true_label, pred_label
 
 
+def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
+    cell_data = combined_data[cell].T
+    cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
+    correct_labels = cell_data.index.to_series(name='correct_labels')
+
+    svm_scores, confusion_mat, y_true, y_pred = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
+                                        num_splits=num_splits)
+    svm_score_average = np.mean(svm_scores)
+
+    return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
+
+
 def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
     cell_names = np.unique(combined_data.columns.get_level_values(0))
     num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
@@ -97,16 +109,8 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     return mean_score_df, split_score_df, all_confusion_mats
 
 
-def decode_single_neuron(cell, combined_data, num_splits, test_percentage):
-    cell_data = combined_data[cell].T
-    correct_labels = cell_data.index.to_series(name='correct_labels')
-    cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
 
-    svm_scores, confusion_mat, y_true, y_pred = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
-                                        num_splits=num_splits)
-    svm_score_average = np.mean(svm_scores)
 
-    return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
 
 
 
