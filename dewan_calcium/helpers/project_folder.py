@@ -229,7 +229,11 @@ class RawDataDir(Dir):
         else:
             combined_data_path = list(self.path.glob('*combined*.pickle'))
             if self._check_file_not_found(combined_data_path, 'Combined Data'):
-                self.combined_data_path = combined_data_path[0]
+                if len(combined_data_path) > 0:
+                    self.combined_data_path = combined_data_path
+                else:
+                    self.combined_data_path = combined_data_path[0]
+
 
 
 class InscopixDir(Dir):
