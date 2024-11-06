@@ -214,8 +214,10 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
 
 def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20):
 
-    true_labels = np.array([], dtype=int)
-    pred_labels = np.array([], dtype=int)
+    # true_labels = np.array([], dtype=int)
+    # pred_labels = np.array([], dtype=int)
+    true_labels = {}
+    pred_labels = {}
     all_split_scores = {}
     all_confusion_mats = {}
     mean_svm_scores = {}
@@ -241,8 +243,8 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  tes
 
         all_split_scores[window] = split_scores
         all_confusion_mats[window] = cm
-        true_labels = np.concatenate((true_labels, true_label))  # Record the 'true' taste
-        pred_labels = np.concatenate((pred_labels, pred_label))  # Record the predicted taste
+        true_labels[window] = true_label  # Record the 'true' taste
+        pred_labels[window] = pred_label
 
     splits_v_repeat_df = pd.DataFrame(all_split_scores)
 
