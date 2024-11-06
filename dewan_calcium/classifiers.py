@@ -6,19 +6,13 @@ Date Created: 10/30/2024
 Most of the code in this module is either directly from, or heavily influenced by, code from
 The Vincis Lab at Florida State University (https://github.com/vincisLab/thermalGC)
 """
-import sys
 
 import numpy as np
 import pandas as pd
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
-
-import sys
-if 'ipykernel' in sys.modules:
-    from tqdm.notebook import tqdm, trange
-else:
-    from tqdm import tqdm, trange
+from tqdm.auto import tqdm, trange
 
 
 def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: float = 0.2, num_splits: int =20 ):
@@ -49,7 +43,7 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
     split_scores = []
 
     # for _ in trange(num_splits, desc='Running SVM splits: '):
-    for _ in trange(num_splits, desc='Running SVM Split', leave=False):
+    for _ in trange(num_splits, desc='Running SVM Split', leave=False, position=4):
 
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, correct_labels, test_size=test_percentage, shuffle=True, stratify=correct_labels)
@@ -170,7 +164,7 @@ def get_windows(data_size, steps):
 
 def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
                       n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
-    data_len = z_scored_combined_data.shape[1]
+
     cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
     num_cells = len(cells)
     odors = z_scored_combined_data.columns.get_level_values(1).unique().values
