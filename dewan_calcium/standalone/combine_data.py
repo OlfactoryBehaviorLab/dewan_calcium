@@ -2,16 +2,20 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-input_dir = Path(r'R:/2_Inscopix/1_DTT/2_HFvFM')
-output_dir_root = Path(r'C:/Projects/Test_Data/4_Combined')
+input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\1_Concentration')
+output_dir_root = Path(r'C:/Projects/Test_Data/')
 
 
-def combine_data(data_files: list[Path], exp_type: str):
+def combine_data(data_files: list[Path], exp_type: str, class_name=None):
     combined_data = pd.DataFrame()
 
     total_num_cells = 0
+    if class_name:
+        desc = f'Processing {class_name} files: '
+    else:
+        desc = f'Processing files: '
 
-    for file in tqdm(data_files, desc='Processing files: '):
+    for file in tqdm(data_files, desc=desc):
         new_data = pd.read_pickle(str(file))
         current_cell_names = new_data.columns.levels[0].values  # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
@@ -31,27 +35,8 @@ def combine_data(data_files: list[Path], exp_type: str):
 
     update_cell_names(combined_data)
 
-    return combined_data
+    return combined_data, total_num_cells
 
-
-def combine_EPM_data(data_files: list[Path]):
-    """
-    Apparently the EPM data is in a different format. Why I did that, not entirely sure...
-    Args:
-        data_files:
-
-    Returns:
-
-    """
-    combined_data = []
-    total_num_cells = 0
-
-    for file in tqdm(data_files, desc='Processing files: '):
-        new_data = pd.read_pickle(str(file))
-        print(new_data)
-        return
-
-    return combined_data
 
 def get_exp_type():
     if 'EPM' in str(input_dir):
@@ -68,13 +53,14 @@ def get_exp_type():
     return experiment_type
 
 
-def find_data_files(exp_type: str):
+def find_data_files(exp_type: str, classes: list[str]=None):
     if not input_dir.exists():
         raise FileNotFoundError(f'Input directory {input_dir} does not exist!')
 
     print('Searching for data files, this may take a while...')
 
     data_files = []
+    files_by_class = {}
     if exp_type == 'Concentration' or exp_type == 'Identity':
         data_files = input_dir.glob('*/Analysis/Output/combined/*combined_data_shift.pickle')
     elif exp_type == 'EPM':
@@ -87,8 +73,17 @@ def find_data_files(exp_type: str):
     if not data_files:
         raise FileNotFoundError(f'No data files found in {input_dir}')
     else:
-        print(f'Found {len(data_files)} data files.')
-        return data_files
+        if classes:
+            for _class in classes:
+                files_by_class[_class] = []
+                for file in data_files:
+                    if _class.lower() in str(file).lower():
+                        files_by_class[_class].append(file)
+                print(f'Found {len(files_by_class[_class])} files for class {_class}.')
+            return files_by_class
+        else:
+            print(f'Found {len(data_files)} data files.')
+            return data_files
 
 
 def update_cell_names(combined_data):
@@ -114,28 +109,52 @@ def generate_new_numbers(new_cells: int, total: int):
     new_total = new_cells + total
     return list(range(total, new_total))
 
-def main():
-    output_dir = []
-    combined_data = []
 
-    exp_type = get_exp_type()
-    data_files = find_data_files(exp_type)
-
-    combined_data = combine_data(data_files, exp_type)
+def combine_and_save(data_files, exp_type, class_name=None):
 
     if exp_type == 'EPM':
-        combined_data = combine_EPM_data(data_files)
+        print('EPM not implemented yet!')
+        return []
+        # collected_data = combine_EPM_data(data_files)
     else:
-        combined_data = combine_data(data_files, exp_type)
+        collected_data, total_cells = combine_data(data_files, exp_type, class_name)
+
     output_dir = output_dir_root.joinpath(exp_type)
-    output_path = output_dir.joinpath(f'{exp_type}-combined.pickle')
+
+    if class_name:
+        file_stem = f'{class_name}-{exp_type}'
+    else:
+        file_stem = f'{exp_type}'
 
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
+    pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
+    total_file = output_dir.joinpath(f"{file_stem}.txt")
+
+    with open(total_file, "w") as out_file:
+        out_file.write(f'Num Cells: {total_cells}\n')
+        out_file.write(f'Num Animals: {len(data_files)}')
 
     print('Writing file to disk...')
-    combined_data.to_pickle(str(output_path), compression={'method': 'xz'})
-    print(f'Combined data for {exp_type} successfully written to disk!')
+    collected_data.to_pickle(str(pickle_path), compression={'method': 'xz'})
+    print(f'Combined data for {file_stem} successfully written to disk!')
+
+
+def main():
+    output_dir = []
+    collected_data = []
+
+    exp_type = get_exp_type()
+    data_files = find_data_files(exp_type, ['VGLUT', 'VGAT'])
+
+    if isinstance(data_files, dict):
+        for _class in data_files:
+            class_files = data_files[_class]
+            combine_and_save(class_files, exp_type, class_name=_class)
+    else:
+        collected_data = combine_data(data_files, exp_type)
+
+
 
 if __name__ == "__main__":
     main()
