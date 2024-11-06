@@ -134,7 +134,7 @@ def _generate_dataframe_index(odor_mins):
     return all_trial_labels
 
 
-def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins):
+def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins, window=None):
     data_per_trial = pd.DataFrame()
 
     for cell_i, cell in enumerate(tqdm(cell_names, desc='Randomly Sampling Cell:')):
@@ -150,6 +150,9 @@ def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_name
 
     data_per_trial.index = combined_data_index
     data_per_trial = data_per_trial.dropna(axis=1)
+
+    if window:
+        data_per_trial = data_per_trial.iloc[:window]
 
     return data_per_trial
 
