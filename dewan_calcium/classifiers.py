@@ -109,22 +109,30 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     return mean_score_df, split_score_df, all_confusion_mats
 
 
+def _get_minimum_trials(combined_data, cell_names, odors):
+    min_odor_trials = {}
+
+    for odor in odors:
+        odor_trials = []
+        for cell in cell_names:
+            data = combined_data[cell][odor]
+            num_trials = data.shape[1]  # Each column is a trial here
+            odor_trials.append(num_trials)
+        min_odor_trials[odor] = (np.min(odor_trials))
+
+    return min_odor_trials
 
 
+def _generate_dataframe_index(odor_mins):
+    all_trial_labels = []
+    for odor in odor_mins:
+        min_odor_trials = odor_mins[odor]
+        labels = np.repeat(odor, min_odor_trials).astype(str)
+        all_trial_labels.extend(labels)
+
+    return all_trial_labels
 
 
-
-def ensemble_decoding(combined_data, ensemble_averaging=False,
-                      n_trial_pairings=50, test_percentage=.2, num_splits=20, class_labels=None):
-    data_len = combined_data.shape[1]
-    cells = np.unique(combined_data.columns.get_level_values(0))
-    num_cells = len(cells)
-    unique_odorants = combined_data.columns.get_level_values(1).unique().values
-
-    # If ensemble_averaging is set to True, then we just average the individual SVM scores for each neuron.
-    if ensemble_averaging:
-
-        mean_score_df, split_score_df, all_confusion_mats = single_neuron_decoding(combined_data, test_percentage=test_percentage, num_splits=num_splits)
 def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins):
     data_per_trial = pd.DataFrame()
 
