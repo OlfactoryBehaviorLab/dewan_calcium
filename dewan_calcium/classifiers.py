@@ -121,7 +121,17 @@ def ensemble_decoding(combined_data, ensemble_averaging=False,
     if ensemble_averaging:
 
         mean_score_df, split_score_df, all_confusion_mats = single_neuron_decoding(combined_data, test_percentage=test_percentage, num_splits=num_splits)
+def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins):
+    data_per_trial = pd.DataFrame()
 
+    for cell_i, cell in enumerate(tqdm(cell_names, desc='Randomly Sampling Cell:')):
+        trial_num = 0
+        cell_data = pd.DataFrame()
+        # Iterate through each taste and select the appropriate number of trials
+        for odor_i, odor in enumerate(trial_labels):
+            cell_odor_data = z_score_combined_data[cell][odor].T
+            random_trials = cell_odor_data.sample(odor_mins[odor], axis=0)
+            cell_data = pd.concat([cell_data, random_trials], ignore_index=True)
 
         if plot_confusion_matrix:
             disp = ConfusionMatrixDisplay.from_predictions(
