@@ -89,15 +89,16 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
     all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
     mean_svm_scores = []
-
+    all_y_vals = {}
     for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
-        svm_score_avg, svm_scores, confusion_mat, y_vals = decode_single_neuron(cell, combined_data, num_splits,
-                              #TODO: send y_vals back in the return of this function
-                            # Can now be used with the avg ensemble decoder
+        svm_score_avg, svm_scores, confusion_mat, y_vals = _decode_single_neuron(
+            cell, combined_data, num_splits, test_percentage)
+            # Can now be used with the avg ensemble decoder
 
         mean_svm_scores.append(svm_score_avg)
         scores[cell_i, :] = svm_scores
         all_confusion_mats[cell_i, :, :] = confusion_mat
+        all_y_vals[cell] = y_vals
 
     # Make the dataframes to return
     mean_score_dict = {'Cell': cell_names, 'Overall SVM Score': mean_svm_scores}
@@ -106,7 +107,7 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     split_score_df = pd.DataFrame(scores, columns=range(num_splits))
     split_score_df.index = cell_names
 
-    return mean_score_df, split_score_df, all_confusion_mats
+    return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
 
 
 def _get_minimum_trials(combined_data, cell_names, odors):
