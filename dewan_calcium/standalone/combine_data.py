@@ -157,7 +157,8 @@ def main():
     collected_data = []
 
     exp_type = get_exp_type()
-    data_files, old_data_files = find_data_files(exp_type, ['VGLUT', 'VGAT'])
+    data_files, old_data_files = find_data_files(exp_type)
+    # data_files, old_data_files = find_data_files(exp_type, ['VGLUT', 'VGAT'])
 
     new_paths = old_to_new(old_data_files)
 
@@ -168,8 +169,8 @@ def main():
             class_files = np.hstack((class_files, new_class_files))
             combine_and_save(class_files, exp_type, class_name=_class)
     else:
-        collected_data = combine_data(data_files, exp_type)
-
+        comb_data_files = np.hstack((new_paths, data_files))
+        combine_and_save(comb_data_files, exp_type)
 
 
 if __name__ == "__main__":

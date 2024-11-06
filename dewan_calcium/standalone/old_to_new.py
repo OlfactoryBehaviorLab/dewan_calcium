@@ -26,14 +26,21 @@ def convert(path):
 
 
 def old_to_new(data_folder: Path):
-    new_paths = {}
+
 
     if isinstance(data_folder, dict):
+        new_paths = {}
         for key in data_folder.keys():
             new_paths[key] = []
             for file in data_folder[key]:
                 file = file.parents[1]
                 new_path = convert(file)
                 new_paths[key].append(new_path)
+    else:
+        new_paths = []
+        for file in data_folder:
+            file = file.parents[1]
+            new_path = convert(file)
+            new_paths.append(new_path)
 
     return new_paths
