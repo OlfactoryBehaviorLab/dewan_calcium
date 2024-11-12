@@ -43,3 +43,20 @@ def old_to_new(data_folder: Path):
             new_paths.append(new_path)
 
     return new_paths
+
+
+def new_old_to_new(files_dict: dict):
+
+    for animal_type in files_dict.keys():
+        type_files = files_dict[animal_type]
+
+        for project in type_files:
+            if not project['old']:
+                continue
+            else:
+                file_parent = project['file'].parents[1]
+                new_path = convert(file_parent)
+                project['file'] = new_path
+                project['old'] = False
+
+    return files_dict
