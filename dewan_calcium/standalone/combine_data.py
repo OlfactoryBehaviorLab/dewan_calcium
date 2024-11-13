@@ -11,7 +11,7 @@ from . import old_to_new
 from . import get_project_files
 
 input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity')
-output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined\Identity\Raw_Data')
+output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined\Identity')
 
 
 def fix_odors(odor_data):
@@ -84,6 +84,11 @@ def strip_insignificant_cells(data, significance_table):
 
     return data
 
+
+def strip_multisensory_trials(data):
+    trials_to_drop = ['MO', 'Buzzer']
+    data = data.drop(trials_to_drop, axis=1, level=1)
+
     return data
 
 
@@ -119,6 +124,7 @@ def combine_data(data_files, filter_significant, class_name=None):
         new_data = pd.read_pickle(str(data_file))
         significance_data = pd.read_excel(str(significance_file))
         new_data = strip_insignificant_cells(new_data, significance_data)
+        new_data = strip_multisensory_trials(new_data)
         current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = new_data[current_cell_names[0]].columns.values
