@@ -36,7 +36,7 @@ def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
         new_old_data = animal_dir.glob('ImagingAnalysis/CombinedData/new*CombinedData*.pickle')
 
         significance_data_old = animal_dir.glob('*SignificanceTable.xlsx')
-        significance_data_new = animal_dir.glob('*/Analysis/Output/*SignificanceTable.xlsx')
+        significance_data_new = animal_dir.glob('Analysis/Output/*SignificanceTable.xlsx')
     # elif exp_type == 'EPM':
     #     data_files = animal_dir.rglob(r'*/Analysis/Output/pseudotrials/*pseudotrial_traces.pickle')
     # elif exp_type == 'HFvFM':
