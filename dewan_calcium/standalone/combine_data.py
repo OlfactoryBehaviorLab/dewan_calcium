@@ -79,7 +79,10 @@ def strip_insignificant_cells(data, significance_table):
     significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
     drop_mask = (significance_table.loc['MO'] > 0).values | (significance_table.loc['Buzzer'] > 0).values
     cells_to_drop = data.columns.get_level_values(0).unique()[drop_mask].values
-    data = data.drop(cells_to_drop, axis=1, level=0)
+    if len(cells_to_drop) > 0:
+        data = data.drop(cells_to_drop, axis=1, level=0)
+
+    return data
 
     return data
 
