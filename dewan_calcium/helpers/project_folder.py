@@ -205,6 +205,8 @@ class RawDataDir(Dir):
                 self.labeled_video_path = labeled_video[0]
         elif self.parent.project_type == 'HFvFM':
             pass # There's nothing here yet
+        elif self.parent.project_type == 'ISX':
+            pass
         else:
             raise ValueError((f'{{{self.parent.project_type}}} is not a valid project type. '
                               f'Please select from the following list: [\'ODOR\', \'EPM\', \'HFvFM\']'))
