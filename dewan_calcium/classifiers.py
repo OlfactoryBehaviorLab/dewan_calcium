@@ -11,18 +11,18 @@ import numpy as np
 import pandas as pd
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
 from sklearn.ensemble import BaggingClassifier
+from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
 
-def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: float = 0.2, num_splits: int =20 ):
+def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int =20):
     """
 
     Args:
         traces (pd.DataFrame): DataFrame containing preprocessed 1-P calcium transient data. DataFrame is size n x t,
         where each row is a trial and each column is a sample (total samples equal to t).
-        correct_labels (pd.Series): Series of labels corresponding to each trial (total trials equal to n)
+        trial_labels (pd.Series): Series of labels corresponding to each trial (total trials equal to n)
         test_percentage (float): Percentage of data to use as test set
         num_splits (int): Number of splits to use for cross-validation
 
@@ -62,6 +62,7 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
 
 
 def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
+
     cell_data = combined_data[cell].T
     cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
     correct_labels = cell_data.index.to_series(name='correct_labels')
