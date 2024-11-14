@@ -218,7 +218,7 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
         return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
 
 
-def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20):
+def sliding_window_ensemble_decoding(z_scored_combined_data, repeat_num, window_size=2,  test_percentage=.2, num_splits=20, ):
 
     # true_labels = np.array([], dtype=int)
     # pred_labels = np.array([], dtype=int)
