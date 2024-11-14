@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+from sklearn.ensemble import BaggingClassifier
 from tqdm.auto import tqdm, trange
 
 
@@ -31,32 +32,29 @@ def run_svm(traces: pd.DataFrame, correct_labels: pd.Series, test_percentage: fl
 
     """
 
-    num_samples = traces.shape[0] * (1 - test_percentage)  # Number of trials
-    num_features = traces.shape[1]  # Number of data points
-    use_dual_param = (num_samples < num_features)
-    # Documentation recommends using dual_param mode if samples < features
-
-    svm = LinearSVC(dual=use_dual_param, max_iter=10000, random_state=1000)
+    svm = LinearSVC(dual='auto', max_iter=10000, random_state=1000)
+    bg = BaggingClassifier(svm, n_estimators=num_splits, random_state=1000)  # use this instead of the manual splits
 
     true_label = np.array([], dtype=int)
     pred_label = np.array([], dtype=int)
     split_scores = []
 
     # for _ in trange(num_splits, desc='Running SVM splits: '):
-    for _ in trange(num_splits, desc='Running SVM Split', leave=False, position=4):
+    # for _ in trange(num_splits, desc='Running SVM Split', leave=False):
 
-        train_trials, test_trials, train_labels, test_labels = train_test_split(
-            traces, correct_labels, test_size=test_percentage, shuffle=True, stratify=correct_labels)
+    train_trials, test_trials, train_labels, test_labels = train_test_split(
+        traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
 
-        svm.fit(train_trials, train_labels)
-        svm_score = svm.score(test_trials, test_labels)
-        split_scores.append(svm_score)
+    bg.fit(train_trials, train_labels)
+    svm_score = bg.score(test_trials, test_labels)
 
-        true_label = np.concatenate((true_label, test_labels))
+    split_scores.append(svm_score)
 
-        svm_prediction = svm.predict(test_trials)
+    true_label = np.concatenate((true_label, test_labels))
 
-        pred_label = np.concatenate((pred_label, svm_prediction))
+    svm_prediction = bg.predict(test_trials)
+
+    pred_label = np.concatenate((pred_label, svm_prediction))
 
     cm = confusion_matrix(true_label, pred_label, normalize='true')
 
