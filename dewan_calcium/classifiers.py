@@ -260,3 +260,18 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  tes
 
     return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
 
+
+def _shuffle_index(df):
+    rng = np.random.default_rng()
+    index = df.index.values
+    rng.shuffle(index)
+    df.index = index
+    return df
+
+
+def shuffle_data(z_scored_combined_data):
+    shuffled_data = z_scored_combined_data.T.groupby(level=0, group_keys=False).apply(_shuffle_index)
+    shuffled_data.index = pd.MultiIndex.from_tuples(shuffled_data.index, names=['cell', 'odor'])
+    shuffled_data = shuffled_data.T
+
+    return shuffled_data
