@@ -147,3 +147,4 @@ desktop.ini
 
 /dewan_calcium.egg-info/
 poetry.lock
+uv.lock

@@ -24,11 +24,12 @@ def convert(path):
     new_data.to_pickle(new_data_path)
     return new_data_path
 
-def convert_time():
+def convert_time(time_file_path):
+
+
     pass
 
 def old_to_new(files_dict: dict):
-
     for animal_type in files_dict.keys():
         type_files = files_dict[animal_type]
 
@@ -42,8 +43,9 @@ def old_to_new(files_dict: dict):
                 project['old'] = False
 
             if project['old_time']:
-                pass
-
-
+                time_file_path = project['time']
+                new_time_path = convert_time(time_file_path)
+                project['file'] = new_time_path
+                project['old'] = False
 
     return files_dict

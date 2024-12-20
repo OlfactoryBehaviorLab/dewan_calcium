@@ -22,12 +22,6 @@ def get_folders(input_dir: Path, animal_type: list):
 def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     # return_dict = {'old': False, 'time_old': False}
     return_dict = dict.fromkeys(['file', 'sig', 'time', 'old', 'time_old'], [])
-    data_file = []
-    old_data_file = []
-    new_old_data = []
-
-    significance_data_old = []
-    significance_data_new = []
 
     if exp_type == 'Concentration' or exp_type == 'Identity':
         data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_shift.pickle')
