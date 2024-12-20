@@ -186,7 +186,7 @@ def main():
 
     for _type in animal_types:
         for folder in tqdm(folders[_type], desc=f'Getting files for {_type} animals'):
-            files[_type].append(get_project_files.new_find_data_files(folder, exp_type))
+            files[_type].append(get_project_files.find_data_files(folder, exp_type))
 
     files = old_to_new.old_to_new(files)
 

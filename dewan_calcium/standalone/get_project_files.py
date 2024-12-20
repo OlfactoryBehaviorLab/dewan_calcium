@@ -19,7 +19,7 @@ def get_folders(input_dir: Path, animal_type: list):
     return folders_per_type
 
 
-def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
+def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     # return_dict = {'old': False, 'time_old': False}
     return_dict = dict.fromkeys(['file', 'sig', 'time', 'old', 'time_old'], [])
     data_file = []
