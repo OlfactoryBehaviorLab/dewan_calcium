@@ -24,39 +24,26 @@ def convert(path):
     new_data.to_pickle(new_data_path)
     return new_data_path
 
+def convert_time():
+    pass
 
-def old_to_new(data_folder: Path):
-
-    if isinstance(data_folder, dict):
-        new_paths = {}
-        for key in data_folder.keys():
-            new_paths[key] = []
-            for file in data_folder[key]:
-                file = file.parents[1]
-                new_path = convert(file)
-                new_paths[key].append(new_path)
-    else:
-        new_paths = []
-        for file in data_folder:
-            file = file.parents[1]
-            new_path = convert(file)
-            new_paths.append(new_path)
-
-    return new_paths
-
-
-def new_old_to_new(files_dict: dict):
+def old_to_new(files_dict: dict):
 
     for animal_type in files_dict.keys():
         type_files = files_dict[animal_type]
 
         for project in type_files:
-            if not project['old']:
+            if not project['old'] and not project['old_time']:
                 continue
-            else:
+            if project['old']:
                 file_parent = project['file'].parents[1]
                 new_path = convert(file_parent)
                 project['file'] = new_path
                 project['old'] = False
+
+            if project['old_time']:
+                pass
+
+
 
     return files_dict

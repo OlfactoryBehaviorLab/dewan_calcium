@@ -1,17 +1,15 @@
 import os
 os.environ['ISX'] = '0'
 
-from dewan_calcium.standalone.old_to_new import old_to_new
-
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-from . import old_to_new
-from . import get_project_files
+import get_project_files
+import old_to_new
 
-input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity')
-output_dir_root = Path(r'R:\2_Inscopix\1_DTT\4_Combined\Identity')
+input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity')
+output_dir_root = Path(r'~/Combined')
 
 
 def fix_odors(odor_data):
@@ -180,18 +178,6 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
 
 
 def main():
-#     file = {
-#         'file': r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity\VGAT\VGAT-42\Analysis\Output\combined\VGAT42_ID-8_19_24-combined_data.pickle',
-#         'sig':  r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\2_Identity\VGAT\VGAT-42\Analysis\Output\VGAT42_ID-8_19_24-SignificanceTable.xlsx',
-#         'old': False
-#     }
-#
-#     files = {
-#         'VGAT': [file]
-#     }
-    # combine_and_save(files, 'Identity')
-    #
-    # return
     animal_types = ['VGAT', 'VGLUT']
     files = {_type: [] for _type in animal_types}
 
@@ -202,10 +188,24 @@ def main():
         for folder in tqdm(folders[_type], desc=f'Getting files for {_type} animals'):
             files[_type].append(get_project_files.new_find_data_files(folder, exp_type))
 
-    files = old_to_new.new_old_to_new(files)
+    files = old_to_new.old_to_new(files)
 
     combine_and_save(files, exp_type)
 
+def test_main():
+    animal_types = ['VGAT', 'VGLUT']
+    files = {_type: [] for _type in animal_types}
+
+    exp_type = get_exp_type()
+    folders = get_project_files.get_folders(input_dir, animal_types)
+    # for _type in animal_types:
+    #     for folder in tqdm(folders[_type], desc=f'Getting files for {_type} animals'):
+    #         files[_type].append(get_project_files.new_find_data_files(folder, exp_type))
+
+    input_file = '/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/1_Concentration/VGLUT/VGLUT-27_RERUN/Analysis/Output/combined/VGLUT27_Conc-8_19_24-combined_data_.pickle'
+    file = pd.read_pickle(str(input_file))
+    print(file.columns)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test_main()

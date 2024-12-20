@@ -16,12 +16,12 @@ def get_folders(input_dir: Path, animal_type: list):
                 type_dir = list(_dir.iterdir())
                 folders_per_type[_type].extend(type_dir)
 
-
     return folders_per_type
 
-def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
-    return_dict = {'old': False}
 
+def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
+    # return_dict = {'old': False, 'time_old': False}
+    return_dict = dict.fromkeys(['file', 'sig', 'time', 'old', 'time_old'], [])
     data_file = []
     old_data_file = []
     new_old_data = []
@@ -29,24 +29,26 @@ def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     significance_data_old = []
     significance_data_new = []
 
-
     if exp_type == 'Concentration' or exp_type == 'Identity':
         data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_shift.pickle')
         old_data_file = animal_dir.glob('ImagingAnalysis/CombinedData/*CombinedData.pickle')
         new_old_data = animal_dir.glob('ImagingAnalysis/CombinedData/new*CombinedData*.pickle')
-
+        new_FV_timestamps = animal_dir.glob('**/*FV_timestamps*.pickle')
+        old_FV_timestamps = animal_dir.glob('**/*FVTimeMap*.pickle')
+        new_old_FV_timestamps = animal_dir.glob('**/new*FVTimeMap*.pickle')
         significance_data_old = animal_dir.glob('*SignificanceTable.xlsx')
         significance_data_new = animal_dir.glob('Analysis/Output/*SignificanceTable.xlsx')
-    # elif exp_type == 'EPM':
-    #     data_files = animal_dir.rglob(r'*/Analysis/Output/pseudotrials/*pseudotrial_traces.pickle')
-    # elif exp_type == 'HFvFM':
-    #     data_files = animal_dir.rglob(r'*/Analysis/Output/combined/*combined_data.pickle')
     else:
         raise ValueError(f'{exp_type} not implemented!')
 
     data_file = list(data_file)
     old_data_file = list(old_data_file)
     new_old_data = list(new_old_data)
+
+    new_FV_timestamps_file = list(new_FV_timestamps)
+    old_FV_timestamps_file = list(old_FV_timestamps)
+    new_old_FV_timestamps = list(new_old_FV_timestamps)
+
     significance_data_old = list(significance_data_old)
     significance_data_new = list(significance_data_new)
 
@@ -72,5 +74,18 @@ def new_find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
             raise FileNotFoundError(f'Cannot find the significance chart in {animal_dir}')
         else:
             return_dict['sig'] = None
+
+    if old_FV_timestamps_file:
+        return_dict['time'] = old_FV_timestamps_file[0]
+        return_dict['old_time'] = True
+    elif new_FV_timestamps_file:
+        return_dict['time'] = new_FV_timestamps_file[0]
+    elif new_old_FV_timestamps:
+        return_dict['time'] = new_old_FV_timestamps[0]
+    else:
+        if error:
+            raise FileNotFoundError(f'Cannot find the FV timestamps in {animal_dir}')
+        else:
+            return_dict['time'] = None
 
     return return_dict
