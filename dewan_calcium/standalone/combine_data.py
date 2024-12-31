@@ -109,7 +109,7 @@ def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     print(f'Combined data for {file_stem} successfully written to disk!')
 
 
-def find_short_trials(time_data) -> tuple[dict, list[int]]:
+def find_short_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices_to_drop = []
     trial_indices = {}
 
@@ -127,13 +127,15 @@ def find_short_trials(time_data) -> tuple[dict, list[int]]:
         trial_periods['post'] = post_indices
 
         if baseline_frames < MIN_BASELINE_TIME_FRAMES:
-            print(f'Trial {i} w/ odor {name} does not have enough baseline frames!')
+            if debug:
+                print(f'Trial {i} w/ odor {name} does not have enough baseline frames!')
             trial_indices_to_drop.append(i)
         elif post_frames < MIN_POST_TIME_FRAMES:
-            print(f'Trial {i} w/ odor {name} does not have enough post-time frames!')
+            if debug:
+                print(f'Trial {i} w/ odor {name} does not have enough post-time frames ({post_frames})!')
             trial_indices_to_drop.append(i)
-        else:
-            trial_indices[i] = trial_periods
+
+        trial_indices[i] = trial_periods
 
     return trial_indices, trial_indices_to_drop
 
