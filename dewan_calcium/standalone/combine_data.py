@@ -153,12 +153,22 @@ def combine_data(data_files, filter_significant, class_name=None):
         data_file = file['file']
         significance_file = file['sig']
         time_file = file['time']
+        name = file['folder'].name
 
         new_data = pd.read_pickle(str(data_file))
         significance_data = pd.read_excel(str(significance_file))
         time_data = pd.read_pickle(str(time_file))
         new_data = strip_insignificant_cells(new_data, significance_data)
         new_data = strip_multisensory_trials(new_data)
+        trial_indices, trial_indices_to_drop = find_short_trials(time_data)
+
+        if len(trial_indices_to_drop) == len(time_data):
+            print(f'Skipping {name}, as all trials are marked to be dropped!')
+            continue
+        elif trial_indices_to_drop:
+            print(f'Dropping {trial_indices_to_drop} from {name}!')
+
+
         current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = new_data[current_cell_names[0]].columns.values
