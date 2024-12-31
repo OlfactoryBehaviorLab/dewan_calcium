@@ -10,7 +10,9 @@ import old_to_new
 
 input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity')
 output_dir_root = Path(r'~/Combined')
-
+MIN_BASELINE_TIME_FRAMES = 20
+MIN_POST_TIME_FRAMES = 20
+ODOR_TIME_S = 2
 
 def fix_odors(odor_data):
     new_odor_data = []
@@ -104,6 +106,27 @@ def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     print(f'Writing combined data for {file_stem} to disk...')
     data.to_pickle(str(pickle_path), compression={'method': 'xz'})
     print(f'Combined data for {file_stem} successfully written to disk!')
+
+
+def find_short_trials(time_data) -> list[int]:
+    trial_indices_to_drop = []
+
+
+    for i, (name, data) in enumerate(time_data.items()):
+        baseline_time = data[data < 0]
+        post_time = data[data >= ODOR_TIME_S]
+        baseline_frames = len(baseline_time)
+        post_frames = len(post_time)
+
+        if baseline_frames < MIN_BASELINE_TIME_FRAMES:
+            print(f'Trial {i} w/ odor {name} does not have enough baseline frames!')
+            trial_indices_to_drop.append(i)
+
+        if post_frames < MIN_POST_TIME_FRAMES:
+            print(f'Trial {i} w/ odor {name} does not have enough post-time frames!')
+            trial_indices_to_drop.append(i)
+
+    return trial_indices_to_drop
 
 
 def combine_data(data_files, filter_significant, class_name=None):
