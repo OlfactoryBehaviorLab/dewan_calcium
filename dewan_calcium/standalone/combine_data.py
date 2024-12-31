@@ -93,6 +93,21 @@ def strip_multisensory_trials(data):
     return data
 
 
+def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
+    num_rows = cell_data.shape[0]
+    rows_to_keep = np.setdiff1d(np.arange(num_rows), trials_to_drop)
+    df = cell_data.iloc[rows_to_keep, :]
+    return df
+
+
+def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
+    cell_data = cell_data.T  # Transpose so cells/trials are the index
+    grouped_data = cell_data.groupby(level=0, group_keys=False)  # Group by the cells
+    grouped_data.apply(lambda df: _drop_trials(df, trials_to_drop)) # Apply _drop_trials to each 'Cell's' Data
+
+    return grouped_data.T  # Flip data back the other direction
+
+
 def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
@@ -167,6 +182,7 @@ def combine_data(data_files, filter_significant, class_name=None):
             continue
         elif trial_indices_to_drop:
             print(f'Dropping {trial_indices_to_drop} from {name}!')
+            new_data = drop_bad_trials(new_data, trial_indices_to_drop)
 
 
         current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
