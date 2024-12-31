@@ -3,6 +3,7 @@ os.environ['ISX'] = '0'
 
 from pathlib import Path
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 
 import get_project_files
@@ -108,25 +109,33 @@ def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     print(f'Combined data for {file_stem} successfully written to disk!')
 
 
-def find_short_trials(time_data) -> list[int]:
+def find_short_trials(time_data) -> tuple[dict, list[int]]:
     trial_indices_to_drop = []
-
+    trial_indices = {}
 
     for i, (name, data) in enumerate(time_data.items()):
-        baseline_time = data[data < 0]
-        post_time = data[data >= ODOR_TIME_S]
-        baseline_frames = len(baseline_time)
-        post_frames = len(post_time)
+        trial_periods = dict.fromkeys(['baseline', 'odor', 'post'], [])
+        baseline_indices = data[data < 0]
+        odor_indices = data[np.logical_and(0 <= data, data < ODOR_TIME_S)]
+        post_indices = data[data >= ODOR_TIME_S]
+
+        baseline_frames = len(baseline_indices)
+        post_frames = len(post_indices)
+
+        trial_periods['baseline'] = baseline_indices
+        trial_periods['odor'] = odor_indices
+        trial_periods['post'] = post_indices
 
         if baseline_frames < MIN_BASELINE_TIME_FRAMES:
             print(f'Trial {i} w/ odor {name} does not have enough baseline frames!')
             trial_indices_to_drop.append(i)
-
-        if post_frames < MIN_POST_TIME_FRAMES:
+        elif post_frames < MIN_POST_TIME_FRAMES:
             print(f'Trial {i} w/ odor {name} does not have enough post-time frames!')
             trial_indices_to_drop.append(i)
+        else:
+            trial_indices[i] = trial_periods
 
-    return trial_indices_to_drop
+    return trial_indices, trial_indices_to_drop
 
 
 def combine_data(data_files, filter_significant, class_name=None):
