@@ -21,26 +21,22 @@ def get_folders(input_dir: Path, animal_type: list):
 
 def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     # return_dict = {'old': False, 'time_old': False}
-    return_dict = dict.fromkeys(['file', 'sig', 'time', 'old', 'time_old'], [])
-
+    return_dict = dict.fromkeys(['file', 'sig', 'time', 'folder'], [])
+    return_dict['folder'] = animal_dir
     if exp_type == 'Concentration' or exp_type == 'Identity':
         data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_shift.pickle')
-        old_data_file = animal_dir.glob('ImagingAnalysis/CombinedData/*CombinedData.pickle')
         new_old_data = animal_dir.glob('ImagingAnalysis/CombinedData/new*CombinedData*.pickle')
-        new_FV_timestamps = animal_dir.glob('**/*FV_timestamps*.pickle')
-        old_FV_timestamps = animal_dir.glob('**/*FVTimeMap*.pickle')
-        new_old_FV_timestamps = animal_dir.glob('**/new*FVTimeMap*.pickle')
+        new_FV_timestamps = animal_dir.glob('Analysis/Preprocessed/*FV_timestamps*.pickle')
+        new_old_FV_timestamps = animal_dir.glob('ImagingAnalysis/AUROCImports/new*FVTimeMap*.pickle')
         significance_data_old = animal_dir.glob('*SignificanceTable.xlsx')
         significance_data_new = animal_dir.glob('Analysis/Output/*SignificanceTable.xlsx')
     else:
         raise ValueError(f'{exp_type} not implemented!')
 
     data_file = list(data_file)
-    old_data_file = list(old_data_file)
     new_old_data = list(new_old_data)
 
     new_FV_timestamps_file = list(new_FV_timestamps)
-    old_FV_timestamps_file = list(old_FV_timestamps)
     new_old_FV_timestamps = list(new_old_FV_timestamps)
 
     significance_data_old = list(significance_data_old)
@@ -48,9 +44,6 @@ def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
 
     if new_old_data:
         return_dict['file'] = new_old_data[0]
-    elif old_data_file:
-        return_dict['file'] = old_data_file[0]
-        return_dict['old'] = True
     elif data_file:
         return_dict['file'] = data_file[0]
     else:
@@ -69,10 +62,7 @@ def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
         else:
             return_dict['sig'] = None
 
-    if old_FV_timestamps_file:
-        return_dict['time'] = old_FV_timestamps_file[0]
-        return_dict['old_time'] = True
-    elif new_FV_timestamps_file:
+    if new_FV_timestamps_file:
         return_dict['time'] = new_FV_timestamps_file[0]
     elif new_old_FV_timestamps:
         return_dict['time'] = new_old_FV_timestamps[0]
