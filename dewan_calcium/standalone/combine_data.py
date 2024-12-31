@@ -141,9 +141,11 @@ def combine_data(data_files, filter_significant, class_name=None):
     for file in tqdm(data_files, desc=desc):
         data_file = file['file']
         significance_file = file['sig']
+        time_file = file['time']
 
         new_data = pd.read_pickle(str(data_file))
         significance_data = pd.read_excel(str(significance_file))
+        time_data = pd.read_pickle(str(time_file))
         new_data = strip_insignificant_cells(new_data, significance_data)
         new_data = strip_multisensory_trials(new_data)
         current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
@@ -190,6 +192,7 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
             for _type in files.keys():
                 data_files = [folder for folder in files[_type] if folder['file'] is not None]
                 data_files = [folder for folder in data_files if folder['sig'] is not None]
+                data_files = [folder for folder in data_files if folder['time'] is not None]
 
                 collected_data, total_cells = combine_data(data_files, filter_significant, _type, )
 
