@@ -52,6 +52,7 @@ def convert_old_times(animal_dir):
     old_odor_data = list(animal_dir.glob('ImagingAnalysis/PreProcessedData/*odordata*.pickle'))
 
     if not old_FV_timestamps or not old_odor_data:
+        print(f'Files missing from {animal_dir}, skipping...')
         return
 
     old_FV_timestamps = old_FV_timestamps[0]
@@ -71,6 +72,7 @@ def convert_old_times(animal_dir):
 
 
 def main():
+    print('Starting!')
     for _dir in input_dir.iterdir():
         convert_old_times(_dir)
 
