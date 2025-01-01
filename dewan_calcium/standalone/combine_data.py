@@ -100,6 +100,17 @@ def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
     return df
 
 
+def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
+    new_df = pd.DataFrame()
+
+    for trial in tqdm(trial_indices.keys()):
+        indices = trial_indices[trial]
+        start_index = indices['baseline'][0]
+        end_index = indices['post'][-1]
+        new_df = pd.concat([new_df, cell_data.iloc[trial, start_index:end_index]])
+    return cell_data
+
+
 def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
     cell_data = cell_data.T  # Transpose so cells/trials are the index
     grouped_data = cell_data.groupby(level=0, group_keys=False)  # Group by the cells
@@ -107,6 +118,13 @@ def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFra
 
     return grouped_data.T  # Flip data back the other direction
 
+
+def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
+    cell_data = cell_data.T
+    grouped_data = cell_data.groupby(level=0, group_keys=False)
+    grouped_data.apply(lambda df: _trim_trials(df, trial_indices))
+
+    return grouped_data.T
 
 def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     if not output_dir.exists():
@@ -130,9 +148,9 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
 
     for i, (name, data) in enumerate(time_data.items()):
         trial_periods = dict.fromkeys(['baseline', 'odor', 'post'], [])
-        baseline_indices = data[data < 0]
-        odor_indices = data[np.logical_and(0 <= data, data < ODOR_TIME_S)]
-        post_indices = data[data >= ODOR_TIME_S]
+        baseline_indices = np.where(data < 0)[0]
+        odor_indices = np.where(np.logical_and(0 <= data, data < ODOR_TIME_S))[0]
+        post_indices = np.where(data >= ODOR_TIME_S)[0]
 
         baseline_frames = len(baseline_indices)
         post_frames = len(post_indices)
@@ -154,7 +172,7 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     return trial_indices, trial_indices_to_drop
 
 
-def combine_data(data_files, filter_significant, class_name=None):
+def combine_data(data_files, filter_significant=True, strip_multisense=True, trim_trials=True, class_name=None):
     combined_data = pd.DataFrame()
 
     total_num_cells = 0
@@ -172,8 +190,12 @@ def combine_data(data_files, filter_significant, class_name=None):
         new_data = pd.read_pickle(str(data_file))
         significance_data = pd.read_excel(str(significance_file))
         time_data = pd.read_pickle(str(time_file))
-        new_data = strip_insignificant_cells(new_data, significance_data)
-        new_data = strip_multisensory_trials(new_data)
+
+        if filter_significant:
+            new_data = strip_insignificant_cells(new_data, significance_data)
+        if strip_multisense:
+            new_data = strip_multisensory_trials(new_data)
+
         trial_indices, trial_indices_to_drop = find_trials(time_data)
 
         if len(trial_indices_to_drop) == len(time_data):
@@ -183,6 +205,8 @@ def combine_data(data_files, filter_significant, class_name=None):
             print(f'Dropping {trial_indices_to_drop} from {name}!')
             new_data = drop_bad_trials(new_data, trial_indices_to_drop)
 
+        if trim_trials:
+            new_data = trim_all_trials(new_data, trial_indices)
 
         current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
