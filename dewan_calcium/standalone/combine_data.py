@@ -76,14 +76,15 @@ def generate_new_numbers(new_cells: int, total: int):
     return list(range(total, new_total))
 
 
-def strip_insignificant_cells(data, significance_table):
+def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
+    columns_to_drop = []
     significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
-    drop_mask = (significance_table.loc['MO'] > 0).values | (significance_table.loc['Buzzer'] > 0).values
-    cells_to_drop = data.columns.get_level_values(0).unique()[drop_mask].values
-    if len(cells_to_drop) > 0:
-        data = data.drop(cells_to_drop, axis=1, level=0)
+    columns_to_drop = significance_table.columns[significance_table.sum() == 0]
+    columns_to_drop = [int(cell[1:]) for cell in columns_to_drop]
+    if columns_to_drop:
+        data = data.drop(columns_to_drop, axis=1)
 
-    return data
+    return data, columns_to_drop
 
 
 def strip_multisensory_trials(data):
