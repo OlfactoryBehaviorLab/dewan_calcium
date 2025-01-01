@@ -124,7 +124,7 @@ def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     print(f'Combined data for {file_stem} successfully written to disk!')
 
 
-def find_short_trials(time_data, debug=False) -> tuple[dict, list[int]]:
+def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices_to_drop = []
     trial_indices = {}
 
@@ -137,10 +137,6 @@ def find_short_trials(time_data, debug=False) -> tuple[dict, list[int]]:
         baseline_frames = len(baseline_indices)
         post_frames = len(post_indices)
 
-        trial_periods['baseline'] = baseline_indices
-        trial_periods['odor'] = odor_indices
-        trial_periods['post'] = post_indices
-
         if baseline_frames < MIN_BASELINE_TIME_FRAMES:
             if debug:
                 print(f'Trial {i} w/ odor {name} does not have enough baseline frames!')
@@ -149,8 +145,11 @@ def find_short_trials(time_data, debug=False) -> tuple[dict, list[int]]:
             if debug:
                 print(f'Trial {i} w/ odor {name} does not have enough post-time frames ({post_frames})!')
             trial_indices_to_drop.append(i)
-
-        trial_indices[i] = trial_periods
+        else:
+            trial_periods['baseline'] = baseline_indices[-MIN_BASELINE_TIME_FRAMES:]
+            trial_periods['odor'] = odor_indices
+            trial_periods['post'] = post_indices[:MIN_POST_TIME_FRAMES]
+            trial_indices[i] = trial_periods
 
     return trial_indices, trial_indices_to_drop
 
@@ -175,7 +174,7 @@ def combine_data(data_files, filter_significant, class_name=None):
         time_data = pd.read_pickle(str(time_file))
         new_data = strip_insignificant_cells(new_data, significance_data)
         new_data = strip_multisensory_trials(new_data)
-        trial_indices, trial_indices_to_drop = find_short_trials(time_data)
+        trial_indices, trial_indices_to_drop = find_trials(time_data)
 
         if len(trial_indices_to_drop) == len(time_data):
             print(f'Skipping {name}, as all trials are marked to be dropped!')
