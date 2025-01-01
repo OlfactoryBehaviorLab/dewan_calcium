@@ -133,11 +133,13 @@ def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
     return new_df
 
 def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
-    cell_data = cell_data.T
-    grouped_data = cell_data.groupby(level=0, group_keys=False)
-    grouped_data.apply(lambda df: _trim_trials(df, trial_indices))
+    trimmed_cell_data = cell_data.T
+    grouped_data = trimmed_cell_data.groupby(level=0)
+    new_data = grouped_data.apply(lambda df: _trim_trials(df, trial_indices))
 
-    return cell_data.T
+    new_data = new_data.T
+    new_data.columns = cell_data.columns
+    return new_data
 
 
 def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
@@ -217,7 +219,7 @@ def combine_data(data_files, filter_significant=True, strip_multisense=True, tri
         if trim_trials:
             cell_data = trim_all_trials(cell_data, trial_indices)
         if filter_significant:
-            cell_data. dropped_cell = strip_insignificant_cells(cell_data, significance_data)
+            cell_data, dropped_cell = strip_insignificant_cells(cell_data, significance_data)
         if strip_multisense:
             cell_data = strip_multisensory_trials(cell_data)
 
