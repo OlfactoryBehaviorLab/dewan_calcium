@@ -115,11 +115,21 @@ def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
     new_df = pd.DataFrame()
     for trial in trial_indices.keys():
         indices = trial_indices[trial]
-        start_index = indices['baseline'][0]
-        end_index = indices['post'][-1]
-        new_row = cell_data.iloc[trial, start_index:end_index]
-        new_df = pd.concat([new_df, new_row], axis=0)
-        print(new_df.shape)
+
+        baseline = indices['baseline']
+        odor = indices['odor']
+        post = indices['post']
+
+        trial_data = cell_data.iloc[trial]
+
+        baseline_data = trial_data[baseline]
+        odor_data = trial_data[odor]
+        post_data = trial_data[post]
+        new_row = pd.Series(np.hstack([baseline_data, odor_data, post_data]))
+        new_df = pd.concat([new_df, new_row], axis=1)
+
+    new_df = new_df.T
+    new_df = new_df.reset_index(drop=True)
     return new_df
 
 def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
