@@ -7,12 +7,12 @@ import numpy as np
 from tqdm import tqdm
 
 import get_project_files
-import old_to_new
 
 input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity')
-output_dir_root = Path(r'~/Combined')
+output_dir_root = Path(r'/home/austin/Combined')
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
+ODOR_TIME_FRAMES = 20
 ODOR_TIME_S = 2
 
 def fix_odors(odor_data):
@@ -77,7 +77,6 @@ def generate_new_numbers(new_cells: int, total: int):
 
 
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
-    columns_to_drop = []
     significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
     columns_to_drop = significance_table.columns[significance_table.sum() == 0]
     columns_to_drop = [int(cell[1:]) for cell in columns_to_drop]
@@ -101,15 +100,7 @@ def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
     return df
 
 
-def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
-    new_df = pd.DataFrame()
 
-    for trial in tqdm(trial_indices.keys()):
-        indices = trial_indices[trial]
-        start_index = indices['baseline'][0]
-        end_index = indices['post'][-1]
-        new_df = pd.concat([new_df, cell_data.iloc[trial, start_index:end_index]])
-    return cell_data
 
 
 def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
@@ -117,26 +108,39 @@ def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFra
     grouped_data = cell_data.groupby(level=0, group_keys=False)  # Group by the cells
     grouped_data.apply(lambda df: _drop_trials(df, trials_to_drop)) # Apply _drop_trials to each 'Cell's' Data
 
-    return grouped_data.T  # Flip data back the other direction
+    return cell_data.T  # Flip data back the other direction
 
+
+def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
+    new_df = pd.DataFrame()
+    for trial in trial_indices.keys():
+        indices = trial_indices[trial]
+        start_index = indices['baseline'][0]
+        end_index = indices['post'][-1]
+        new_row = cell_data.iloc[trial, start_index:end_index]
+        new_df = pd.concat([new_df, new_row], axis=0)
+        print(new_df.shape)
+    return new_df
 
 def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     cell_data = cell_data.T
     grouped_data = cell_data.groupby(level=0, group_keys=False)
     grouped_data.apply(lambda df: _trim_trials(df, trial_indices))
 
-    return grouped_data.T
+    return cell_data.T
+
 
 def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     if not output_dir.exists():
-        output_dir.mkdir(parents=True)
+        print(f'Output directory does not exist! Creating {output_dir}')
+        output_dir.mkdir(exists_ok=True, parents=True)
 
     pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
     total_file = output_dir.joinpath(f"{file_stem}.txt")
 
     with open(total_file, "w") as out_file:
         out_file.write(f'Num Cells: {total_cells}\n')
-        out_file.write(f'Num Animals: {num_animals}')
+        out_file.write(f'Num Animals: {num_animals}\n')
 
     print(f'Writing combined data for {file_stem} to disk...')
     data.to_pickle(str(pickle_path), compression={'method': 'xz'})
@@ -148,9 +152,9 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices = {}
 
     for i, (name, data) in enumerate(time_data.items()):
-        trial_periods = dict.fromkeys(['baseline', 'odor', 'post'], [])
+        trial_periods = {}
         baseline_indices = np.where(data < 0)[0]
-        odor_indices = np.where(np.logical_and(0 <= data, data < ODOR_TIME_S))[0]
+        odor_indices = np.where(data >=0)[0]
         post_indices = np.where(data >= ODOR_TIME_S)[0]
 
         baseline_frames = len(baseline_indices)
@@ -166,7 +170,7 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
             trial_indices_to_drop.append(i)
         else:
             trial_periods['baseline'] = baseline_indices[-MIN_BASELINE_TIME_FRAMES:]
-            trial_periods['odor'] = odor_indices
+            trial_periods['odor'] = odor_indices[:ODOR_TIME_FRAMES]
             trial_periods['post'] = post_indices[:MIN_POST_TIME_FRAMES]
             trial_indices[i] = trial_periods
 
@@ -188,15 +192,9 @@ def combine_data(data_files, filter_significant=True, strip_multisense=True, tri
         time_file = file['time']
         name = file['folder'].name
 
-        new_data = pd.read_pickle(str(data_file))
+        cell_data = pd.read_pickle(str(data_file))
         significance_data = pd.read_excel(str(significance_file))
         time_data = pd.read_pickle(str(time_file))
-
-        if filter_significant:
-            new_data = strip_insignificant_cells(new_data, significance_data)
-        if strip_multisense:
-            new_data = strip_multisensory_trials(new_data)
-
         trial_indices, trial_indices_to_drop = find_trials(time_data)
 
         if len(trial_indices_to_drop) == len(time_data):
@@ -204,24 +202,28 @@ def combine_data(data_files, filter_significant=True, strip_multisense=True, tri
             continue
         elif trial_indices_to_drop:
             print(f'Dropping {trial_indices_to_drop} from {name}!')
-            new_data = drop_bad_trials(new_data, trial_indices_to_drop)
+            cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
 
         if trim_trials:
-            new_data = trim_all_trials(new_data, trial_indices)
+            cell_data = trim_all_trials(cell_data, trial_indices)
+        if filter_significant:
+            cell_data. dropped_cell = strip_insignificant_cells(cell_data, significance_data)
+        if strip_multisense:
+            cell_data = strip_multisensory_trials(cell_data)
 
-        current_cell_names = new_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
+        current_cell_names = cell_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
-        trial_order = new_data[current_cell_names[0]].columns.values
+        trial_order = cell_data[current_cell_names[0]].columns.values
         fixed_odors = fix_odors(trial_order)
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
 
         new_numbers = generate_new_numbers(num_new_cells, total_num_cells)
         # Generate new labels for this set of cells
         new_multiindex = pd.MultiIndex.from_product([new_numbers, fixed_odors], sortorder=None, names=['Cells', 'Trials'])
-        new_data.columns = new_multiindex
+        cell_data.columns = new_multiindex
         # Create new multiindex with new cell labels and apply it to the new data
 
-        combined_data = pd.concat([combined_data, new_data], axis=1)
+        combined_data = pd.concat([combined_data, cell_data], axis=1)
 
         total_num_cells += num_new_cells
 
