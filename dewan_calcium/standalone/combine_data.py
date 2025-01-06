@@ -10,6 +10,7 @@ import get_project_files
 
 input_dir = Path(r'C:/Projects/test_data/files_to_combine')
 output_dir_root = Path(r'/home/austin/Combined')
+
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
 ODOR_TIME_FRAMES = 20
@@ -298,18 +299,21 @@ def new_combine(files: dict, filter_significant=True):
             timestamps = pd.read_pickle(timestamps_path)
 
         significance_table = pd.read_excel(significance_file_path)
-        odor_data = pd.read_excel(odor_file_path)
 
-        trial_indices, trial_indices_to_drop = find_trials(timestamps)
-        print(combined_data.columns.get_level_values(1).unique())
+        odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
+        odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
+        new_index = pd.MultiIndex.from_product([combined_data.columns.get_level_values(0).unique(), odor_data],
+                                              names=['Cells', 'Frames'])
+        combined_data.columns = new_index
 
-        #
-        # if len(trial_indices_to_drop) == len(timestamps):
-        #     print(f'Skipping {name}, as all trials are marked to be dropped!')
-        #     continue
-        # elif trial_indices_to_drop:
-        #     print(f'Dropping {trial_indices_to_drop} from {name}!')
-        #     cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
+        trial_indices, trial_indices_to_drop = find_trials(combined_data)
+
+        if len(trial_indices_to_drop) == len(timestamps):
+            print(f'Skipping {name}, as all trials are marked to be dropped!')
+            continue
+        elif trial_indices_to_drop:
+            print(f'Dropping {trial_indices_to_drop} from {name}!')
+            combined_data = drop_bad_trials(combined_data, trial_indices_to_drop)
 
 
 
