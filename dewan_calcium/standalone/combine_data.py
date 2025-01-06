@@ -161,7 +161,6 @@ def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
 def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices_to_drop = []
     trial_indices = {}
-
     for i, (name, data) in enumerate(time_data.items()):
         trial_periods = {}
         baseline_indices = np.where(data < 0)[0]
@@ -277,7 +276,7 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
                 write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
 
 
-def new_combine(files: dict, filter_significant=True, strip_multisensory=True):
+def new_combine(files: dict, filter_significant=True, strip_multisensory=True, trim_trials=True):
     combined_data = pd.DataFrame()
     total_cells = 0
 
@@ -290,9 +289,9 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True):
         timestamps_path = animal_files['time']
 
         try:
-            combined_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
+            cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
         except Exception:  # yeah yeah I know; I can't remember how they were saved
-            combined_data = pd.read_pickle(combined_data_path)
+            cell_data = pd.read_pickle(combined_data_path)
         try:
             timestamps = pd.read_pickle(timestamps_path, compression={'method': 'xz'})
         except Exception:
@@ -300,11 +299,12 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True):
 
         significance_table = pd.read_excel(significance_file_path)
 
+
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
-        new_index = pd.MultiIndex.from_product([combined_data.columns.get_level_values(0).unique(), odor_data],
+        new_index = pd.MultiIndex.from_product([cell_data.columns.get_level_values(0).unique(), odor_data],
                                                names=['Cells', 'Frames'])
-        combined_data.columns = new_index
+        cell_data.columns = new_index
 
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
 
@@ -313,19 +313,24 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True):
             continue
         elif trial_indices_to_drop:
             print(f'Dropping {trial_indices_to_drop} from {name}!')
-            combined_data = drop_bad_trials(combined_data, trial_indices_to_drop)
+            cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
 
+        if trim_trials:
+            cell_data = trim_all_trials(cell_data, trial_indices)
         if strip_multisensory:
-            combined_data = strip_multisensory_trials(combined_data)
+            cell_data = strip_multisensory_trials(cell_data)
         if filter_significant:
-            combined_data, dropped_cells = strip_insignificant_cells(combined_data, significance_table)
+            cell_data, dropped_cells = strip_insignificant_cells(cell_data, significance_table)
             print(f'Dropped {dropped_cells} for having no significant responses!')
 
-        return
+        combined_data = pd.concat([combined_data, cell_data], axis=1)
+
+    return combined_data, total_cells
 def main():
     animal_dirs = list(input_dir.iterdir())
     files = get_project_files.get_test_files(animal_dirs)
-    new_combine(files)
+    combined_data, total_cells = new_combine(files)
+    # TODO: give cells unique numbers
 
 if __name__ == "__main__":
     main()
