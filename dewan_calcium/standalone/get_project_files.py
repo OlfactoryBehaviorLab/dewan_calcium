@@ -73,3 +73,23 @@ def find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
             return_dict['time'] = None
 
     return return_dict
+
+
+def get_test_files(animal_dirs: list[Path]):
+    file_map = {}
+    for dir in animal_dirs:
+        trace_data = dir.glob('*combined*.pickle')
+        sig_table = dir.glob('*Significance*.xlsx')
+        odor_data = dir.glob('*odor_data.pickle')
+        FV_times = dir.glob('*FV_timestamps.pickle')
+
+        dir_dict = {
+            'trace': list(trace_data)[0],
+            'sig': list(sig_table)[0],
+            'odor': list(odor_data)[0],
+            'time': list(FV_times)[0]
+        }
+        file_map[dir.name] = dir_dict
+
+    return file_map
+

@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 import get_project_files
 
-input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity')
+input_dir = Path(r'C:/Projects/test_data/files_to_combine')
 output_dir_root = Path(r'/home/austin/Combined')
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
@@ -100,9 +100,6 @@ def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
     return df
 
 
-
-
-
 def drop_bad_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
     cell_data = cell_data.T  # Transpose so cells/trials are the index
     grouped_data = cell_data.groupby(level=0, group_keys=False)  # Group by the cells
@@ -131,6 +128,7 @@ def _trim_trials(cell_data: pd.DataFrame, trial_indices: dict) -> pd.DataFrame:
     new_df = new_df.T
     new_df = new_df.reset_index(drop=True)
     return new_df
+
 
 def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     trimmed_cell_data = cell_data.T
@@ -279,34 +277,10 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
 
 
 def main():
-    animal_types = ['VGAT', 'VGLUT']
-    files = {_type: [] for _type in animal_types}
+    animal_dirs = list(input_dir.iterdir())
+    files = get_project_files.get_test_files(animal_dirs)
+    print(files)
 
-    exp_type = get_exp_type()
-    folders = get_project_files.get_folders(input_dir, animal_types)
-
-    for _type in animal_types:
-        for folder in tqdm(folders[_type], desc=f'Getting files for {_type} animals'):
-            files[_type].append(get_project_files.find_data_files(folder, exp_type))
-
-    files = old_to_new.old_to_new(files)
-
-    combine_and_save(files, exp_type)
-
-def test_main():
-    animal_types = ['VGAT', 'VGLUT']
-    files = {_type: [] for _type in animal_types}
-
-    exp_type = get_exp_type()
-    folders = get_project_files.get_folders(input_dir, animal_types)
-    # for _type in animal_types:
-    #     for folder in tqdm(folders[_type], desc=f'Getting files for {_type} animals'):
-    #         files[_type].append(get_project_files.new_find_data_files(folder, exp_type))
-
-    input_file = '/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/1_Concentration/VGLUT/VGLUT-27_RERUN/Analysis/Output/combined/VGLUT27_Conc-8_19_24-combined_data_.pickle'
-    file = pd.read_pickle(str(input_file))
-    print(file.columns)
 
 if __name__ == "__main__":
-    # main()
-    test_main()
+    main()
