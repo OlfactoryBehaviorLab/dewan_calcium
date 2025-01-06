@@ -79,10 +79,10 @@ def generate_new_numbers(new_cells: int, total: int):
 
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
     significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
-    columns_to_drop = significance_table.columns[significance_table.sum() == 0]
-    columns_to_drop = [int(cell[1:]) for cell in columns_to_drop]
-    if columns_to_drop:
-        data = data.drop(columns_to_drop, axis=1)
+    columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
+
+    if len(columns_to_drop) > 0:
+        data = data.drop(columns_to_drop, level=0, axis=1)
 
     return data, columns_to_drop
 
