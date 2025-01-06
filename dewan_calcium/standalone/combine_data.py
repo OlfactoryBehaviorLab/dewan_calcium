@@ -277,7 +277,7 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
                 write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
 
 
-def new_combine(files: dict, filter_significant=True):
+def new_combine(files: dict, filter_significant=True, strip_multisensory=True):
     combined_data = pd.DataFrame()
     total_cells = 0
 
@@ -303,10 +303,10 @@ def new_combine(files: dict, filter_significant=True):
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
         new_index = pd.MultiIndex.from_product([combined_data.columns.get_level_values(0).unique(), odor_data],
-                                              names=['Cells', 'Frames'])
+                                               names=['Cells', 'Frames'])
         combined_data.columns = new_index
 
-        trial_indices, trial_indices_to_drop = find_trials(combined_data)
+        trial_indices, trial_indices_to_drop = find_trials(timestamps)
 
         if len(trial_indices_to_drop) == len(timestamps):
             print(f'Skipping {name}, as all trials are marked to be dropped!')
@@ -315,8 +315,13 @@ def new_combine(files: dict, filter_significant=True):
             print(f'Dropping {trial_indices_to_drop} from {name}!')
             combined_data = drop_bad_trials(combined_data, trial_indices_to_drop)
 
+        if strip_multisensory:
+            combined_data = strip_multisensory_trials(combined_data)
+        if filter_significant:
+            combined_data, dropped_cells = strip_insignificant_cells(combined_data, significance_table)
+            print(f'Dropped {dropped_cells} for having no significant responses!')
 
-
+        return
 def main():
     animal_dirs = list(input_dir.iterdir())
     files = get_project_files.get_test_files(animal_dirs)
