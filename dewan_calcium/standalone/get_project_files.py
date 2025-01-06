@@ -80,7 +80,7 @@ def get_test_files(animal_dirs: list[Path]):
     for dir in animal_dirs:
         trace_data = dir.glob('*combined*.pickle')
         sig_table = dir.glob('*Significance*.xlsx')
-        odor_data = dir.glob('*OdorData.xlsx')
+        odor_data = dir.glob('*OdorList.xlsx')
         FV_times = dir.glob('*FV_timestamps.pickle')
 
         dir_dict = {
