@@ -276,11 +276,47 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
                 write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
 
 
+def new_combine(files: dict, filter_significant=True):
+    combined_data = pd.DataFrame()
+    total_cells = 0
+
+    for file in tqdm(files.keys()):
+        animal_files = files[file]
+        name = file
+        combined_data_path = animal_files['trace']
+        significance_file_path = animal_files['sig']
+        odor_file_path = animal_files['odor']
+        timestamps_path = animal_files['time']
+
+        try:
+            combined_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
+        except Exception:  # yeah yeah I know; I can't remember how they were saved
+            combined_data = pd.read_pickle(combined_data_path)
+        try:
+            timestamps = pd.read_pickle(timestamps_path, compression={'method': 'xz'})
+        except Exception:
+            timestamps = pd.read_pickle(timestamps_path)
+
+        significance_table = pd.read_excel(significance_file_path)
+        odor_data = pd.read_excel(odor_file_path)
+
+        trial_indices, trial_indices_to_drop = find_trials(timestamps)
+        print(combined_data.columns.get_level_values(1).unique())
+
+        #
+        # if len(trial_indices_to_drop) == len(timestamps):
+        #     print(f'Skipping {name}, as all trials are marked to be dropped!')
+        #     continue
+        # elif trial_indices_to_drop:
+        #     print(f'Dropping {trial_indices_to_drop} from {name}!')
+        #     cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
+
+
+
 def main():
     animal_dirs = list(input_dir.iterdir())
     files = get_project_files.get_test_files(animal_dirs)
-    print(files)
-
+    new_combine(files)
 
 if __name__ == "__main__":
     main()
