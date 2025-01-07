@@ -43,7 +43,10 @@ def generate_new_numbers(new_cells: int, total: int):
 
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
     significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
-    columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
+    # twos = significance_table[]
+    # columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
+    column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() != 0)
+    columns_to_drop = significance_table.columns[column_mask].values
 
     if len(columns_to_drop) > 0:
         data = data.drop(columns_to_drop, level=0, axis=1)
@@ -285,9 +288,25 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True, t
             cell_data = strip_multisensory_trials(cell_data)
         if filter_significant:
             cell_data, dropped_cells = strip_insignificant_cells(cell_data, significance_table)
-            print(f'Dropped {dropped_cells} for having no significant responses!')
+            print(f'Dropped {dropped_cells} for having no significant excitatory responses!')
+
+        cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
+        num_new_cells = len(cell_names)
+        trial_order = cell_data[cell_names[0]].columns.values
+        # Get the order of the trials, all cells in this df share this order, so just use the first cell
+
+        new_numbers = generate_new_numbers(num_new_cells, total_cells)
+        # Generate new labels for this set of cells
+        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order], sortorder=None, names=['Cells', 'Trials'])
+        cell_data.columns = new_multiindex
+        # Create new multiindex with new cell labels and apply it to the new data
+
+
 
         combined_data = pd.concat([combined_data, cell_data], axis=1)
+        total_cells += num_new_cells
+
+    update_cell_names(combined_data)
 
     return combined_data, total_cells
 def main():
