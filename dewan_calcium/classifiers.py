@@ -33,7 +33,7 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
     """
 
     svm = LinearSVC(dual='auto', max_iter=10000, random_state=1000)
-    bg = BaggingClassifier(svm, n_estimators=num_splits, random_state=1000)  # use this instead of the manual splits
+    bg = BaggingClassifier(svm, n_estimators=num_splits,n_jobs=-1, random_state=1000)  # use this instead of the manual splits
 
     true_label = np.array([], dtype=int)
     pred_label = np.array([], dtype=int)
