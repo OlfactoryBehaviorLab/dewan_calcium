@@ -16,42 +16,6 @@ MIN_POST_TIME_FRAMES = 20
 ODOR_TIME_FRAMES = 20
 ODOR_TIME_S = 2
 
-def fix_odors(odor_data):
-    new_odor_data = []
-    for odor in odor_data:
-        if '-' in odor:
-            print('Dashes present, returning!')
-            return odor_data
-        try:
-            first_val = int(odor[0])
-            if first_val == 2:
-                new_odor = '-'.join([odor[1:2], odor[2:]])
-            else:
-                new_odor = '-'.join([odor[0], odor[1:]])
-            new_odor_data.append(new_odor)
-            continue
-        except Exception:
-            pass
-
-        new_odor_data.append(odor)
-
-    return new_odor_data
-
-
-def get_exp_type():
-    if 'EPM' in str(input_dir):
-        experiment_type = 'EPM'
-    elif 'HFvFM' in str(input_dir):
-        experiment_type = 'HFvFM'
-    elif 'Concentration' in str(input_dir):
-        experiment_type = 'Concentration'
-    elif 'Identity' in str(input_dir):
-        experiment_type = 'Identity'
-    else:
-        raise RuntimeError('Input folder is not a known experiment type!')
-
-    return experiment_type
-
 
 def update_cell_names(combined_data):
     """
