@@ -108,7 +108,7 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
 def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
     if not output_dir.exists():
         print(f'Output directory does not exist! Creating {output_dir}')
-        output_dir.mkdir(exists_ok=True, parents=True)
+        output_dir.mkdir(exist_ok=True, parents=True)
 
     pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
     total_file = output_dir.joinpath(f"{file_stem}.txt")
@@ -188,12 +188,12 @@ def combine_data(data_files, filter_significant=True, strip_multisense=True, tri
         current_cell_names = cell_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
         num_new_cells = len(current_cell_names)
         trial_order = cell_data[current_cell_names[0]].columns.values
-        fixed_odors = fix_odors(trial_order)
+       # fixed_odors = fix_odors(trial_order)
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
 
         new_numbers = generate_new_numbers(num_new_cells, total_num_cells)
         # Generate new labels for this set of cells
-        new_multiindex = pd.MultiIndex.from_product([new_numbers, fixed_odors], sortorder=None, names=['Cells', 'Trials'])
+       # new_multiindex = pd.MultiIndex.from_product([new_numbers, fixed_odors], sortorder=None, names=['Cells', 'Trials'])
         cell_data.columns = new_multiindex
         # Create new multiindex with new cell labels and apply it to the new data
 
@@ -294,7 +294,10 @@ def main():
     animal_dirs = list(input_dir.iterdir())
     files = get_project_files.get_test_files(animal_dirs)
     combined_data, total_cells = new_combine(files)
-    # TODO: give cells unique numbers
+
+    stem = 'four_animals'
+    num_animals = len(files)
+    write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
 
 if __name__ == "__main__":
     main()
