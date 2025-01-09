@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 import get_project_files
 
-input_dir = Path(r'C:/Projects/test_data/files_to_combine')
-output_dir_root = Path(r'/home/austin/Combined')
+input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
+output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/4_Combined')
 
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
@@ -154,61 +154,6 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     return trial_indices, trial_indices_to_drop
 
 
-def combine_data(data_files, filter_significant=True, strip_multisense=True, trim_trials=True, class_name=None):
-    combined_data = pd.DataFrame()
-
-    total_num_cells = 0
-    if class_name:
-        desc = f'Processing {class_name} files: '
-    else:
-        desc = f'Processing files: '
-
-    for file in tqdm(data_files, desc=desc):
-        data_file = file['file']
-        significance_file = file['sig']
-        time_file = file['time']
-        name = file['folder'].name
-
-        cell_data = pd.read_pickle(str(data_file))
-        significance_data = pd.read_excel(str(significance_file))
-        time_data = pd.read_pickle(str(time_file))
-        trial_indices, trial_indices_to_drop = find_trials(time_data)
-
-        if len(trial_indices_to_drop) == len(time_data):
-            print(f'Skipping {name}, as all trials are marked to be dropped!')
-            continue
-        elif trial_indices_to_drop:
-            print(f'Dropping {trial_indices_to_drop} from {name}!')
-            cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
-
-        if trim_trials:
-            cell_data = trim_all_trials(cell_data, trial_indices)
-        if filter_significant:
-            cell_data, dropped_cell = strip_insignificant_cells(cell_data, significance_data)
-        if strip_multisense:
-            cell_data = strip_multisensory_trials(cell_data)
-
-        current_cell_names = cell_data.columns.get_level_values(0).unique().values # Get all the unique cells in the multiindex
-        num_new_cells = len(current_cell_names)
-        trial_order = cell_data[current_cell_names[0]].columns.values
-       # fixed_odors = fix_odors(trial_order)
-        # Get the order of the trials, all cells in this df share this order, so just use the first cell
-
-        new_numbers = generate_new_numbers(num_new_cells, total_num_cells)
-        # Generate new labels for this set of cells
-       # new_multiindex = pd.MultiIndex.from_product([new_numbers, fixed_odors], sortorder=None, names=['Cells', 'Trials'])
-        cell_data.columns = new_multiindex
-        # Create new multiindex with new cell labels and apply it to the new data
-
-        combined_data = pd.concat([combined_data, cell_data], axis=1)
-
-        total_num_cells += num_new_cells
-
-    update_cell_names(combined_data)
-
-    return combined_data, total_num_cells
-
-
 def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all=False):
 
     if exp_type == 'EPM':
@@ -302,21 +247,24 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True, t
         # Create new multiindex with new cell labels and apply it to the new data
 
 
-
         combined_data = pd.concat([combined_data, cell_data], axis=1)
         total_cells += num_new_cells
 
     update_cell_names(combined_data)
 
     return combined_data, total_cells
-def main():
-    animal_dirs = list(input_dir.iterdir())
-    files = get_project_files.get_test_files(animal_dirs)
-    combined_data, total_cells = new_combine(files)
 
-    stem = 'four_animals'
-    num_animals = len(files)
-    write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
+
+def main():
+    animal_types = ['VGLUT']
+    data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types)
+    print(data_files['VGLUT'])
+    # files = get_project_files.find_data_files()
+    # combined_data, total_cells = new_combine(files)
+    #
+    # stem = 'four_animals'
+    # num_animals = len(files)
+    # write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
 
 if __name__ == "__main__":
     main()
