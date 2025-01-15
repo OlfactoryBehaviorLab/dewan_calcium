@@ -164,21 +164,16 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
 
 def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
                          FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
-                         project_folder: ProjectFolder, latent: bool = False, all_cells: bool = False,
+                         project_folder: ProjectFolder, all_cells: bool = False,
                          num_workers: int = None):
-    save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
-    plot_type = 'On Time'
-    if latent:
-        save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
-        plot_type = 'Latent'
 
     data_iterator = plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix)
     plot_function = partial(_plot_odor_traces,
-                            FV_data, odor_list, response_duration, save_path, latent, all_cells)
+                            FV_data, odor_list, response_duration, project_folder, all_cells)
 
-    with tqdm(desc=f"Plotting {plot_type} Cells: ", total=len(cell_names)) as pbar:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as executer:
-            for _ in executer.map(plot_function, data_iterator):
+    with tqdm(desc=f"Plotting Cell Traces: ", total=len(cell_names)) as pbar:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as ex:
+            for _ in ex.map(plot_function, data_iterator):
                 pbar.update()
 
 
