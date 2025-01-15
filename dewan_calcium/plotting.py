@@ -75,21 +75,22 @@ def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_duration: int, save_path: Dir, latent: bool,
+def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder,
                       all_cells: bool, cell_data: tuple):
     cell_name, cell_df, auroc_data, significance_table = cell_data
-    baseline_start = 0
-    baseline_end = -response_duration
-    evoked_start = 0
-    evoked_end = response_duration
 
-    if latent:
-        evoked_start = response_duration
-        evoked_end = response_duration * 2
 
     for odor in odor_list:
         significant = False
-        significance_val = significance_table[odor]
+        latent = False
+
+        baseline_start = 0
+        baseline_end = -response_duration
+        evoked_start = 0
+        evoked_end = response_duration
+
+        significance_val = significance_table[odor].astype(int)
+        save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
 
         if all_cells is False and significance_val == 0:
             # If were not plotting everything and the cell is not significant; skip
@@ -97,6 +98,13 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
 
         if significance_val > 0:  # Tag the significant graphs
             significant = True
+
+        if significance_val in [3,4]: # Latent cells; on-time is the default
+            save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
+            evoked_start = response_duration
+            evoked_end = response_duration * 2
+            latent=True
+
 
         odor_data = cell_df[odor]
         odor_times = FV_data[odor]
