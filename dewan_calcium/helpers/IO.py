@@ -26,13 +26,20 @@ def save_data_to_disk(data: pd.DataFrame | object, name: str, file_header: str, 
         print(e)
 
 
-def load_data_from_disk(name: str, file_header: str, folder: Path) -> object:
-    file_path = folder.joinpath(f'{file_header}{name}.pickle')
+def load_data_from_disk(name: str, file_header: str, folder: Path, xlsx=False) -> object:
+    ext = 'pickle'
+    if xlsx:
+        ext = 'xlsx'
+
+    file_path = folder.joinpath(f'{file_header}{name}.{ext}')
 
     try:
-        data_in = pd.read_pickle(file_path)  # Since we don't know what the data is, we can just load with Pandas
+        if not xlsx:
+            data_in = pd.read_pickle(file_path)  # Since we don't know what the data is, we can just load with Pandas
+        else:
+            data_in = pd.read_excel(file_path, index_col=0)
 
-        print(f'{file_header}{name} has loaded successfully!')
+        print(f'{file_header}{name}.{ext} has loaded successfully!')
         return data_in
 
     except pickle.UnpicklingError as e:
