@@ -188,14 +188,14 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
                 write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
 
 
-def new_combine(files: dict, filter_significant=True, strip_multisensory=True, trim_trials=True):
+def new_combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
     combined_data = pd.DataFrame()
     total_cells = 0
 
-    for file in tqdm(files.keys()):
+    for file in tqdm(files):
         animal_files = files[file]
         name = file
-        combined_data_path = animal_files['trace']
+        combined_data_path = animal_files['file']
         significance_file_path = animal_files['sig']
         odor_file_path = animal_files['odor']
         timestamps_path = animal_files['time']
@@ -257,14 +257,13 @@ def new_combine(files: dict, filter_significant=True, strip_multisensory=True, t
 
 def main():
     animal_types = ['VGLUT']
-    data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types)
-    print(data_files['VGLUT'])
-    # files = get_project_files.find_data_files()
-    # combined_data, total_cells = new_combine(files)
-    #
-    # stem = 'four_animals'
-    # num_animals = len(files)
-    # write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
+    data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
+    data_files = data_files['VGLUT']
+    combined_data, total_cells = new_combine(data_files)
+
+    stem='VGLUT_Comb'
+    num_animals = len(data_files)
+    write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
 
 if __name__ == "__main__":
     main()
