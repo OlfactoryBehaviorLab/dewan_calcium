@@ -57,7 +57,7 @@ def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFra
 def strip_multisensory_trials(data):
     trials_to_drop = ['MO', 'Buzzer']
     data = data.drop(trials_to_drop, axis=1, level=1)
-
+    # TODO: Drop cells instead of trials
     return data
 
 
