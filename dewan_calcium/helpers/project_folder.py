@@ -252,22 +252,24 @@ class InscopixDir(Dir):
             self._get_files()
 
     def _get_files(self):
-        cell_trace_file = list(self.path.glob('*TRACES*.csv'))
-        GPIO_file = list(self.path.glob('*GPIO*.csv'))
-        max_projection_file = list(self.path.glob('*HD*MAX*.tiff'))
-        cell_contours = list(self.path.glob('*CONTOURS*.json'))
-        cell_props = list(self.path.glob('*props*.csv'))
 
-        if self._check_file_not_found(cell_trace_file, 'Cell Traces'):
-            self.cell_trace_path = cell_trace_file[0]
-        if self._check_file_not_found(GPIO_file, 'GPIO File'):
-            self.GPIO_path = GPIO_file[0]
-        if self._check_file_not_found(max_projection_file, 'HD Max Projection'):
-            self.max_projection_path = max_projection_file[0]
-        if self._check_file_not_found(cell_contours, 'Cell Contours'):
-            self.contours_path = cell_contours[0]
-        if self._check_file_not_found(cell_props, 'Cell Props'):
-            self.props_path = cell_props[0]
+        if not self.parent.project_type == 'ISX':  # These files dont exist if in the ISX notebook
+            cell_trace_file = list(self.path.glob('*TRACES*.csv'))
+            GPIO_file = list(self.path.glob('*GPIO*.csv'))
+            max_projection_file = list(self.path.glob('*HD*MAX*.tiff'))
+            cell_contours = list(self.path.glob('*CONTOURS*.json'))
+            cell_props = list(self.path.glob('*props*.csv'))
+
+            if self._check_file_not_found(cell_trace_file, 'Cell Traces'):
+                self.cell_trace_path = cell_trace_file[0]
+            if self._check_file_not_found(GPIO_file, 'GPIO File'):
+                self.GPIO_path = GPIO_file[0]
+            if self._check_file_not_found(max_projection_file, 'HD Max Projection'):
+                self.max_projection_path = max_projection_file[0]
+            if self._check_file_not_found(cell_contours, 'Cell Contours'):
+                self.contours_path = cell_contours[0]
+            if self._check_file_not_found(cell_props, 'Cell Props'):
+                self.props_path = cell_props[0]
 
 
 class AnalysisDir(Dir):
