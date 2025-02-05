@@ -42,7 +42,6 @@ def generate_new_numbers(new_cells: int, total: int):
 
 
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
-    significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
     # twos = significance_table[]
     # columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
     column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() != 0)
@@ -54,11 +53,17 @@ def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFra
     return data, columns_to_drop
 
 
-def strip_multisensory_trials(data):
-    trials_to_drop = ['MO', 'Buzzer']
-    data = data.drop(trials_to_drop, axis=1, level=1)
+def drop_multisensory_cells(data, significance_table: pd.DataFrame):
+
+    MO_mask = significance_table.loc['MO'] != 0
+    buzzer_mask = significance_table.loc['Buzzer'] != 0
+    cell_drop_mask = np.logical_or(MO_mask, buzzer_mask)
+    cells_to_drop = significance_table.columns[cell_drop_mask].values
+
+    if len(cells_to_drop) > 0:
+        data = data.drop(cells_to_drop, axis=1, level=0)
     # TODO: Drop cells instead of trials
-    return data
+    return data, cells_to_drop
 
 
 def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
@@ -210,7 +215,7 @@ def new_combine(files: list, filter_significant=True, strip_multisensory=True, t
             timestamps = pd.read_pickle(timestamps_path)
 
         significance_table = pd.read_excel(significance_file_path)
-
+        significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
 
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
@@ -230,10 +235,11 @@ def new_combine(files: list, filter_significant=True, strip_multisensory=True, t
         if trim_trials:
             cell_data = trim_all_trials(cell_data, trial_indices)
         if strip_multisensory:
-            cell_data = strip_multisensory_trials(cell_data)
+            cell_data, dropped_multisense_cells = drop_multisensory_cells(cell_data, significance_table)
+            print(f'Dropped {dropped_multisense_cells} for having responses to MO and Buzzer!')
         if filter_significant:
-            cell_data, dropped_cells = strip_insignificant_cells(cell_data, significance_table)
-            print(f'Dropped {dropped_cells} for having no significant excitatory responses!')
+            cell_data, dropped_insig_cells = strip_insignificant_cells(cell_data, significance_table)
+            print(f'Dropped {dropped_insig_cells} for having no significant excitatory responses!')
 
         cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
         num_new_cells = len(cell_names)
