@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 import get_project_files
 
-input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
-output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/4_Combined')
+input_dir = Path(r'/mnt/r/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
+output_dir_root = Path(r'/mnt/r/2_Inscopix/1_DTT/4_Combined')
 
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
@@ -45,6 +45,7 @@ def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFra
     # twos = significance_table[]
     # columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
     column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() != 0)
+    print(column_mask)
     columns_to_drop = significance_table.columns[column_mask].values
 
     if len(columns_to_drop) > 0:
@@ -113,17 +114,31 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     return new_data
 
 
-def write_to_disk(data, output_dir, file_stem, total_cells, num_animals):
+def write_to_disk(data, output_dir, file_stem, stats, total_cells, num_animals):
     if not output_dir.exists():
         print(f'Output directory does not exist! Creating {output_dir}')
         output_dir.mkdir(exist_ok=True, parents=True)
 
     pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
     total_file = output_dir.joinpath(f"{file_stem}.txt")
-
+# ['trials', 'multi', 'insig', 'num_cells']
     with open(total_file, "w") as out_file:
         out_file.write(f'Num Cells: {total_cells}\n')
         out_file.write(f'Num Animals: {num_animals}\n')
+        out_file.write(f'=============================\n\n')
+        for animal in stats.keys():
+            animal_stats = stats[animal]
+            dropped_trials = animal_stats['trials']
+            dropped_multisense = animal_stats['multi']
+            dropped_insig = animal_stats['insig']
+            num_cells = animal_stats['num_cells']
+
+            out_file.write(f'{animal}:\n')
+            out_file.write(f'Number Good Cells: {num_cells}\n')
+            out_file.write(f'Dropped Trials: {dropped_trials}\n')
+            out_file.write(f'Dropped Multisensory Cells: {dropped_multisense}\n')
+            out_file.write(f'Dropped Insignificant Cells: {dropped_insig}\n')
+            out_file.write(f'=============================\n\n')
 
     print(f'Writing combined data for {file_stem} to disk...')
     data.to_pickle(str(pickle_path), compression={'method': 'xz'})
@@ -196,8 +211,9 @@ def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all
 def new_combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
     combined_data = pd.DataFrame()
     total_cells = 0
-
+    stats = {}
     for file in tqdm(files):
+        animal_stats = dict.fromkeys(['trials', 'multi', 'insig', 'num_cells'], None)
         animal_files = files[file]
         name = file
         combined_data_path = animal_files['file']
@@ -231,18 +247,22 @@ def new_combine(files: list, filter_significant=True, strip_multisensory=True, t
         elif trial_indices_to_drop:
             print(f'Dropping {trial_indices_to_drop} from {name}!')
             cell_data = drop_bad_trials(cell_data, trial_indices_to_drop)
+            animal_stats['trials'] = trial_indices_to_drop
 
         if trim_trials:
             cell_data = trim_all_trials(cell_data, trial_indices)
         if strip_multisensory:
             cell_data, dropped_multisense_cells = drop_multisensory_cells(cell_data, significance_table)
+            animal_stats['multi'] = dropped_multisense_cells
             print(f'Dropped {dropped_multisense_cells} for having responses to MO and Buzzer!')
         if filter_significant:
             cell_data, dropped_insig_cells = strip_insignificant_cells(cell_data, significance_table)
+            animal_stats['insig'] = dropped_insig_cells
             print(f'Dropped {dropped_insig_cells} for having no significant excitatory responses!')
 
         cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
         num_new_cells = len(cell_names)
+        animal_stats['num_cells'] = num_new_cells
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
 
@@ -255,21 +275,21 @@ def new_combine(files: list, filter_significant=True, strip_multisensory=True, t
 
         combined_data = pd.concat([combined_data, cell_data], axis=1)
         total_cells += num_new_cells
+        stats[name] = animal_stats
 
     update_cell_names(combined_data)
 
-    return combined_data, total_cells
+    return combined_data, stats, total_cells
 
 
 def main():
     animal_types = ['VGLUT']
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
     data_files = data_files['VGLUT']
-    combined_data, total_cells = new_combine(data_files)
-
+    combined_data, stats, total_cells = new_combine(data_files)
     stem='VGLUT_Comb'
     num_animals = len(data_files)
-    write_to_disk(combined_data, output_dir_root, stem, total_cells, num_animals)
+    write_to_disk(combined_data, output_dir_root, stem, stats, total_cells, num_animals)
 
 if __name__ == "__main__":
     main()
