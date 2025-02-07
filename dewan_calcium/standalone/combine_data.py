@@ -44,8 +44,7 @@ def generate_new_numbers(new_cells: int, total: int):
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
     # twos = significance_table[]
     # columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
-    column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() != 0)
-    print(column_mask)
+    column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() == 0)
     columns_to_drop = significance_table.columns[column_mask].values
 
     if len(columns_to_drop) > 0:
