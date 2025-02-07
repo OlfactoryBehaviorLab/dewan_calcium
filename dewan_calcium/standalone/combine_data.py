@@ -174,41 +174,7 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     return trial_indices, trial_indices_to_drop
 
 
-def combine_and_save(files: dict, exp_type, filter_significant=True, combine_all=False):
-
-    if exp_type == 'EPM':
-        print('EPM not implemented yet!')
-        return []
-        # collected_data = combine_EPM_data(data_files)
-    else:
-        if combine_all:
-            data_files = []
-            significance_files = []
-            for _type in files.keys():
-                data_files = [folder for folder in files[_type] if folder['file'] is not None]
-
-            collected_data, total_cells = combine_data(data_files, filter_significant, class_name=None)
-            output_dir = output_dir_root.joinpath(exp_type)
-            file_stem = f'{exp_type}'
-
-            write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
-
-        else:
-            for _type in files.keys():
-                data_files = [folder for folder in files[_type] if folder['file'] is not None]
-                data_files = [folder for folder in data_files if folder['sig'] is not None]
-                data_files = [folder for folder in data_files if folder['time'] is not None]
-
-                collected_data, total_cells = combine_data(data_files, filter_significant, _type, )
-
-                output_dir = output_dir_root.joinpath(exp_type)
-
-                file_stem = f'{_type}-{exp_type}'
-
-                write_to_disk(collected_data, output_dir, file_stem, total_cells, len(data_files))
-
-
-def new_combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
+def combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
     combined_data = pd.DataFrame()
     total_cells = 0
     stats = {}
@@ -286,7 +252,7 @@ def main():
     animal_types = ['VGLUT']
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
     data_files = data_files['VGLUT']
-    combined_data, stats, total_cells = new_combine(data_files)
+    combined_data, stats, total_cells = combine(data_files)
     stem='VGLUT_Comb'
     num_animals = len(data_files)
     write_to_disk(combined_data, output_dir_root, stem, stats, total_cells, num_animals)
