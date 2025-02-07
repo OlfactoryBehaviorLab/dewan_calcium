@@ -54,16 +54,18 @@ def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFra
     return data, columns_to_drop
 
 
-def drop_multisensory_cells(data, significance_table: pd.DataFrame):
+def drop_multisensory(data, significance_table: pd.DataFrame):
 
     MO_mask = significance_table.loc['MO'] != 0
     buzzer_mask = significance_table.loc['Buzzer'] != 0
-    cell_drop_mask = np.logical_or(MO_mask, buzzer_mask)
+    cell_drop_mask = MO_mask | buzzer_mask
     cells_to_drop = significance_table.columns[cell_drop_mask].values
 
     if len(cells_to_drop) > 0:
         data = data.drop(cells_to_drop, axis=1, level=0)
-    # TODO: Drop cells instead of trials
+
+    data = data.drop(['MO', 'Buzzer'], axis=1, level=1)
+
     return data, cells_to_drop
 
 
@@ -218,7 +220,7 @@ def combine(files: list, filter_significant=True, strip_multisensory=True, trim_
         if trim_trials:
             cell_data = trim_all_trials(cell_data, trial_indices)
         if strip_multisensory:
-            cell_data, dropped_multisense_cells = drop_multisensory_cells(cell_data, significance_table)
+            cell_data, dropped_multisense_cells = drop_multisensory(cell_data, significance_table)
             animal_stats['multi'] = dropped_multisense_cells
             print(f'Dropped {dropped_multisense_cells} for having responses to MO and Buzzer!')
         if filter_significant:
