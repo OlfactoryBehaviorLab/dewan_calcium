@@ -22,7 +22,7 @@
 		- Classes: \[AL, OL, ATE, AMINE, ONE]
 	- Concentration Experiment:
 		- Modifiers: \[1, 10, 100, 1000]
-		- Classes: \[AL, OL, ATE, AMINE, ONE]
+		- Classes: \[5AL, 5OL, 5ATE, 5AMINE, 5ONE]
 	- All Experiments: \[MO, Buzzer]
 - The full list of 22 stimuli, is presented 12 times each
 	- The total dataset will consist of 264 trials
@@ -41,6 +41,7 @@
 
 ## Possible Fluorescence Patterns
 > The patterns exist within the 90 frames per trial. Each trial could have a different below pattern.
+	Note: The fluorescent values will be run through an AUROC algorithm to determine whether there is a significant difference between the baseline and odor period. See AUROC.py in the repository for the code.
 1) On Time Excitatory: The average fluorescent values within the *odor* period are higher than those in the *baseline* period
 2) On Time Inhibitory: The average fluorescent values within the *baseline* period are higher than those in the *odor* period
 3) Latent Excitatory: The average fluorescent values within the *post* period are higher than those in the *baseline* period. There is very little change during the *odor* period. There may be some gradual increasing towards the end of the *odor* period leading into the *post* period
@@ -52,7 +53,7 @@
 		- index_col = 0
 	- Each column is an odor
 		- header = 0
-	- Each cell will contain a number from 0-4 representing the type of response the cell will have to the representative odorant:
+	- Each cell will contain a number from 0-4 representing the type of response the cell will have to the representative odorant as determined by the AUROC analysis:
 	0) No Response
 	1) On Time Excitatory
 	2) On Time Inhibitory
