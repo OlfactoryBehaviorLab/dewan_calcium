@@ -17,7 +17,7 @@ ODOR_TIME_FRAMES = 20
 ODOR_TIME_S = 2
 
 
-def update_cell_names(combined_data):
+def update_cell_names(combined_data, significance_table):
     """
     Function which will take each cell number, and add it to a string prepended with a 'C.' The dataframe can then be
     indexed by unique cell names instead of an integer. This reflects the nomenclature in the normal processing
@@ -34,6 +34,7 @@ def update_cell_names(combined_data):
 
     string_names = [f'C{i}' for i in range(len(combined_data.columns.levels[0]))]
     combined_data.columns = combined_data.columns.set_levels(string_names, level=0)
+    significance_table.columns = significance_table.columns = string_names
 
 
 def generate_new_numbers(new_cells: int, total: int):
@@ -42,8 +43,6 @@ def generate_new_numbers(new_cells: int, total: int):
 
 
 def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
-    # twos = significance_table[]
-    # columns_to_drop = significance_table.columns[significance_table.sum() == 0].values
     column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() == 0)
     columns_to_drop = significance_table.columns[column_mask].values
 
@@ -115,14 +114,15 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     return new_data
 
 
-def write_to_disk(data, output_dir, file_stem, stats, total_cells, num_animals):
+def write_to_disk(data, sig_table, output_dir, file_stem, stats, total_cells, num_animals):
     if not output_dir.exists():
         print(f'Output directory does not exist! Creating {output_dir}')
         output_dir.mkdir(exist_ok=True, parents=True)
 
     pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
+    excel_path = output_dir.joinpath(f'{file_stem}-combined.xlsx')
     total_file = output_dir.joinpath(f"{file_stem}.txt")
-# ['trials', 'multi', 'insig', 'num_cells']
+
     with open(total_file, "w") as out_file:
         out_file.write(f'Num Cells: {total_cells}\n')
         out_file.write(f'Num Animals: {num_animals}\n')
@@ -143,6 +143,8 @@ def write_to_disk(data, output_dir, file_stem, stats, total_cells, num_animals):
 
     print(f'Writing combined data for {file_stem} to disk...')
     data.to_pickle(str(pickle_path), compression={'method': 'xz'})
+    print(f'Writing combined significance table for {file_stem} to disk...')
+    sig_table.T.to_excel(str(excel_path))
     print(f'Combined data for {file_stem} successfully written to disk!')
 
 
@@ -177,6 +179,7 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
 
 def combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
     combined_data = pd.DataFrame()
+    combined_significance_table = pd.DataFrame()
     total_cells = 0
     stats = {}
     for file in tqdm(files):
@@ -197,8 +200,8 @@ def combine(files: list, filter_significant=True, strip_multisensory=True, trim_
         except Exception:
             timestamps = pd.read_pickle(timestamps_path)
 
-        significance_table = pd.read_excel(significance_file_path)
-        significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
+        significance_table = pd.read_excel(significance_file_path, index_col=0, header=[0])
+        # significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
 
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
@@ -239,14 +242,17 @@ def combine(files: list, filter_significant=True, strip_multisensory=True, trim_
         cell_data.columns = new_multiindex
         # Create new multiindex with new cell labels and apply it to the new data
 
-
         combined_data = pd.concat([combined_data, cell_data], axis=1)
+
+        significance_table = significance_table[cell_names] # Trim this to only include the 'good' cells
+        combined_significance_table = pd.concat([combined_significance_table, significance_table], axis=1)
+
         total_cells += num_new_cells
         stats[name] = animal_stats
 
-    update_cell_names(combined_data)
+    update_cell_names(combined_data, combined_significance_table)
 
-    return combined_data, stats, total_cells
+    return combined_data, combined_significance_table, stats, total_cells
 
 
 def main():
