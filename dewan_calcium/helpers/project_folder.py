@@ -184,6 +184,7 @@ class RawDataDir(Dir):
 
         if self.parent.combined:
             self.combined_data_path = None
+            self.combined_sig_table_path = None
 
         if not self._new_dir:
             self._get_files()
@@ -228,11 +229,17 @@ class RawDataDir(Dir):
                 self.exp_h5_path = exp_h5_file[0]
         else:
             combined_data_path = list(self.path.glob('*combined*.pickle'))
+            sig_table_path = list(self.path.glob('*combined*.xlsx'))
             if self._check_file_not_found(combined_data_path, 'Combined Data'):
                 if len(combined_data_path) > 0:
                     self.combined_data_path = combined_data_path
                 else:
                     self.combined_data_path = combined_data_path[0]
+            if self._check_file_not_found(sig_table_path, 'Significance Table'):
+                if len(combined_data_path) > 0:
+                    self.combined_sig_table_path = sig_table_path
+                else:
+                    self.combined_sig_table_path = sig_table_path[0]
 
 
 
