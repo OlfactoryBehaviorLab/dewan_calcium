@@ -255,7 +255,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
 
         combined_data = pd.concat([combined_data, cell_data], axis=1)
 
-        significance_table = significance_table[cell_names] # Trim this to only include the 'good' cells
+        # Includes all cells, INCLUDING any that we dropped above.
         combined_significance_table = pd.concat([combined_significance_table, significance_table], axis=1)
 
         total_cells += num_new_cells
@@ -270,10 +270,11 @@ def main():
     animal_types = ['VGLUT']
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
     data_files = data_files['VGLUT']
-    combined_data, stats, total_cells = combine(data_files)
+    combined_data, combined_significance_table, stats, total_cells = combine(data_files)
     stem='VGLUT_Comb'
     num_animals = len(data_files)
-    write_to_disk(combined_data, output_dir_root, stem, stats, total_cells, num_animals)
+    write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, total_cells, num_animals)
+
 
 if __name__ == "__main__":
     main()
