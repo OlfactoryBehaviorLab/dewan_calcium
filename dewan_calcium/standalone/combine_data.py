@@ -44,8 +44,8 @@ def generate_new_numbers(new_cells: int, total: int):
     return list(range(total, new_total))
 
 
-def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
-    column_mask = (np.logical_or(significance_table == 2, significance_table == 4).sum() == 0)
+def drop_nonresponsive_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
+    column_mask = (significance_table != 0).sum() == 0
     columns_to_drop = significance_table.columns[column_mask].values
 
     if len(columns_to_drop) > 0:
@@ -54,19 +54,23 @@ def strip_insignificant_cells(data: pd.DataFrame, significance_table: pd.DataFra
     return data, columns_to_drop
 
 
-def drop_multisensory(data, significance_table: pd.DataFrame):
+def drop_multisense_cells(data, significance_table: pd.DataFrame):
 
     MO_mask = significance_table.loc['MO'] != 0
     buzzer_mask = significance_table.loc['Buzzer'] != 0
-    cell_drop_mask = MO_mask | buzzer_mask
-    cells_to_drop = significance_table.columns[cell_drop_mask].values
+
+    MO_cells_to_drop = significance_table.columns[MO_mask].values
+    buzzer_cells_to_drop = significance_table.columns[buzzer_mask].values
+
+    drop_mask = MO_mask | buzzer_mask
+    cells_to_drop = significance_table.columns[drop_mask].values
 
     if len(cells_to_drop) > 0:
         data = data.drop(cells_to_drop, axis=1, level=0)
 
     data = data.drop(['MO', 'Buzzer'], axis=1, level=1)
 
-    return data, cells_to_drop
+    return data, MO_cells_to_drop, buzzer_cells_to_drop
 
 
 def _drop_trials(cell_data: pd.DataFrame, trials_to_drop: list) -> pd.DataFrame:
@@ -132,15 +136,17 @@ def write_to_disk(data, sig_table, output_dir, file_stem, stats, total_cells, nu
         for animal in stats.keys():
             animal_stats = stats[animal]
             dropped_trials = animal_stats['trials']
-            dropped_multisense = animal_stats['multi']
+            dropped_MO = animal_stats['MO']
+            dropped_Buzzer = animal_stats['MO']
             dropped_insig = animal_stats['insig']
             num_cells = animal_stats['num_cells']
 
             out_file.write(f'{animal}:\n')
             out_file.write(f'Number Good Cells: {num_cells}\n')
             out_file.write(f'Dropped Trials: {dropped_trials}\n')
-            out_file.write(f'Dropped Multisensory Cells: {dropped_multisense}\n')
-            out_file.write(f'Dropped Insignificant Cells: {dropped_insig}\n')
+            out_file.write(f'Dropped MO Cells: {dropped_MO}\n')
+            out_file.write(f'Dropped Buzzer Cells: {dropped_Buzzer}\n')
+            out_file.write(f'Dropped Nonresponsive Cells: {dropped_insig}\n')
             out_file.write(f'=============================\n\n')
 
     print(f'Writing combined data for {file_stem} to disk...')
@@ -179,13 +185,13 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     return trial_indices, trial_indices_to_drop
 
 
-def combine(files: list, filter_significant=True, strip_multisensory=True, trim_trials=True):
+def combine(files: list, filter_significant=True, drop_multisense=True, trim_trials=True):
     combined_data = pd.DataFrame()
     combined_significance_table = pd.DataFrame()
     total_cells = 0
     stats = {}
     for file in tqdm(files):
-        animal_stats = dict.fromkeys(['trials', 'multi', 'insig', 'num_cells'], None)
+        animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'num_cells'], None)
         animal_files = files[file]
         name = file
         combined_data_path = animal_files['file']
@@ -223,14 +229,17 @@ def combine(files: list, filter_significant=True, strip_multisensory=True, trim_
 
         if trim_trials:
             cell_data = trim_all_trials(cell_data, trial_indices)
-        if strip_multisensory:
-            cell_data, dropped_multisense_cells = drop_multisensory(cell_data, significance_table)
-            animal_stats['multi'] = dropped_multisense_cells
-            print(f'Dropped {dropped_multisense_cells} for having responses to MO and Buzzer!')
+        if drop_multisense:
+            cell_data, dropped_MO_cells, dropped_Buzzer_cells = drop_multisense_cells(cell_data, significance_table)
+            animal_stats['MO'] = dropped_MO_cells
+            animal_stats['Buzzer'] = dropped_Buzzer_cells
+
+            print(f'Dropped {dropped_MO_cells} for having responses to MO!')
+            print(f'Dropped {dropped_Buzzer_cells} for having responses Buzzer!')
         if filter_significant:
-            cell_data, dropped_insig_cells = strip_insignificant_cells(cell_data, significance_table)
+            cell_data, dropped_insig_cells = drop_nonresponsive_cells(cell_data, significance_table)
             animal_stats['insig'] = dropped_insig_cells
-            print(f'Dropped {dropped_insig_cells} for having no significant excitatory responses!')
+            print(f'Dropped {dropped_insig_cells} for having no significant responses!')
 
         cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
         num_new_cells = len(cell_names)
