@@ -34,7 +34,9 @@ def update_cell_names(combined_data, significance_table):
 
     string_names = [f'C{i}' for i in range(len(combined_data.columns.levels[0]))]
     combined_data.columns = combined_data.columns.set_levels(string_names, level=0)
-    significance_table.columns = significance_table.columns = string_names
+
+    string_names = [f'C{i}' for i in range(len(significance_table.columns))]
+    significance_table.columns = string_names
 
 
 def generate_new_numbers(new_cells: int, total: int):
