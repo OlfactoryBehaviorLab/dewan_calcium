@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
-from .helpers import trace_tools
 
 
 def sparseness(iterable: int, means: np.array) -> float:
@@ -46,68 +45,9 @@ def sparseness(iterable: int, means: np.array) -> float:
     return sparseness_val
 
 
-def population_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame,
-                          significant_ontime_cells: list[int], unique_odors: list[str]) -> pd.DataFrame:
-
-    num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
-    population_sparseness_values = []
-
-    for i in range(num_odors):
-        population_sparseness = sparseness(len(significant_ontime_cells),
-                                           zeroed_trial_averaged_responses_matrix.iloc[:, i])
-        population_sparseness_values.append(population_sparseness)
-
-    population_sparseness_DF = pd.DataFrame(population_sparseness_values, columns=['Population Sparseness'],
-                                            index=unique_odors)
-
-    return population_sparseness_DF
-
-
-def lifetime_sparseness(zeroed_trial_averaged_responses_matrix: pd.DataFrame, significant_ontime_cells: list, cell_list: list) -> pd.DataFrame:
-
-    num_odors = len(zeroed_trial_averaged_responses_matrix.iloc[0])
-
-    lifetime_sparseness_values = []
-    cell_row_names = []
-    for cell in significant_ontime_cells:
-        lifetime_sparseness = sparseness(num_odors, zeroed_trial_averaged_responses_matrix.loc[cell])
-        lifetime_sparseness_values.append(lifetime_sparseness)
-        cell_row_names.append(f'Cell {cell_list[cell]}')
-
-    lifetime_sparseness_DF = pd.DataFrame(lifetime_sparseness_values,
-                                          columns=['Lifetime Sparseness'], index=cell_row_names)
-
-    return lifetime_sparseness_DF
-
-
 def generate_correlation_pairs(number_trials: int) -> list:
     return [pair for pair in itertools.combinations(range(number_trials), r=2)]
     # We <3 list comprehension
-
-
-def trial_averaged_odor_responses(stats_data, significant_ontime_cells: list) -> list:
-    trial_averaged_responses_matrix = []
-
-    for cell in significant_ontime_cells:
-        # Loop through the significant cells
-        stats_data.update_cell(cell)  # Update the datastore to grab the correct data
-
-        trial_averaged_responses = []
-
-        for odor in range(len(stats_data.unique_odors)):  # Loop through all odors
-            stats_data.update_odor(odor)
-            baseline_data, evoked_data = trace_tools.collect_trial_data(stats_data, None, False)
-            # Get cell-odor data for all trials, no returns, on time cells only
-            baseline_data, evoked_data = trace_tools.truncate_data(baseline_data, evoked_data)  # Make all rows the same length
-
-            baseline_mean = np.mean(baseline_data)  # Get the average baseline for all trials
-            evoked_data = np.subtract(evoked_data, baseline_mean)  # Baseline shift all the evoked data
-            average_response = np.mean(evoked_data)  # Average the baseline-shifted responses for all trials
-
-            trial_averaged_responses.append(average_response)
-
-        trial_averaged_responses_matrix.append(trial_averaged_responses)
-    return trial_averaged_responses_matrix
 
 
 def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_odors: list) -> tuple:
