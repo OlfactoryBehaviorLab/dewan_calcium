@@ -26,19 +26,21 @@ def new_collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, respons
     evoked_indices = []
 
     for trial_index, (_, data) in enumerate(odor_df.items()):
+        evoke_start_time = 0
         evoke_end_time = response_duration
         if latent:
-            evoke_end_time *= 2
+            evoke_start_time += response_duration
+            evoke_end_time += response_duration
 
         trial_timestamps = time_df.iloc[:, trial_index]
 
-        baseline_trial_indices = trial_timestamps[trial_timestamps < 0].index
+        baseline_trial_indices = trial_timestamps[trial_timestamps.between(-response_duration, 0, 'both')].index
         baseline_trial_data = data[baseline_trial_indices]
 
         baseline_data.append(baseline_trial_data)
         baseline_indices.append((baseline_trial_indices[0], baseline_trial_indices[-1]))
 
-        evoked_trial_indices = trial_timestamps[trial_timestamps.between(0, evoke_end_time, 'both')].index
+        evoked_trial_indices = trial_timestamps[trial_timestamps.between(evoke_start_time, evoke_end_time, 'both')].index
         evoked_trial_data = data[evoked_trial_indices]
         evoked_data.append(evoked_trial_data)
 
