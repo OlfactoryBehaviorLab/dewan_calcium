@@ -87,7 +87,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
         baseline_end = -response_duration
         evoked_start = 0
         evoked_end = response_duration
-        auroc_data = combo_auroc_data['ontime']
+        ontime_auroc_data = combo_auroc_data['ontime']
+        latent_auroc_data = combo_auroc_data['latent']
+
+        auroc_data = ontime_auroc_data
         significance_val = significance_table[odor].astype(int)
 
         save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
@@ -98,13 +101,17 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
 
         if significance_val > 0:  # Tag the significant graphs
             significant = True
+        else:
+            significant = False
+            save_path = project_folder.analysis_dir.figures_dir._traces_dir
 
-        if significance_val in [3, 4]: # Latent cells; on-time is the default
+        if significance_val in [3, 4]:  # Latent cells; on-time is the default
             save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
             auroc_data = combo_auroc_data['latent']
             evoked_start = response_duration
             evoked_end = response_duration * 2
             latent = True
+
 
         odor_data = cell_df[odor]
         odor_times = FV_data[odor]
@@ -138,14 +145,33 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
         ax1.plot(x_vals, avg_data, "k", linewidth=1.5)
 
         ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
-        ax1.text(0.015, 0.02, f'AUROC Percentile: {str(percentile * 100)}',
-                 transform=ax1.transAxes, fontsize='x-small', style='italic',
-                 bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
 
         if significant:
             ax1.text(0.015, 0.965, 'Significant!', transform=ax1.transAxes,
                      fontsize='x-small', style='italic',
                      bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
+
+            ax1.text(0.015, 0.02, f'AUROC Percentile: {str(round(percentile * 100, 4))}',
+                     transform=ax1.transAxes, fontsize='x-small', style='italic',
+                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
+        else:
+            # If a cell is insignificant, but we are plotting everything, there are some extra things we want to show
+
+            latent_percentile = latent_auroc_data.loc[odor]['percentiles']
+            evoked_latent_start = response_duration
+            evoked_latent_end = evoked_latent_start + response_duration
+
+            ax1.text(0.015, 0.02, f'On Time AUROC Percentile: {str(round(percentile * 100, 4))}',
+                     transform=ax1.transAxes, fontsize='x-small', style='italic',
+                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
+            ax1.text(0.015, 0.08, f'Latent AUROC Percentile: {str(round(latent_percentile * 100, 4))}',
+                     transform=ax1.transAxes, fontsize='x-small', style='italic',
+                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
+
+            latent_rectangle = mpatches.Rectangle((evoked_latent_start, y_min), (evoked_latent_end - evoked_latent_start),
+                                                  y_max,
+                                                  alpha=0.3, facecolor='magenta')
+            ax1.add_patch(latent_rectangle)
 
         baseline_rectangle = mpatches.Rectangle((baseline_start, y_min),
                                                 baseline_end - baseline_start,
