@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
 
-def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int =20):
+def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20):
     """
 
     Args:
@@ -28,37 +28,45 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
 
     Returns:
         split_scores (np.array): List of floats representing the score for each split
-        cm (confusion_matrix): Confusion matrix of all results
-
+        cm (list[confusion_matrix]): Confusion matrix of all results
+        true_labels (list[list[int]]): List containing the list of correct labels for each cross-validation split
+        pred_labels (list[list[int]]): List containing the list of predicted labels for each cross-validation split
     """
 
     svm = LinearSVC(dual='auto', max_iter=10000, random_state=1000)
-    bg = BaggingClassifier(svm, n_estimators=num_splits,n_jobs=-1, random_state=1000)  # use this instead of the manual splits
+    # bg = BaggingClassifier(svm, n_estimators=num_splits, n_jobs=-1, random_state=1000)
+    # use this instead of the manual splits
 
-    true_label = np.array([], dtype=int)
-    pred_label = np.array([], dtype=int)
+    true_labels = np.array([], dtype=int)
+    pred_labels = np.array([], dtype=int)
     split_scores = []
+    cms = []
 
-    # for _ in trange(num_splits, desc='Running SVM splits: '):
-    # for _ in trange(num_splits, desc='Running SVM Split', leave=False):
+    for _ in trange(num_splits):
+        train_trials, test_trials, train_labels, test_labels = train_test_split(
+            traces, trial_labels, test_size=test_percentage, shuffle=True) #, stratify=trial_labels)
 
-    train_trials, test_trials, train_labels, test_labels = train_test_split(
-        traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
+        svm.fit(train_trials, train_labels)
+        svm_score = svm.score(test_trials, test_labels)
+        split_scores.append(svm_score)
+        true_label = np.concatenate((true_labels, test_labels))
+        svm_prediction = svm.predict(test_trials)
+        pred_label = np.concatenate((pred_labels, svm_prediction))
+        cm = confusion_matrix(true_label, pred_label, normalize='true')
+        cms.append(cm)
 
-    bg.fit(train_trials, train_labels)
-    svm_score = bg.score(test_trials, test_labels)
+    return split_scores, cms, true_labels, pred_labels
 
-    split_scores.append(svm_score)
-
-    true_label = np.concatenate((true_label, test_labels))
-
-    svm_prediction = bg.predict(test_trials)
-
-    pred_label = np.concatenate((pred_label, svm_prediction))
-
-    cm = confusion_matrix(true_label, pred_label, normalize='true')
-
-    return split_scores, cm, true_label, pred_label
+    # train_trials, test_trials, train_labels, test_labels = train_test_split(
+    #     traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
+    # bg.fit(train_trials, train_labels)
+    # svm_score = bg.score(test_trials, test_labels)
+    # split_scores.append(svm_score)
+    # true_label = np.concatenate((true_label, test_labels))
+    # svm_prediction = bg.predict(test_trials)
+    # pred_label = np.concatenate((pred_label, svm_prediction))
+    # cm = confusion_matrix(true_label, pred_label, normalize='true')
+    # return split_scores, cm, true_label, pred_label
 
 
 def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
