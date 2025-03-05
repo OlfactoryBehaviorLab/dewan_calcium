@@ -270,11 +270,11 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
 
         block_order = get_block_maps(blocks, trial_order)
 
-        new_numbers = generate_new_numbers(num_new_cells, total_cells)
+        new_numbers = generate_new_numbers(num_new_cells, good_cells)
         # Generate new labels for this set of cells
-        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order], sortorder=None, names=['Cells', 'Trials'])
+        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order, block_order], sortorder=None, names=['Cells', 'Trials', 'Blocks'])
         cell_data.columns = new_multiindex
-        # Create new multiindex with new cell labels and apply it to the new data
+        # Create new multiindex with new cell labels and block and apply it to the new data
 
         combined_data = pd.concat([combined_data, cell_data], axis=1)
 
