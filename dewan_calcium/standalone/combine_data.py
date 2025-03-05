@@ -185,6 +185,14 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     return trial_indices, trial_indices_to_drop
 
 
+def get_block_maps(block_list, odor_list):
+    for block, odors in block_list.items():
+        block_mask = odor_list.isin(odors)
+        odor_list[block_mask] = block
+
+    return odor_list
+
+
 def combine(files: list, filter_significant=True, drop_multisense=True, trim_trials=True):
     combined_data = pd.DataFrame()
     combined_significance_table = pd.DataFrame()
@@ -198,6 +206,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         significance_file_path = animal_files['sig']
         odor_file_path = animal_files['odor']
         timestamps_path = animal_files['time']
+        block_file_path = animal_files['block']
 
         try:
             cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
@@ -211,6 +220,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         significance_table = pd.read_excel(significance_file_path, index_col=0, header=[0])
         # significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
 
+        blocks = pd.read_excel(block_file_path, header=[0])
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
         new_index = pd.MultiIndex.from_product([cell_data.columns.get_level_values(0).unique(), odor_data],
@@ -246,6 +256,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         animal_stats['num_cells'] = num_new_cells
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
+        block_order = get_block_maps(blocks, trial_order)
 
         new_numbers = generate_new_numbers(num_new_cells, total_cells)
         # Generate new labels for this set of cells
