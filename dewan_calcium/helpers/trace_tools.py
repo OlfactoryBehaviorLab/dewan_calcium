@@ -60,6 +60,14 @@ def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, la
     return baseline_means, evoked_means
 
 
+def average_odor_responses(odor_df: pd.DataFrame, odor_timestamps:pd.DataFrame, response_duration: int) -> float:
+    baseline_means, evoked_means = get_evoked_baseline_means(odor_df, odor_timestamps, response_duration)
+    diff = evoked_means - baseline_means
+    average_response = diff.mean()
+
+    return average_response
+
+
 def collect_trial_data(data_input, return_values = None,
                        latent_cells_only: bool = False) -> tuple:
     baseline_data = []
