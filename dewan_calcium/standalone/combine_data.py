@@ -120,7 +120,9 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     return new_data
 
 
-def write_to_disk(data, sig_table, output_dir, file_stem, stats, total_cells, num_animals):
+def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, total_cells, num_animals):
+    output_dir = output_dir_root.joinpath(file_stem)
+
     if not output_dir.exists():
         print(f'Output directory does not exist! Creating {output_dir}')
         output_dir.mkdir(exist_ok=True, parents=True)
@@ -295,11 +297,12 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
 def main():
     animal_types = ['VGLUT']
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
-    data_files = data_files['VGLUT']
-    combined_data, combined_significance_table, stats, total_cells = combine(data_files)
-    stem='VGLUT_Comb'
-    num_animals = len(data_files)
-    write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, total_cells, num_animals)
+    for type in animal_types:
+        data_files = data_files[type]
+        combined_data, combined_significance_table, stats, cells = combine(data_files)
+        stem=f'{type}_Comb'
+        num_animals = len(data_files)
+        write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
 
 if __name__ == "__main__":
