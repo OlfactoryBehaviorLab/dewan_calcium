@@ -50,41 +50,22 @@ def generate_correlation_pairs(number_trials: int) -> list:
     # We <3 list comprehension
 
 
-def calculate_pairwise_distances(trial_averaged_responses_matrix: list, unique_odors: list) -> tuple:
+def calculate_pairwise_distances(trial_averaged_responses_matrix: pd.DataFrame) -> tuple:
+    cells = trial_averaged_responses_matrix.columns
+    odors = trial_averaged_responses_matrix.index
+
     scaler = StandardScaler()
     scaled_trial_averaged_responses = scaler.fit_transform(trial_averaged_responses_matrix)
-
-    odor_trial_averaged_responses_matrix = pd.DataFrame(np.transpose(scaled_trial_averaged_responses))
-    odor_trial_averaged_responses_matrix.set_index(unique_odors, inplace=True)
+    cell_trial_averaged_responses_matrix = scaled_trial_averaged_responses.T
 
     # 8A.3: Calculate several different correlation coefficients
-    cell_pairwise_distances = pairwise_distances(scaled_trial_averaged_responses, metric='correlation')
-    odor_pairwise_distances = pairwise_distances(odor_trial_averaged_responses_matrix, metric='correlation')
+    cell_pairwise_distances = pairwise_distances(cell_trial_averaged_responses_matrix, metric='correlation')
+    odor_pairwise_distances = pairwise_distances(scaled_trial_averaged_responses, metric='correlation')
+
+    cell_pairwise_distances = pd.DataFrame(cell_pairwise_distances, index=cells, columns=cells)
+    odor_pairwise_distances = pd.DataFrame(odor_pairwise_distances, index=odors, columns=odors)
 
     return odor_pairwise_distances, cell_pairwise_distances
-
-
-def cell_v_correlation(centroids, cell_pairwise_distances) -> list:
-    distance_matrix = calculate_spatial_distance(centroids)
-
-    # Pair the spatial distance with its associated correlation coefficient
-    distance_v_correlation_pairs = np.stack((distance_matrix, cell_pairwise_distances), axis=-1)
-
-    unique_distance_v_correlation_pairs = []
-    for i, cell in enumerate(distance_v_correlation_pairs[:-1]):
-        # Select half of the n x n matrix since the bottom half is just a reflection
-        unique_distance_v_correlation_pairs.extend(cell[i + 1:])
-
-    unique_distance_v_correlation_pairs = np.vstack(unique_distance_v_correlation_pairs)
-    # Combine individual rows into one large contiguous array
-
-    # Alternative way to do the above that is vectorized instead of looped
-    # distance_v_correlation = np.vstack(distance_v_correlation)
-    # distance_v_correlation = pd.DataFrame(np.round(distance_v_correlation, 6))
-    # distance_v_correlation.drop_duplicates(inplace=True)
-    # distance_v_correlation = distance_v_correlation.iloc[1:]
-
-    return unique_distance_v_correlation_pairs
 
 
 def calculate_spatial_distance(centroids: pd.DataFrame) -> list:
