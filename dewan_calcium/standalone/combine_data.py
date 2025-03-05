@@ -196,18 +196,23 @@ def get_block_maps(block_list, odor_list):
 def combine(files: list, filter_significant=True, drop_multisense=True, trim_trials=True):
     combined_data = pd.DataFrame()
     combined_significance_table = pd.DataFrame()
+    good_cells = 0
     total_cells = 0
     stats = {}
+
     for file in tqdm(files):
-        animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'num_cells'], None)
+        animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'good_cells', 'orig_cells'], None)
         animal_files = files[file]
         name = file
+
+        # File Paths
         combined_data_path = animal_files['file']
         significance_file_path = animal_files['sig']
         odor_file_path = animal_files['odor']
         timestamps_path = animal_files['time']
         block_file_path = animal_files['block']
 
+        # Load Data
         try:
             cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
         except Exception:  # yeah yeah I know; I can't remember how they were saved
@@ -218,17 +223,23 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
             timestamps = pd.read_pickle(timestamps_path)
 
         significance_table = pd.read_excel(significance_file_path, index_col=0, header=[0])
-        # significance_table = significance_table.set_index(significance_table.columns[0], drop=True)
-
         blocks = pd.read_excel(block_file_path, header=[0])
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
-        new_index = pd.MultiIndex.from_product([cell_data.columns.get_level_values(0).unique(), odor_data],
-                                               names=['Cells', 'Frames'])
+
+        # Count original cells
+        orig_cells = cell_data.columns.get_level_values(0).unique()
+        num_orig_cells = len(orig_cells)
+        stats['orig_cells'] = num_orig_cells
+
+        # Reset MultiIndex
+        new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
         cell_data.columns = new_index
 
+        # Get good/bad trials
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
 
+        # Drop trials
         if len(trial_indices_to_drop) == len(timestamps):
             print(f'Skipping {name}, as all trials are marked to be dropped!')
             continue
@@ -253,9 +264,10 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
 
         cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
         num_new_cells = len(cell_names)
-        animal_stats['num_cells'] = num_new_cells
+        animal_stats['good_cells'] = num_new_cells
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
+
         block_order = get_block_maps(blocks, trial_order)
 
         new_numbers = generate_new_numbers(num_new_cells, total_cells)
@@ -269,12 +281,15 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         # Includes all cells, INCLUDING any that we dropped above.
         combined_significance_table = pd.concat([combined_significance_table, significance_table], axis=1)
 
-        total_cells += num_new_cells
+        # update totals
+        good_cells += num_new_cells
+        total_cells += num_orig_cells
+
         stats[name] = animal_stats
 
     update_cell_names(combined_data, combined_significance_table)
 
-    return combined_data, combined_significance_table, stats, total_cells
+    return combined_data, combined_significance_table, stats, (good_cells, total_cells)
 
 
 def main():
