@@ -1,5 +1,6 @@
 from pathlib import Path
 
+SKIP = ['.', 'z']
 
 def get_folders(input_dir: Path, exp_type, animal_type: list, error:bool = False) -> dict:
     if not input_dir.exists():
@@ -13,6 +14,9 @@ def get_folders(input_dir: Path, exp_type, animal_type: list, error:bool = False
                 data_files[_type] = {}
                 type_dir = list(_dir.iterdir()) # List all the animals within a class
                 for animal in type_dir:
+                    if animal.name[0] in SKIP:
+                        continue # Skip any .* or z directories
+                    print(f'Searching {animal}...')
                     animal_files = _find_data_files(animal, exp_type, error=error)
                     if not animal_files:
                         continue
