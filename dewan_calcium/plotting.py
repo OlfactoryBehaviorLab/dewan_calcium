@@ -371,23 +371,21 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
     fig.savefig(path, dpi=800)
 
 
-def plot_distance_v_correlation(unique_distance_v_correlation):
-    x = unique_distance_v_correlation[:, 0]
-    y = unique_distance_v_correlation[:, 1]
+def plot_distance_v_correlation(distances, correlations):
 
     # Quick linear regression
-    m, b = np.polyfit(x, y, deg=1)
-    reg_x = np.arange(np.max(x))
+    m, b = np.polyfit(distances, correlations, deg=1)
+    reg_x = np.arange(np.max(distances))
     reg_y = np.add(np.multiply(m, reg_x), b)
 
     # Plot regression line, formula, and data
     fig, ax = plt.subplots()
-    ax.plot(reg_x, reg_y)
-    ax.scatter(x, y)
-    plt.xlabel("Pairwise Distance")
-    plt.ylabel("Pairwise Signal Correlation")
+    ax.plot(reg_x, reg_y, color='magenta')
+    ax.scatter(distances, correlations)
+    plt.xlabel("Euclidian Distance (au)")
+    plt.ylabel("Neural Activity Correlation")
     plt.title("Activity vs. Spatial Distance")
-    _ = ax.text(0, np.max(y), f'y={np.round(m, 4)}x + {np.round(b, 4)}')
+    _ = ax.text(0, 1.05, f'y={np.round(m, 4)}x + {np.round(b, 4)}', transform=ax.transAxes)
 
 
 def plot_epm_roi(polygons: pd.DataFrame, image):
