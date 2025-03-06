@@ -218,11 +218,12 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
 
 
 def get_block_maps(block_list, odor_list):
+    odor_list_block_number = odor_list.copy()
     for block, odors in block_list.items():
         block_mask = np.isin(odor_list, odors)
-        odor_list[block_mask] = block
+        odor_list_block_number[block_mask] = block
 
-    return odor_list
+    return odor_list_block_number
 
 
 def combine(files: list, filter_significant=True, drop_multisense=True, trim_trials=True):
