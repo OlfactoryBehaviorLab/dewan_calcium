@@ -371,7 +371,7 @@ def pairwise_correlation_distances(odor_pairwise_distances, cell_pairwise_distan
     fig.savefig(path, dpi=800)
 
 
-def plot_distance_v_correlation(distances, correlations):
+def plot_distance_v_correlation(distances, correlations, project_folder):
 
     # Quick linear regression
     m, b = np.polyfit(distances, correlations, deg=1)
@@ -386,6 +386,10 @@ def plot_distance_v_correlation(distances, correlations):
     plt.ylabel("Neural Activity Correlation")
     plt.title("Activity vs. Spatial Distance")
     _ = ax.text(0, 1.05, f'y={np.round(m, 4)}x + {np.round(b, 4)}', transform=ax.transAxes)
+
+    save_dir = project_folder.analysis_dir.figures_dir.path
+    save_path = save_dir.joinpath('distance_v_correlation.pdf')
+    fig.savefig(save_path, dpi=800)
 
 
 def plot_epm_roi(polygons: pd.DataFrame, image):
