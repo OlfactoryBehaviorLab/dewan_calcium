@@ -189,7 +189,7 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
 
 def get_block_maps(block_list, odor_list):
     for block, odors in block_list.items():
-        block_mask = odor_list.isin(odors)
+        block_mask = np.isin(odor_list, odors)
         odor_list[block_mask] = block
 
     return odor_list
