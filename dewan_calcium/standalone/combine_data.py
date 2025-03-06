@@ -47,7 +47,7 @@ def generate_new_numbers(new_cells: int, total: int):
 
 def drop_nonresponsive_cells(data: pd.DataFrame, significance_table: pd.DataFrame) -> (pd.DataFrame, list):
     column_mask = (significance_table != 0).sum() == 0
-    columns_to_drop = significance_table.columns[column_mask].values
+    columns_to_drop = significance_table.columns[column_mask].tolist()
 
     if len(columns_to_drop) > 0:
         data = data.drop(columns_to_drop, level=0, axis=1)
@@ -60,8 +60,8 @@ def drop_multisense_cells(data, significance_table: pd.DataFrame):
     MO_mask = significance_table.loc['MO'] != 0
     buzzer_mask = significance_table.loc['Buzzer'] != 0
 
-    MO_cells_to_drop = significance_table.columns[MO_mask].values
-    buzzer_cells_to_drop = significance_table.columns[buzzer_mask].values
+    MO_cells_to_drop = significance_table.columns[MO_mask].tolist()
+    buzzer_cells_to_drop = significance_table.columns[buzzer_mask].tolist()
 
     drop_mask = MO_mask | buzzer_mask
     cells_to_drop = significance_table.columns[drop_mask].values
@@ -148,25 +148,25 @@ def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, cells, num
             dropped_Buzzer = animal_stats['Buzzer']
             dropped_insig = animal_stats['insig']
 
-            if dropped_trials is None:
+            if not dropped_trials:
                 dropped_trials = 'None'
                 num_dropped_trials = 0
             else:
                 num_dropped_trials = len(dropped_trials)
 
-            if dropped_MO is None or not dropped_MO:
+            if not dropped_MO:
                 dropped_MO = 'None'
                 num_dropped_MO = 0
             else:
                 num_dropped_MO = len(dropped_MO)
 
-            if dropped_Buzzer is None or not dropped_Buzzer:
+            if not dropped_Buzzer:
                 dropped_Buzzer = 'None'
                 num_dropped_buzzer = 0
             else:
                 num_dropped_buzzer = len(dropped_Buzzer)
 
-            if dropped_insig is None:
+            if not dropped_insig:
                 dropped_insig = 'None'
                 num_dropped_insig = 0
             else:
@@ -234,7 +234,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
     stats = {}
 
     for file in tqdm(files):
-        animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'good_cells', 'orig_cells'], None)
+        animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'good_cells', 'orig_cells'], [])
         animal_files = files[file]
         name = file
 
