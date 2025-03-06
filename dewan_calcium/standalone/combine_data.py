@@ -8,8 +8,8 @@ from tqdm import tqdm
 
 import get_project_files
 
-input_dir = Path(r'/mnt/r/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
-output_dir_root = Path(r'/mnt/r/2_Inscopix/1_DTT/5_Combined')
+input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
+output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/5_Combined')
 
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
