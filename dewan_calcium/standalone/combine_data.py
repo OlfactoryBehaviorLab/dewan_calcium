@@ -121,8 +121,10 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     return new_data
 
 
-def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, total_cells, num_animals):
+def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, cells, num_animals):
     output_dir = output_dir_root.joinpath(file_stem)
+
+    global_good_cells, global_total_cells = cells
 
     if not output_dir.exists():
         print(f'Output directory does not exist! Creating {output_dir}')
@@ -133,23 +135,50 @@ def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, total_cell
     total_file = output_dir.joinpath(f"{file_stem}.txt")
 
     with open(total_file, "w") as out_file:
-        out_file.write(f'Num Cells: {total_cells}\n')
+        out_file.write(f'Number Total Cells: {global_total_cells}\n')
+        out_file.write(f'Number Good Cells: {global_good_cells}\n')
         out_file.write(f'Num Animals: {num_animals}\n')
         out_file.write(f'=============================\n\n')
         for animal in stats.keys():
             animal_stats = stats[animal]
+            original_cells = animal_stats['orig_cells']
+            good_cells = animal_stats['good_cells']
             dropped_trials = animal_stats['trials']
             dropped_MO = animal_stats['MO']
-            dropped_Buzzer = animal_stats['MO']
+            dropped_Buzzer = animal_stats['Buzzer']
             dropped_insig = animal_stats['insig']
-            num_cells = animal_stats['num_cells']
+
+            if dropped_trials is None:
+                dropped_trials = 'None'
+                num_dropped_trials = 0
+            else:
+                num_dropped_trials = len(dropped_trials)
+
+            if dropped_MO is None or not dropped_MO:
+                dropped_MO = 'None'
+                num_dropped_MO = 0
+            else:
+                num_dropped_MO = len(dropped_MO)
+
+            if dropped_Buzzer is None or not dropped_Buzzer:
+                dropped_Buzzer = 'None'
+                num_dropped_buzzer = 0
+            else:
+                num_dropped_buzzer = len(dropped_Buzzer)
+
+            if dropped_insig is None:
+                dropped_insig = 'None'
+                num_dropped_insig = 0
+            else:
+                num_dropped_insig = len(dropped_insig)
 
             out_file.write(f'{animal}:\n')
-            out_file.write(f'Number Good Cells: {num_cells}\n')
-            out_file.write(f'Dropped Trials: {dropped_trials}\n')
-            out_file.write(f'Dropped MO Cells: {dropped_MO}\n')
-            out_file.write(f'Dropped Buzzer Cells: {dropped_Buzzer}\n')
-            out_file.write(f'Dropped Nonresponsive Cells: {dropped_insig}\n')
+            out_file.write(f'Number Original Cells: {original_cells}\n')
+            out_file.write(f'Number Good Cells: {good_cells}\n')
+            out_file.write(f'Dropped {num_dropped_trials} Trials: {dropped_trials}\n')
+            out_file.write(f'Dropped {num_dropped_MO} MO Cells: {dropped_MO}\n')
+            out_file.write(f'Dropped {num_dropped_buzzer} Buzzer Cells: {dropped_Buzzer}\n')
+            out_file.write(f'Dropped {num_dropped_insig} Nonresponsive Cells: {dropped_insig}\n')
             out_file.write(f'=============================\n\n')
 
     print(f'Writing combined data for {file_stem} to disk...')
@@ -233,7 +262,7 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         # Count original cells
         orig_cells = cell_data.columns.get_level_values(0).unique()
         num_orig_cells = len(orig_cells)
-        stats['orig_cells'] = num_orig_cells
+        animal_stats['orig_cells'] = num_orig_cells
 
         # Reset MultiIndex
         new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
