@@ -1,6 +1,7 @@
 import os
 os.environ['ISX'] = '0'
 
+import itertools
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -269,12 +270,15 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         animal_stats['good_cells'] = num_new_cells
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
-
         block_order = get_block_maps(blocks, trial_order)
-
+        trial_labels = zip(trial_order, block_order)
         new_numbers = generate_new_numbers(num_new_cells, good_cells)
+        cell_trial_labels = itertools.product(new_numbers, trial_labels)
+        cell_trial_tuples = [tuple([item[0]]) + item[1] for item in cell_trial_labels]
+
+
         # Generate new labels for this set of cells
-        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order, block_order], sortorder=None, names=['Cells', 'Trials', 'Blocks'])
+        new_multiindex = pd.MultiIndex.from_tuples(cell_trial_tuples, sortorder=None, names=['Cells', 'Trials', 'Blocks'])
         cell_data.columns = new_multiindex
         # Create new multiindex with new cell labels and block and apply it to the new data
 
