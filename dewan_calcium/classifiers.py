@@ -28,7 +28,6 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
 
     Returns:
         split_scores (np.array): List of floats representing the score for each split
-        cm (list[confusion_matrix]): Confusion matrix of all results
         true_labels (list[list[int]]): List containing the list of correct labels for each cross-validation split
         pred_labels (list[list[int]]): List containing the list of predicted labels for each cross-validation split
     """
@@ -37,25 +36,22 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
     # bg = BaggingClassifier(svm, n_estimators=num_splits, n_jobs=-1, random_state=1000)
     # use this instead of the manual splits
 
-    true_labels = np.array([], dtype=int)
-    pred_labels = np.array([], dtype=int)
+    true_labels = []
+    pred_labels = []
     split_scores = []
-    cms = []
 
-    for _ in trange(num_splits):
+    for _ in range(num_splits):
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, trial_labels, test_size=test_percentage, shuffle=True) #, stratify=trial_labels)
 
         svm.fit(train_trials, train_labels)
         svm_score = svm.score(test_trials, test_labels)
         split_scores.append(svm_score)
-        true_label = np.concatenate((true_labels, test_labels))
+        true_labels.extend(test_labels.values)
         svm_prediction = svm.predict(test_trials)
-        pred_label = np.concatenate((pred_labels, svm_prediction))
-        cm = confusion_matrix(true_label, pred_label, normalize='true')
-        cms.append(cm)
+        pred_labels.extend(svm_prediction)
 
-    return split_scores, cms, true_labels, pred_labels
+    return split_scores, true_labels, pred_labels
 
     # train_trials, test_trials, train_labels, test_labels = train_test_split(
     #     traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
@@ -220,28 +216,23 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
             mean_svm_scores.append(avg_score)
 
             all_split_scores.append(split_scores)
-            all_confusion_mats.append(cm)
             true_labels = np.concatenate((true_labels, true_label))  # Record the 'true' taste
             pred_labels = np.concatenate((pred_labels, pred_label))  # Record the predicted taste
 
 
         splits_v_repeat_df = pd.DataFrame(all_split_scores, columns=range(num_splits))
 
-        return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
+        return mean_svm_scores, splits_v_repeat_df, (true_labels, pred_labels)
 
 
 def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20, ):
 
-    # true_labels = np.array([], dtype=int)
-    # pred_labels = np.array([], dtype=int)
     true_labels = {}
     pred_labels = {}
     all_split_scores = {}
-    all_confusion_mats = {}
     mean_svm_scores = {}
 
     cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
-    num_cells = len(cells)
     odors = z_scored_combined_data.columns.get_level_values(1).unique().values
 
     data_size = z_scored_combined_data.shape[0]
@@ -255,18 +246,17 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  tes
 
         correct_labels = cropped_data_per_trial.index.to_series()
 
-        split_scores, cm, true_label, pred_label = run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
+        split_scores, true_label, pred_label = run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
         avg_score = np.mean(split_scores)
         mean_svm_scores[window] = avg_score
 
         all_split_scores[window] = split_scores
-        all_confusion_mats[window] = cm
         true_labels[window] = true_label  # Record the 'true' taste
         pred_labels[window] = pred_label
 
     splits_v_repeat_df = pd.DataFrame(all_split_scores)
 
-    return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
+    return mean_svm_scores, splits_v_repeat_df, (true_labels, pred_labels)
 
 
 def _shuffle_index(df):
