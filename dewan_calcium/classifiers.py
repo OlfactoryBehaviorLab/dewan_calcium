@@ -44,14 +44,14 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
 
     for _ in trange(num_splits):
         train_trials, test_trials, train_labels, test_labels = train_test_split(
-            traces, trial_labels, test_size=test_percentage, shuffle=True) #, stratify=trial_labels)
+            traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
 
         svm.fit(train_trials, train_labels)
         svm_score = svm.score(test_trials, test_labels)
         split_scores.append(svm_score)
-        true_labels = true_labels.append(test_labels)
+        true_labels.append(test_labels)
         svm_prediction = svm.predict(test_trials)
-        pred_labels = pred_labels.append(svm_prediction)
+        pred_labels.append(svm_prediction)
         cm = confusion_matrix(test_labels, svm_prediction, normalize='true')
         cms.append(cm)
 
