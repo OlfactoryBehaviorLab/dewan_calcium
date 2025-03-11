@@ -37,8 +37,8 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
     # bg = BaggingClassifier(svm, n_estimators=num_splits, n_jobs=-1, random_state=1000)
     # use this instead of the manual splits
 
-    true_labels = np.array([], dtype=int)
-    pred_labels = np.array([], dtype=int)
+    true_labels = []
+    pred_labels = []
     split_scores = []
     cms = []
 
@@ -49,10 +49,10 @@ def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: floa
         svm.fit(train_trials, train_labels)
         svm_score = svm.score(test_trials, test_labels)
         split_scores.append(svm_score)
-        true_label = np.concatenate((true_labels, test_labels))
+        true_labels = true_labels.append(test_labels)
         svm_prediction = svm.predict(test_trials)
-        pred_label = np.concatenate((pred_labels, svm_prediction))
-        cm = confusion_matrix(true_label, pred_label, normalize='true')
+        pred_labels = pred_labels.append(svm_prediction)
+        cm = confusion_matrix(test_labels, svm_prediction, normalize='true')
         cms.append(cm)
 
     return split_scores, cms, true_labels, pred_labels
@@ -232,8 +232,6 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
 
 def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20, ):
 
-    # true_labels = np.array([], dtype=int)
-    # pred_labels = np.array([], dtype=int)
     true_labels = {}
     pred_labels = {}
     all_split_scores = {}
@@ -241,7 +239,6 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  tes
     mean_svm_scores = {}
 
     cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
-    num_cells = len(cells)
     odors = z_scored_combined_data.columns.get_level_values(1).unique().values
 
     data_size = z_scored_combined_data.shape[0]
