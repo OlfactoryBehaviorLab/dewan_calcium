@@ -40,7 +40,7 @@ def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: flo
     split_scores = []
     cms = []
 
-    for _ in trange(num_splits):
+    for _ in trange(num_splits, desc="Running bootstrapped cross-validation: ", position=2, leave=True):
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
 
@@ -99,9 +99,9 @@ def _randomly_sample_trials(z_score_combined_data, combined_data_index, cell_nam
     progress_desc = 'Randomly Sampling Cells'
 
     if window:
-        progress_desc = progress_desc + f' for window size {window}'
+        progress_desc = progress_desc + f' for window size {int(window[0]), int(window[1])}'
 
-    for cell_i, cell in enumerate(tqdm(cell_names, desc=progress_desc, leave=False, position=2)):
+    for cell_i, cell in enumerate(tqdm(cell_names, desc=progress_desc, position=1, leave=True)):
         cell_data = pd.DataFrame()
 
         # Iterate through each taste and select the appropriate number of trials
@@ -230,8 +230,11 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2, test
 
 
 def shuffle_data(z_scored_combined_data):
+    names = z_scored_combined_data.columns.names
+
     shuffled_data = z_scored_combined_data.T.groupby(level=0, group_keys=False).apply(_shuffle_index)
-    shuffled_data.index = pd.MultiIndex.from_tuples(shuffled_data.index, names=['cell', 'odor'])
+    shuffled_data.index = pd.MultiIndex.from_tuples(shuffled_data.index, names=names)
     shuffled_data = shuffled_data.T
 
     return shuffled_data
+
