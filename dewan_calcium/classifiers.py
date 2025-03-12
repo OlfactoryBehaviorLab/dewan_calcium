@@ -69,35 +69,6 @@ def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
     return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
 
 
-def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
-    cell_names = np.unique(combined_data.columns.get_level_values(0))
-    num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
-    num_cells = len(cell_names)
-
-    scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
-    all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
-    mean_svm_scores = []
-    all_y_vals = {}
-    for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
-        svm_score_avg, svm_scores, confusion_mat, y_vals = _decode_single_neuron(
-            cell, combined_data, num_splits, test_percentage)
-            # Can now be used with the avg ensemble decoder
-
-        mean_svm_scores.append(svm_score_avg)
-        scores[cell_i, :] = svm_scores
-        all_confusion_mats[cell_i, :, :] = confusion_mat
-        all_y_vals[cell] = y_vals
-
-    # Make the dataframes to return
-    mean_score_dict = {'Cell': cell_names, 'Overall SVM Score': mean_svm_scores}
-    mean_score_df = pd.DataFrame(mean_score_dict)
-
-    split_score_df = pd.DataFrame(scores, columns=range(num_splits))
-    split_score_df.index = cell_names
-
-    return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
-
-
 def _get_minimum_trials(combined_data, cell_names, odors):
     min_odor_trials = {}
 
@@ -167,54 +138,12 @@ def _get_windows(data_size, steps):
     return list(zip(windows_start, windows_end))
 
 
-def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
-                      n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
-
-    cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
-    num_cells = len(cells)
-    odors = z_scored_combined_data.columns.get_level_values(1).unique().values
-
-    # If ensemble_averaging is set to True, then we just average the individual SVM scores for each neuron.
-    # This is just single_neuron_decoding again
-    if ensemble_averaging:
-
-        mean_score_df, split_score_df, all_confusion_mats, all_y_vals = single_neuron_decoding(
-            z_scored_combined_data, test_percentage=test_percentage, num_splits=num_splits)
-
-        return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
-
-    else:
-        # Set up arrays for recording results
-        true_labels = np.array([], dtype=int)
-        pred_labels = np.array([], dtype=int)
-        all_split_scores = []
-        all_confusion_mats = []
-        mean_svm_scores = []
-
-        # Figure out the minimum number of trials a neuron has for each taste
-        odor_mins = _get_minimum_trials(z_scored_combined_data, cells, odors)
-        combined_data_index = _generate_dataframe_index(odor_mins)
-
-        # Repeat sampling of trials
-        for repeat_i in trange(n_repeats, desc='Running SVM repeats: '):
-
-            # X is the concatenated dataframe. Each row will represent a trial, and the neural spike trains will be stacked horizonatally.
-            data_per_trial = randomly_sample_trials(z_scored_combined_data, combined_data_index, cells, odors, odor_mins)
-            correct_labels = data_per_trial.index.to_series(name='correct_labels')
-
-            split_scores, cm, true_label, pred_label = run_svm(data_per_trial, correct_labels, test_percentage, num_splits)
-            avg_score = np.mean(split_scores)
-            mean_svm_scores.append(avg_score)
-
-            all_split_scores.append(split_scores)
-            all_confusion_mats.append(cm)
-            true_labels = np.concatenate((true_labels, true_label))  # Record the 'true' taste
-            pred_labels = np.concatenate((pred_labels, pred_label))  # Record the predicted taste
-
-
-        splits_v_repeat_df = pd.DataFrame(all_split_scores, columns=range(num_splits))
-
-        return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
+def _shuffle_index(df):
+    rng = np.random.default_rng()
+    index = df.index.values
+    rng.shuffle(index)
+    df.index = index
+    return df
 
 
 def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message, window=False):
