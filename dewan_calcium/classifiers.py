@@ -155,25 +155,29 @@ def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterat
     cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
     odors = z_scored_combined_data.columns.get_level_values(1).unique().values
 
-    data_size = z_scored_combined_data.shape[0]
-    windows = get_windows(data_size, window_size)
     odor_mins = _get_minimum_trials(z_scored_combined_data, cells, odors)
     combined_data_index = _generate_dataframe_index(odor_mins)
 
-    for window in tqdm(windows, desc='Sliding Window Ensemble Decoding', leave=True, position=0):
-        cropped_data_per_trial = randomly_sample_trials(z_scored_combined_data,
-                                                        combined_data_index, cells, odors, odor_mins, window=window)
+    for iterator in tqdm(iterator, desc=loop_message, leave=True, position=0):
+
+        if window:
+            _window = iterator
+        else:
+            _window = None
+
+        cropped_data_per_trial = _randomly_sample_trials(z_scored_combined_data,
+                                                        combined_data_index, cells, odors, odor_mins, window=_window)
 
         correct_labels = cropped_data_per_trial.index.to_series()
 
-        split_scores, cm, true_label, pred_label = run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
+        split_scores, cm, true_label, pred_label = _run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
         avg_score = np.mean(split_scores)
-        mean_svm_scores[window] = avg_score
 
-        all_split_scores[window] = split_scores
-        all_confusion_mats[window] = cm
-        true_labels[window] = true_label  # Record the 'true' taste
-        pred_labels[window] = pred_label
+        mean_svm_scores[iterator] = avg_score
+        all_split_scores[iterator] = split_scores
+        all_confusion_mats[iterator] = cm
+        true_labels[iterator] = true_label  # Record the 'true' odorants
+        pred_labels[iterator] = pred_label # Record the predicted odorants
 
     splits_v_repeat_df = pd.DataFrame(all_split_scores)
 
