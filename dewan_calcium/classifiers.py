@@ -102,17 +102,15 @@ def _randomly_sample_trials(z_score_combined_data, combined_data_index, cell_nam
         progress_desc = progress_desc + f' for window size {window}'
 
     for cell_i, cell in enumerate(tqdm(cell_names, desc=progress_desc, leave=False, position=2)):
-        trial_num = 0
         cell_data = pd.DataFrame()
-
-        if window:
-            start_frame, end_frame = window
 
         # Iterate through each taste and select the appropriate number of trials
         for odor_i, odor in enumerate(trial_labels):
             cell_odor_data = z_score_combined_data[cell][odor].T
             if window:
+                start_frame, end_frame = window
                 cell_odor_data = cell_odor_data.iloc[:, start_frame:end_frame]
+
             random_trials = cell_odor_data.sample(odor_mins[odor], axis=0)
             cell_data = pd.concat([cell_data, random_trials], ignore_index=True)
 
