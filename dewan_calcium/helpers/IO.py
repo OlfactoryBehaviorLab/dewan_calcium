@@ -145,3 +145,27 @@ def generate_deinterleaved_video_paths(video_files: list[str], output_directory:
         paths.extend(focus_paths)
 
     return paths
+
+
+def save_SVM_output(svm_output_dir: Path, mean_score_df: pd.DataFrame, mean_svm_scores: pd.DataFrame,
+                    splits_v_repeat_df: pd.DataFrame, all_confusion_mats: dict,
+                    true_labels: list[list[int]], pred_labels: list[list[int]], shuffle=False):
+
+    if shuffle:
+        svm_output_dir = svm_output_dir.joinpath('Shuffle')
+        if not svm_output_dir.exists():
+            svm_output_dir.mkdir(parents=True, exist_ok=True)
+
+    mean_score_df.to_excel(svm_output_dir.joinpath('mean_svm_scores.xlsx'))
+
+    mean_scores_path = svm_output_dir.joinpath('mean_svm_scores.pickle')
+    pd.to_pickle(mean_svm_scores, mean_scores_path)
+    splits_path = svm_output_dir.joinpath('splits_v_repeat_df.pickle')
+    pd.to_pickle(splits_v_repeat_df, splits_path)
+    all_confusion_mat_path = svm_output_dir.joinpath('all_confusion_mat.pickle')
+    pd.to_pickle(all_confusion_mats, all_confusion_mat_path)
+    labels_path = svm_output_dir.joinpath('labels.pickle')
+    pd.to_pickle((true_labels, pred_labels), labels_path)
+
+    print('Successfully saved SVM data!')
+    
