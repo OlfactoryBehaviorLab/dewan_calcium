@@ -184,12 +184,49 @@ def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterat
     return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
 
 
-def _shuffle_index(df):
-    rng = np.random.default_rng()
-    index = df.index.values
-    rng.shuffle(index)
-    df.index = index
-    return df
+def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
+
+    cell_names = np.unique(combined_data.columns.get_level_values(0))
+    num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
+    num_cells = len(cell_names)
+
+    scores = np.zeros(shape=(num_cells, num_splits))  # num_cells x num_splits array to combine the SVM scores
+    all_confusion_mats = np.zeros(shape=(num_cells, num_labels, num_labels))
+    mean_svm_scores = []
+    all_y_vals = {}
+    for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
+        svm_score_avg, svm_scores, confusion_mat, y_vals = _decode_single_neuron(
+            cell, combined_data, num_splits, test_percentage)
+            # Can now be used with the avg ensemble decoder
+
+        mean_svm_scores.append(svm_score_avg)
+        scores[cell_i, :] = svm_scores
+        all_confusion_mats[cell_i, :, :] = confusion_mat
+        all_y_vals[cell] = y_vals
+
+    # Make the dataframes to return
+    mean_score_dict = {'Cell': cell_names, 'Overall SVM Score': mean_svm_scores}
+    mean_score_df = pd.DataFrame(mean_score_dict)
+
+    split_score_df = pd.DataFrame(scores, columns=range(num_splits))
+    split_score_df.index = cell_names
+
+    return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
+
+
+def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20):
+    iterator = np.arange(n_repeats)
+    loop_message = 'Running Repeat SVM Ensemble Decoding: '
+
+    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message)
+
+
+def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2, test_percentage=.2, num_splits=20):
+    data_size = z_scored_combined_data.shape[0]
+    windows = _get_windows(data_size, window_size)
+    loop_message = 'Running Sliding Window SVM Decoding: '
+
+    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, windows, loop_message, window=True)
 
 
 def shuffle_data(z_scored_combined_data):
