@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
 
-def run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20):
+def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20):
     """
 
     Args:
@@ -62,7 +62,7 @@ def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
     cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
     correct_labels = cell_data.index.to_series(name='correct_labels')
 
-    svm_scores, confusion_mat, y_true, y_pred = run_svm(cell_data, correct_labels, test_percentage=test_percentage,
+    svm_scores, confusion_mat, y_true, y_pred = _run_svm(cell_data, correct_labels, test_percentage=test_percentage,
                                         num_splits=num_splits)
     svm_score_average = np.mean(svm_scores)
 
@@ -122,7 +122,7 @@ def _generate_dataframe_index(odor_mins):
     return all_trial_labels
 
 
-def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins, window=None):
+def _randomly_sample_trials(z_score_combined_data, combined_data_index, cell_names, trial_labels, odor_mins, window=None):
     data_per_trial = pd.DataFrame()
 
     progress_desc = 'Randomly Sampling Cells'
@@ -154,7 +154,7 @@ def randomly_sample_trials(z_score_combined_data, combined_data_index, cell_name
     return data_per_trial
 
 
-def get_windows(data_size, steps):
+def _get_windows(data_size, steps):
     windows_end = np.arange(steps, data_size, steps)
     final_index = data_size - 1
 
@@ -217,7 +217,7 @@ def ensemble_decoding(z_scored_combined_data, ensemble_averaging=False,
         return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
 
 
-def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2,  test_percentage=.2, num_splits=20, ):
+def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message, window=False):
 
     true_labels = {}
     pred_labels = {}
