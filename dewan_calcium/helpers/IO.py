@@ -168,4 +168,17 @@ def save_SVM_output(svm_output_dir: Path, mean_score_df: pd.DataFrame, mean_svm_
     pd.to_pickle((true_labels, pred_labels), labels_path)
 
     print('Successfully saved SVM data!')
-    
+
+
+def verify_input(var_name, input_var, allowed_types, allowed_values=None, allowed_range=None, inclusive=False):
+    if type(input_var) not in allowed_types:
+        raise TypeError(f'{var_name} has type of {type(input_var)}, but must be of type {allowed_types}')
+    if allowed_values and input_var not in allowed_values:
+        raise ValueError(f'{var_name} has value of {input_var}, but must be one of {allowed_values}')
+    if allowed_range:
+        if inclusive:
+            if input_var < allowed_range[0] or input_var >= allowed_range[1]:
+                raise ValueError(f'{var_name} has value of {input_var}, but must be between {allowed_range[0]} and {allowed_range[1]} inclusive')
+        else:
+            if input_var < allowed_range[0] or input_var > allowed_range[1]:
+                raise ValueError(f'{var_name} has value of {input_var}, but must be between {allowed_range[0]} and {allowed_range[1]} noninclusive')
