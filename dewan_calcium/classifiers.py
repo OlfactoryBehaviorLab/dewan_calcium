@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
 
-def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20):
+def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20, class_labels: list = None):
     """
 
     Args:
@@ -50,20 +50,20 @@ def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: flo
         true_labels.append(test_labels)
         svm_prediction = svm.predict(test_trials)
         pred_labels.append(svm_prediction)
-        cm = confusion_matrix(test_labels, svm_prediction, normalize='true')
+        cm = confusion_matrix(test_labels, svm_prediction, labels=class_labels, normalize='true')
         cms.append(cm)
 
     return split_scores, cms, true_labels, pred_labels
 
 
-def _decode_single_neuron(cell, combined_data, num_splits, test_percentage):
+def _decode_single_neuron(cell, combined_data, num_splits, test_percentage, class_labels=None):
 
     cell_data = combined_data[cell].T
     cell_data = cell_data.dropna(axis=1)  # We lose a few trials occasionally due to concatenation
     correct_labels = cell_data.index.to_series(name='correct_labels')
 
     svm_scores, confusion_mat, y_true, y_pred = _run_svm(cell_data, correct_labels, test_percentage=test_percentage,
-                                        num_splits=num_splits)
+                                        num_splits=num_splits, class_labels=class_labels)
     svm_score_average = np.mean(svm_scores)
 
     return svm_score_average, svm_scores, confusion_mat, (y_true, y_pred)
@@ -144,7 +144,7 @@ def _shuffle_index(df):
     return df
 
 
-def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message, window=False):
+def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message, window=False, class_labels=None):
 
     true_labels = {}
     pred_labels = {}
@@ -165,12 +165,13 @@ def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterat
         else:
             _window = None
 
-        cropped_data_per_trial = _randomly_sample_trials(z_scored_combined_data,
-                                                        combined_data_index, cells, odors, odor_mins, window=_window)
+        cropped_data_per_trial = _randomly_sample_trials(z_scored_combined_data, combined_data_index, cells, odors,
+                                                         odor_mins, window=_window)
 
         correct_labels = cropped_data_per_trial.index.to_series()
 
-        split_scores, cm, true_label, pred_label = _run_svm(cropped_data_per_trial, correct_labels, test_percentage, num_splits)
+        split_scores, cm, true_label, pred_label = _run_svm(cropped_data_per_trial, correct_labels, test_percentage,
+                                                            num_splits,  class_labels=class_labels)
         avg_score = np.mean(split_scores)
 
         mean_svm_scores[iterator] = avg_score
@@ -184,7 +185,7 @@ def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterat
     return mean_svm_scores, splits_v_repeat_df, all_confusion_mats, (true_labels, pred_labels)
 
 
-def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20):
+def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num_splits=20, class_labels=None):
 
     cell_names = np.unique(combined_data.columns.get_level_values(0))
     num_labels = len(np.unique(combined_data.columns.get_level_values(1)))
@@ -196,7 +197,7 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     all_y_vals = {}
     for cell_i, cell in enumerate(tqdm(cell_names, desc='Running SVM per single neuron: ')):
         svm_score_avg, svm_scores, confusion_mat, y_vals = _decode_single_neuron(
-            cell, combined_data, num_splits, test_percentage)
+            cell, combined_data, num_splits, test_percentage, class_labels=class_labels)
             # Can now be used with the avg ensemble decoder
 
         mean_svm_scores.append(svm_score_avg)
@@ -214,19 +215,22 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
 
 
-def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20):
+def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
     iterator = np.arange(n_repeats)
     loop_message = 'Running Repeat SVM Ensemble Decoding: '
 
-    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message)
+    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterator, loop_message,
+                            class_labels=class_labels)
 
 
-def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2, test_percentage=.2, num_splits=20):
+def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2, test_percentage=.2, num_splits=20,
+                                     class_labels=None):
     data_size = z_scored_combined_data.shape[0]
     windows = _get_windows(data_size, window_size)
     loop_message = 'Running Sliding Window SVM Decoding: '
 
-    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, windows, loop_message, window=True)
+    return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, windows, loop_message,
+                            window=True, class_labels=class_labels)
 
 
 def shuffle_data(z_scored_combined_data):
