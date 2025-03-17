@@ -276,7 +276,7 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
 
         # Drop trials
-        if len(trial_indices_to_drop) == len(timestamps):
+        if len(trial_indices_to_drop) == timestamps.shape[1]:
             print(f'Skipping {name}, as all trials are marked to be dropped!')
             continue
         elif trial_indices_to_drop:
