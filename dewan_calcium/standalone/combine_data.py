@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 
-import get_project_files
+import get_project_files, odors
 
 input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
 output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/5_Combined')
@@ -226,7 +226,7 @@ def get_block_maps(block_list, odor_list):
     return odor_list_block_number
 
 
-def combine(files: list, filter_significant=True, drop_multisense=True, trim_trials=True):
+def combine(files: list, experiment_type, cell_class, filter_significant=True, drop_multisense=True, trim_trials=True):
     combined_data = pd.DataFrame()
     combined_significance_table = pd.DataFrame()
     good_cells = 0
@@ -266,8 +266,8 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         animal_stats['orig_cells'] = num_orig_cells
 
         # Reset MultiIndex
-        new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
-        cell_data.columns = new_index
+        # new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
+        # cell_data.columns = new_index
 
         # Get good/bad trials
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
@@ -301,6 +301,8 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
         block_order = get_block_maps(blocks, trial_order)
+        trial_order = odors.normalize_odors(trial_order, experiment_type, cell_class)
+        print(trial_order)
         trial_labels = zip(trial_order, block_order)
         new_numbers = generate_new_numbers(num_new_cells, good_cells)
         cell_trial_labels = itertools.product(new_numbers, trial_labels)
@@ -313,6 +315,10 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
         # Create new multiindex with new cell labels and block and apply it to the new data
 
         combined_data = pd.concat([combined_data, cell_data], axis=1)
+
+        sig_table_odors = significance_table.index.values
+        fixed_sig_table_odors = odors.normalize_odors(sig_table_odors, experiment_type, cell_class)
+        significance_table.index = fixed_sig_table_odors
 
         # Includes all cells, INCLUDING any that we dropped above.
         combined_significance_table = pd.concat([combined_significance_table, significance_table], axis=1)
@@ -329,11 +335,11 @@ def combine(files: list, filter_significant=True, drop_multisense=True, trim_tri
 
 
 def main():
-    animal_types = ['VGLUT']
+    animal_types = ['VGAT']
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
     for type in animal_types:
         data_files = data_files[type]
-        combined_data, combined_significance_table, stats, cells = combine(data_files)
+        combined_data, combined_significance_table, stats, cells = combine(data_files, 'Identity', 'VGAT')
         stem=f'{type}_Comb'
         num_animals = len(data_files)
         write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
