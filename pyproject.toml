@@ -1,6 +1,6 @@
 [project]
 name = "dewan_calcium"
-version = "2.0.1"
+version = "2.1"
 description = "Dewan Lab calcium imaging toolbox"
 authors = [
     {name="Austin Pauley", email="pauley@psy.fsu.edu"},
@@ -37,4 +37,4 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages=['dewan_calcium']
+packages=['dewan_calcium', 'dewan_calcium.helpers', 'dewan_calcium.standalone']
