@@ -259,15 +259,18 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
         blocks = pd.read_excel(block_file_path, header=[0])
         odor_data = pd.read_excel(odor_file_path, header=None, usecols=[0]).values
         odor_data = [odor[0] for odor in odor_data]  # Aha, fixed the off-by-one error
+        internal_odors = cell_data.columns.get_level_values(1)
+        # if needed, reload odors
+        odor_data = odor_data[:len(internal_odors)]
 
         # Count original cells
         orig_cells = cell_data.columns.get_level_values(0).unique()
         num_orig_cells = len(orig_cells)
         animal_stats['orig_cells'] = num_orig_cells
 
-        # Reset MultiIndex
-        # new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
-        # cell_data.columns = new_index
+        # Reset MultiIndex since we may have updated the odor list
+        new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
+        cell_data.columns = new_index
 
         # Get good/bad trials
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
@@ -302,7 +305,6 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
         block_order = get_block_maps(blocks, trial_order)
         trial_order = odors.normalize_odors(trial_order, experiment_type, cell_class)
-        print(trial_order)
         trial_labels = zip(trial_order, block_order)
         new_numbers = generate_new_numbers(num_new_cells, good_cells)
         cell_trial_labels = itertools.product(new_numbers, trial_labels)
@@ -339,7 +341,8 @@ def main():
     data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
     for type in animal_types:
         data_files = data_files[type]
-        combined_data, combined_significance_table, stats, cells = combine(data_files, 'Identity', 'VGAT')
+        combined_data, combined_significance_table, stats, cells = combine(data_files, 'Concentration', type)
+
         stem=f'{type}_Comb'
         num_animals = len(data_files)
         write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
