@@ -6,7 +6,7 @@ def get_folders(input_dir: Path, exp_type, animal_type: list, error:bool = False
     if not input_dir.exists():
         raise FileNotFoundError(f'Input directory {input_dir} does not exist!')
 
-    data_files = dict.fromkeys(animal_type, {})
+    data_files = {key: {} for key in animal_type}
 
     for _dir in input_dir.iterdir(): # Loop through the root directory
         for _type in animal_type: # Find the folder for our animal type [VGAT/VGLUT/OXTR/etc.]
