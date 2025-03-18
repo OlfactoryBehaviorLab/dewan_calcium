@@ -153,8 +153,7 @@ def save_SVM_output(svm_output_dir: Path, mean_score_df: pd.DataFrame, mean_svm_
 
     if shuffle:
         svm_output_dir = svm_output_dir.joinpath('Shuffle')
-        if not svm_output_dir.exists():
-            svm_output_dir.mkdir(parents=True, exist_ok=True)
+        svm_output_dir.mkdir(parents=True, exist_ok=True)
 
     mean_score_df.to_excel(svm_output_dir.joinpath('mean_svm_scores.xlsx'))
 
@@ -170,11 +169,7 @@ def save_SVM_output(svm_output_dir: Path, mean_score_df: pd.DataFrame, mean_svm_
     print('Successfully saved SVM data!')
 
 
-def load_SVM_data(project_folder, ANALYSIS_VARIABLE, WINDOW=None):
-    input_dir = project_folder.analysis_dir.output_dir.subdir('SVM')
-    if WINDOW:
-        input_dir = input_dir.joinpath(f'Window-{WINDOW}')
-    input_dir = input_dir.joinpath(ANALYSIS_VARIABLE)
+def load_SVM_data(input_dir):
 
     mean_scores_path = input_dir.joinpath('mean_svm_scores.pickle')
     mean_svm_scores = pd.read_pickle(mean_scores_path)
