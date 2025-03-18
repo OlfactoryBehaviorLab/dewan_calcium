@@ -14,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
+from dewan_calcium import plotting
 
 def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20, class_labels: list = None):
     """
@@ -41,7 +42,7 @@ def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: flo
 
     for _ in trange(num_splits, desc="Running bootstrapped cross-validation: ", position=2, leave=True):
         train_trials, test_trials, train_labels, test_labels = train_test_split(
-            traces, trial_labels, test_size=test_percentage, shuffle=True, stratify=trial_labels)
+            traces, trial_labels, test_size=test_percentage, shuffle=True)
 
         svm.fit(train_trials, train_labels)
         svm_score = svm.score(test_trials, test_labels)
@@ -241,6 +242,7 @@ def shuffle_data(z_scored_combined_data):
 
     return shuffled_data
 
+
 def postprocess(mean_svm_scores, num_cells, window=None):
     mean_score_df = pd.DataFrame(mean_svm_scores, np.arange(len(mean_svm_scores)))
     mean_score_df.insert(0, column='num_cells', value=num_cells)
@@ -248,6 +250,7 @@ def postprocess(mean_svm_scores, num_cells, window=None):
         mean_score_df.insert(0, column='window_size', value=window)
 
     return mean_score_df
+
 
 def preprocess_for_plotting(mean_svm_scores, splits_v_repeat_df):
     # Unpack Values
@@ -263,6 +266,7 @@ def preprocess_for_plotting(mean_svm_scores, splits_v_repeat_df):
     CI_max = np.add(mean_performance, CI_scalar)
 
     return mean_performance, CI_min, CI_max
+
 
 def save_svm_data(mean_performance, shuffle_mean_performance, index, CI, shuffle_CI, svm_output_dir):
     CI_min, CI_max = CI
@@ -287,3 +291,26 @@ def average_CM(all_confusion_mats, windows):
         window_averaged_cms[window] = avg_cm
 
     return window_averaged_cms
+
+
+def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, labels, cm_data_save_dir, cm_figure_save_dir):
+    odor_cm = []
+    start_idx, end_idx = cm_window
+    for window in windows:
+        if window[0] >= start_idx and window[1] <= end_idx:
+            odor_cm.append(window_averaged_cms[window])
+
+    average_odor_cm = np.mean(odor_cm, axis=0)
+
+    average_odor_cm_df = pd.DataFrame(average_odor_cm, columns=labels, index=labels)
+
+    title_text = ' '.join(window_name.split('_'))
+    title_with_index = f'{title_text}({start_idx}-{end_idx})'
+    df_save_path = cm_data_save_dir.joinpath(f'{title_with_index}.xlsx')
+    fig_save_path = cm_figure_save_dir.joinpath(f'{title_with_index}.pdf')
+
+    plotting.plot_avg_cm(labels, average_odor_cm, fig_save_path, title_with_index)
+
+    average_odor_cm_df.to_excel(df_save_path, index=True)
+
+
