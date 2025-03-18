@@ -421,3 +421,33 @@ def get_polygon_coordinates(polygons):
 
     return coordinates
 
+
+def plot_svm_performance(mean_performance, shuffle_mean_performance, CI, shuffle_CI, descriptors, svm_fig_dir):
+    CI_min, CI_max = CI
+    shuffle_CI_min, shuffle_CI_max = shuffle_CI
+
+    _exp_type, CELL_CLASS, ANALYSIS_VARIABLE, num_cells = descriptors
+
+    # Plot SVM performance vs. Shuffled Data
+    fig, ax = plt.subplots()
+    x_vals = np.linspace(-2, 3.5, len(mean_performance), endpoint=True) + 0.25
+    ax.plot(x_vals, mean_performance, color='#04BBC9', linewidth=3)
+    ax.plot(x_vals, shuffle_mean_performance, color='#C500FF', linewidth=1)
+    ax.fill_between(x_vals, CI_min, CI_max, alpha=0.5, color='red')
+    ax.fill_between(x_vals, shuffle_CI_min, shuffle_CI_max, alpha=0.5, color='green')
+
+    x_vals = np.linspace(-2, 4, 13)
+    plt.xticks(x_vals)
+    ax.vlines(x=0, ymin=-1, ymax=1, color='r')
+    ax.set_ylim([-0.05, 1])
+    ax.set_xlim([-2.1, 4.1])
+
+    plt.suptitle(f'{CELL_CLASS} {_exp_type} {ANALYSIS_VARIABLE} SVM Classifier n={num_cells}', fontsize=18,
+                 fontweight='bold')
+    ax.set_ylabel('Classifier Performance', fontsize=12)
+    ax.set_xlabel('Time Relative to Odor Onset (s)', fontsize=12)
+    plt.tight_layout()
+    plt.savefig(svm_fig_dir.joinpath(f'{CELL_CLASS}_{_exp_type}_{ANALYSIS_VARIABLE}_Classifier_Odor.pdf'), dpi=600)
+
+    return fig
+
