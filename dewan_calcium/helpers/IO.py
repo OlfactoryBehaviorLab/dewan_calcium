@@ -170,6 +170,42 @@ def save_SVM_output(svm_output_dir: Path, mean_score_df: pd.DataFrame, mean_svm_
     print('Successfully saved SVM data!')
 
 
+def load_SVM_data(project_folder, ANALYSIS_VARIABLE, WINDOW=None):
+    input_dir = project_folder.analysis_dir.output_dir.subdir('SVM')
+    if WINDOW:
+        input_dir = input_dir.joinpath(f'Window-{WINDOW}')
+    input_dir = input_dir.joinpath(ANALYSIS_VARIABLE)
+
+    mean_scores_path = input_dir.joinpath('mean_svm_scores.pickle')
+    mean_svm_scores = pd.read_pickle(mean_scores_path)
+    splits_path = input_dir.joinpath('splits_v_repeat_df.pickle')
+    splits_v_repeat_df = pd.read_pickle(splits_path)
+    all_confusion_mat_path = input_dir.joinpath('all_confusion_mat.pickle')
+    all_confusion_mats = pd.read_pickle(all_confusion_mat_path)
+    labels_path = input_dir.joinpath('labels.pickle')
+    (true_labels, pred_labels) = pd.read_pickle(labels_path)
+
+    SVM_data = (mean_svm_scores, splits_v_repeat_df, all_confusion_mats, true_labels, pred_labels)
+
+    print('Successfully loaded SVM output!')
+
+    shuffle_input_dir = input_dir.joinpath('Shuffle')
+
+    shuffled_mean_scores_path = shuffle_input_dir.joinpath('mean_svm_scores.pickle')
+    shuffled_mean_svm_scores = pd.read_pickle(shuffled_mean_scores_path)
+    shuffled_splits_path = shuffle_input_dir.joinpath('splits_v_repeat_df.pickle')
+    shuffled_splits_v_repeat_df = pd.read_pickle(shuffled_splits_path)
+    shuffled_all_confusion_mat_path = shuffle_input_dir.joinpath('all_confusion_mat.pickle')
+    shuffled_all_confusion_mats = pd.read_pickle(shuffled_all_confusion_mat_path)
+    shuffled_labels_path = shuffle_input_dir.joinpath('labels.pickle')
+    (shuffled_true_labels, shuffled_pred_labels) = pd.read_pickle(shuffled_labels_path)
+
+    shuffled_SVM_data = (shuffled_mean_svm_scores, shuffled_splits_v_repeat_df, shuffled_all_confusion_mats, shuffled_true_labels, shuffled_pred_labels)
+    print('Successfully loaded shuffled SVM output!')
+
+    return SVM_data, shuffled_SVM_data
+
+
 def verify_input(var_name, input_var, allowed_types, allowed_values=None, allowed_range=None, inclusive=False):
     if type(input_var) not in allowed_types:
         raise TypeError(f'{var_name} has type of {type(input_var)}, but must be of type {allowed_types}')
