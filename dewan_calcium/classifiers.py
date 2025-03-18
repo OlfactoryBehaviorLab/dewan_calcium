@@ -6,6 +6,7 @@ Date Created: 10/30/2024
 Most of the code in this module is either directly from, or heavily influenced by, code from
 The Vincis Lab at Florida State University (https://github.com/vincisLab/thermalGC)
 """
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -40,7 +41,8 @@ def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: flo
     split_scores = []
     cms = []
 
-    for _ in trange(num_splits, desc="Running bootstrapped cross-validation: ", position=2, leave=True):
+    #for _ in trange(num_splits, desc="Running bootstrapped cross-validation: ", position=2, leave=True):
+    for _ in range(num_splits):
         train_trials, test_trials, train_labels, test_labels = train_test_split(
             traces, trial_labels, test_size=test_percentage, shuffle=True)
 
@@ -101,7 +103,8 @@ def _randomly_sample_trials(z_score_combined_data, combined_data_index, cell_nam
     if window:
         progress_desc = progress_desc + f' for window size {int(window[0]), int(window[1])}'
 
-    for cell_i, cell in enumerate(tqdm(cell_names, desc=progress_desc, position=1, leave=True)):
+    # for cell_i, cell in enumerate(tqdm(cell_names, desc=progress_desc, position=1, leave=True)):
+    for cell_i, cell in enumerate(cell_names):
         cell_data = pd.DataFrame()
 
         # Iterate through each taste and select the appropriate number of trials
@@ -153,7 +156,8 @@ def _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, iterat
     mean_svm_scores = {}
 
     cells = np.unique(z_scored_combined_data.columns.get_level_values(0))
-    odors = z_scored_combined_data.columns.get_level_values(1).unique().values
+    #odors = z_scored_combined_data.columns.get_level_values(1).unique().values
+    odors = class_labels
 
     odor_mins = _get_minimum_trials(z_scored_combined_data, cells, odors)
     combined_data_index = _generate_dataframe_index(odor_mins)
