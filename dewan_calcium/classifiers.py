@@ -276,3 +276,14 @@ def save_svm_data(mean_performance, shuffle_mean_performance, index, CI, shuffle
         columns=['Mean SVM Performance', '99% CI Min', '99% CI Max', 'Shuffled SVM Performance', 'Shuffled 99% CI Min',
                  'Shuffled 99% CI Max'])
     svm_df.to_excel(output_path)
+
+
+def average_CM(all_confusion_mats, windows):
+    window_averaged_cms = {}
+
+    for window in windows:
+        window_cm = all_confusion_mats[window]
+        avg_cm = np.mean(window_cm, axis=0)
+        window_averaged_cms[window] = avg_cm
+
+    return window_averaged_cms
