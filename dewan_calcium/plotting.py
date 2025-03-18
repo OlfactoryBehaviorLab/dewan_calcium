@@ -11,15 +11,14 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection, LineCollection
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from matplotlib.colors import LinearSegmentedColormap
 
-if 'ipykernel' in sys.modules:
-    from tqdm.notebook import tqdm
-elif 'IPython' in sys.modules:
-    from tqdm import tqdm
+from sklearn import metrics
+
+from tqdm.auto import tqdm
 
 from .helpers import IO, trace_tools
-from .helpers.project_folder import ProjectFolder, Dir
+from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
 
@@ -451,3 +450,13 @@ def plot_svm_performance(mean_performance, shuffle_mean_performance, CI, shuffle
 
     return fig
 
+
+def plot_avg_cm(_labels, average_odor_cm, fig_save_path, title_with_index):
+    avg_cm = metrics.ConfusionMatrixDisplay(average_odor_cm, display_labels=_labels)
+    avg_cm.plot(include_values=False)
+    avg_cm.ax_.set_title(title_with_index)
+    avg_cm.ax_.tick_params(axis='x', labelrotation=90)
+    plt.tight_layout()
+    avg_cm.figure_.savefig(fig_save_path, dpi=900)
+
+    return avg_cm.figure_
