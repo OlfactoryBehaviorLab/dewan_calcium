@@ -241,3 +241,38 @@ def shuffle_data(z_scored_combined_data):
 
     return shuffled_data
 
+def postprocess(mean_svm_scores, num_cells, window=None):
+    mean_score_df = pd.DataFrame(mean_svm_scores, np.arange(len(mean_svm_scores)))
+    mean_score_df.insert(0, column='num_cells', value=num_cells)
+    if window:
+        mean_score_df.insert(0, column='window_size', value=window)
+
+    return mean_score_df
+
+def preprocess_for_plotting(mean_svm_scores, splits_v_repeat_df):
+    # Unpack Values
+    mean_performance = [mean_svm_scores[key] for key in mean_svm_scores]
+
+    # Calculate confidence interval scalar
+    sqrt = np.sqrt(splits_v_repeat_df.shape[0])
+    std_devs = splits_v_repeat_df.T.std(axis=1)
+    CI_scalar = 2.576 * (std_devs / sqrt)
+
+    # Calculate all CI values
+    CI_min = np.subtract(mean_performance, CI_scalar)
+    CI_max = np.add(mean_performance, CI_scalar)
+
+    return mean_performance, CI_min, CI_max
+
+def save_svm_data(mean_performance, shuffle_mean_performance, index, CI, shuffle_CI, svm_output_dir):
+    CI_min, CI_max = CI
+    shuffle_CI_min, shuffle_CI_max = shuffle_CI
+
+    output_path = svm_output_dir.joinpath('SVM_Performance_Stats.xlsx')
+
+    svm_df = pd.DataFrame(
+        np.vstack([mean_performance, CI_min, CI_max, shuffle_mean_performance, shuffle_CI_min, shuffle_CI_max]).T,
+        index=index,
+        columns=['Mean SVM Performance', '99% CI Min', '99% CI Max', 'Shuffled SVM Performance', 'Shuffled 99% CI Min',
+                 'Shuffled 99% CI Max'])
+    svm_df.to_excel(output_path)
