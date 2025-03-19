@@ -134,3 +134,20 @@ def truncate_data(data1: list, data2: list) -> tuple:
     data2 = [row[:row_minimum] for row in data2]
 
     return data1, data2
+
+
+def _calc_dff(trial_series: pd.Series, baseline_frames: int):
+    f0 = np.mean(trial_series.iloc[0:baseline_frames])
+    df = np.subtract(trial_series, f0)
+    dff = np.divide(df, f0)
+    return dff
+
+
+def dff(combined_data: pd.DataFrame, baseline_frames: int):
+    dff_combined = pd.DataFrame()
+    groupby_cell = combined_data.T.groupby(level=0, group_keys=False)
+    for cell, cell_df in groupby_cell:
+        cell_df = cell_df.T.apply(lambda x: _calc_dff(baseline_frames=baseline_frames))
+        dff_combined = pd.concat([dff_combined, cell_df], axis=1)
+
+    return dff_combined
