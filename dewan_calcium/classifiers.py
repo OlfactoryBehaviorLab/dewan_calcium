@@ -313,8 +313,20 @@ def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, label
     df_save_path = cm_data_save_dir.joinpath(f'{title_with_index}.xlsx')
     fig_save_path = cm_figure_save_dir.joinpath(f'{title_with_index}.pdf')
 
-    plotting.plot_avg_cm(labels, average_odor_cm, fig_save_path, title_with_index)
+    fig, ax = plotting.plot_avg_cm(labels, average_odor_cm, fig_save_path, title_with_index)
 
     average_odor_cm_df.to_excel(df_save_path, index=True)
 
+    return fig, ax
 
+def add_odor_class(combined_data, odor_classes):
+    new_columns = []
+    odors = combined_data.columns.get_level_values(1)
+    for i, orig_tuple in enumerate(combined_data.columns.values):
+        odor_class = odor_classes[odors[i]]
+        new_columns.append(orig_tuple + tuple([odor_class]))
+    new_index = pd.MultiIndex.from_tuples(new_columns, names=['Cells', 'Odor', 'Block', 'Class'])
+    combined_data.columns = new_index
+    original_columns = combined_data.columns
+
+    return combined_data, original_columns
