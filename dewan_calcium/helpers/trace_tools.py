@@ -147,7 +147,7 @@ def dff(combined_data: pd.DataFrame, baseline_frames: int):
     dff_combined = pd.DataFrame()
     groupby_cell = combined_data.T.groupby(level=0, group_keys=False)
     for cell, cell_df in groupby_cell:
-        cell_df = cell_df.T.apply(lambda x: _calc_dff(baseline_frames=baseline_frames))
+        cell_df = cell_df.T.apply(lambda x: _calc_dff(x, baseline_frames))
         dff_combined = pd.concat([dff_combined, cell_df], axis=1)
 
     return dff_combined
