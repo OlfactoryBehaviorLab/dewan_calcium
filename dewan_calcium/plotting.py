@@ -459,4 +459,4 @@ def plot_avg_cm(_labels, average_odor_cm, fig_save_path, title_with_index):
     plt.tight_layout()
     avg_cm.figure_.savefig(fig_save_path, dpi=900)
 
-    return avg_cm.figure_
+    return avg_cm.figure_, avg_cm.ax_
