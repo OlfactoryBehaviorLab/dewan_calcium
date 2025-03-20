@@ -268,9 +268,9 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
         num_orig_cells = len(orig_cells)
         animal_stats['orig_cells'] = num_orig_cells
 
-        # Reset MultiIndex since we may have updated the odor list
-        new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
-        cell_data.columns = new_index
+        # # Reset MultiIndex since we may have updated the odor list
+        # new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
+        # cell_data.columns = new_index
 
         # Get good/bad trials
         trial_indices, trial_indices_to_drop = find_trials(timestamps)
