@@ -33,8 +33,9 @@ def update_cell_names(combined_data, significance_table):
     string_names = [f'C{i}' for i in range(len(combined_data.columns.levels[0]))]
     combined_data.columns = combined_data.columns.set_levels(string_names, level=0)
 
-    string_names = [f'C{i}' for i in range(len(significance_table.columns))]
-    significance_table.columns = string_names
+    if significance_table:
+        string_names = [f'C{i}' for i in range(len(significance_table.columns))]
+        significance_table.columns = string_names
 
 
 def generate_new_numbers(new_cells: int, total: int):
@@ -118,7 +119,7 @@ def trim_all_trials(cell_data:pd.DataFrame, trial_indices:dict) -> pd.DataFrame:
     return new_data
 
 
-def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, cells, num_animals):
+def write_odor(data, sig_table, output_dir_root, file_stem, stats, cells, num_animals):
     output_dir = output_dir_root.joinpath(file_stem)
 
     global_good_cells, global_total_cells = cells
@@ -185,6 +186,21 @@ def write_to_disk(data, sig_table, output_dir_root, file_stem, stats, cells, num
     print(f'Combined data for {file_stem} successfully written to disk!')
 
 
+def write_hffm(combined_data, total_cells, num_animals, output_dir_root, file_stem):
+    output_dir = output_dir_root.joinpath(file_stem)
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+    pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
+    total_file = output_dir.joinpath(f"{file_stem}.txt")
+
+    with open(total_file, "w") as out_file:
+        out_file.write(f'Number Total Animals: {num_animals}\n')
+        out_file.write(f'Number Total Cells: {total_cells}\n')
+        print(f'Writing combined data for {file_stem} to disk...')
+        combined_data.to_pickle(str(pickle_path), compression={'method': 'xz'})
+        print(f'Combined data for {file_stem} successfully written to disk!')
+
+
 def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices_to_drop = []
     trial_indices = {}
@@ -223,7 +239,37 @@ def get_block_maps(block_list, odor_list):
     return odor_list_block_number
 
 
-def combine(files: list, experiment_type, cell_class, filter_significant=True, drop_multisense=True, trim_trials=True):
+def combine_HFvFM(files: list):
+    combined_data = pd.DataFrame()
+    total_cells = 0
+    for file in tqdm(files):
+        animal_files = files[file]
+        combined_data_path = animal_files['file']
+
+        # Load Data
+        try:
+            cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
+        except Exception:  # yeah yeah I know; I can't remember how they were saved
+            cell_data = pd.read_pickle(combined_data_path)
+
+        cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
+        num_new_cells = len(cell_names)
+        new_numbers = generate_new_numbers(num_new_cells, total_cells)
+        trial_order = cell_data[cell_names[0]].columns.values
+
+        # Generate new labels for this set of cells
+        new_multiindex = pd.MultiIndex.from_product([new_numbers, trial_order], names=['Cells', 'Trials'])
+        cell_data.columns = new_multiindex
+        # Create new multiindex with new cell labels and block and apply it to the new data
+        combined_data = pd.concat([combined_data, cell_data], axis=1)
+        total_cells += num_new_cells
+
+    update_cell_names(combined_data, None)
+
+    return combined_data, total_cells
+
+
+def combine_odor_data(files: list, cell_class, experiment_type, filter_significant=True, drop_multisense=True, trim_trials=True):
     combined_data = pd.DataFrame()
     combined_significance_table = pd.DataFrame()
     good_cells = 0
@@ -237,9 +283,9 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
 
         # File Paths
         combined_data_path = animal_files['file']
+        timestamps_path = animal_files['time']
         significance_file_path = animal_files['sig']
         odor_file_path = animal_files['odor']
-        timestamps_path = animal_files['time']
         block_file_path = animal_files['block']
 
         # Load Data
@@ -251,6 +297,7 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
             timestamps = pd.read_pickle(timestamps_path, compression={'method': 'xz'})
         except Exception:
             timestamps = pd.read_pickle(timestamps_path)
+
 
         significance_table = pd.read_excel(significance_file_path, index_col=0, header=[0])
         blocks = pd.read_excel(block_file_path, header=[0])
@@ -332,19 +379,22 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
 
 
 def main():
-    exp_type = 'Identity'
-    animal_types = ['VGLUT', 'VGAT']
-    input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
-    output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/5_Combined')
+    animal_types = ['VGLUT']
+    experiment_type = 'HFvFM'
 
-    data_files = get_project_files.get_folders(input_dir, exp_type, animal_types, error=False)
-    for _type in animal_types:
-        files = data_files[_type]
-        combined_data, combined_significance_table, stats, cells = combine(files, exp_type, _type, filter_significant=False, drop_multisense=False)
+    data_files = get_project_files.get_folders(input_dir, experiment_type, animal_types, error=False)
 
-        stem=f'{_type}_Comb'
-        num_animals = len(data_files)
-        write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
+    for type in animal_types:
+        _data_files = data_files[type]
+        stem=f'{experiment_type}-{type}_Comb'
+        num_animals = len(_data_files)
+
+        if experiment_type == 'HFvFM':
+            combined_data, total_cells = combine_HFvFM(_data_files)
+            write_hffm(combined_data, total_cells, num_animals, output_dir_root, stem)
+        else:
+            combined_data, combined_significance_table, stats, cells = combine_odor_data(data_files, type, experiment_type)
+            write_odor(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
 
 if __name__ == "__main__":
