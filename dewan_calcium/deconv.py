@@ -98,14 +98,14 @@ def smooth_data(smoothing_kernel, trace_data) -> dict:
     return cell_smoothed_traces
 
 
-def pooled_deconvolution(combined_data, smoothing_kernel, workers=8):
+def pooled_deconvolution(combined_data, smoothing_kernel, chunksize=1, workers=8):
     from functools import partial
     from tqdm.contrib.concurrent import process_map
 
     iterable = combined_data.T.groupby(level=0)
     partial_function = partial(smooth_data, smoothing_kernel)
 
-    return_dicts = process_map(partial_function, iterable, max_workers=workers)
+    return_dicts = process_map(partial_function, iterable, chunksize=chunksize, max_workers=workers)
 
     return _repackage_return(return_dicts)
 
