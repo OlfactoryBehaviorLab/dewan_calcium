@@ -12,8 +12,8 @@ def get_folders(input_dir: Path, exp_type, animal_type: list, error:bool = False
         for _type in animal_type: # Find the folder for our animal type [VGAT/VGLUT/OXTR/etc.]
             if _type in str(_dir):
                 data_files[_type] = {}
-                type_dir = list(_dir.iterdir()) # List all the animals within a class
-                for animal in type_dir:
+                animal_type_dir = list(_dir.iterdir()) # List all the animals within a class
+                for animal in animal_type_dir:
                     if animal.name[0] in SKIP:
                         continue # Skip any .* or z directories
                     print(f'Searching {animal}...')
@@ -45,22 +45,30 @@ def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
         significance_file = animal_dir.glob('Analysis/Output/*SignificanceTable.xlsx')
         odor_data_file = animal_dir.glob('Raw_Data/*List*.xlsx')
         block_data_file = animal_dir.glob('Raw_Data/*Blocks*.xlsx')
+    elif exp_type == 'HFvFM':
+        return_dict['folder'] = animal_dir
+        data_file = animal_dir.glob('Analysis/Output/combined/*combined_data.pickle')
+        # FV_timestamps = animal_dir.glob('Analysis/Preprocessed/*FV_timestamps*.pickle')
     else:
         raise ValueError(f'{exp_type} not implemented!')
 
     data_file = list(data_file)
-    FV_timestamps_file = list(FV_timestamps)
-    significance_file = list(significance_file)
-    odor_data_file = list(odor_data_file)
-    block_data_file = list(block_data_file)
-
     return_dict['file'] = _check_file(data_file, 'combined data file')
-    return_dict['time'] = _check_file(FV_timestamps_file, 'FV timestamps file')
-    return_dict['sig'] = _check_file(significance_file, 'significance matrix file')
-    return_dict['odor'] = _check_file(odor_data_file, 'odor data file file')
-    return_dict['block'] = _check_file(block_data_file, 'odor-block mapping file')
+
+
+    if not exp_type == 'HFvFM':
+        FV_timestamps_file = list(FV_timestamps)
+        significance_file = list(significance_file)
+        odor_data_file = list(odor_data_file)
+        block_data_file = list(block_data_file)
+        return_dict['time'] = _check_file(FV_timestamps_file, 'FV timestamps file')
+        return_dict['sig'] = _check_file(significance_file, 'significance matrix file')
+        return_dict['odor'] = _check_file(odor_data_file, 'odor data file file')
+        return_dict['block'] = _check_file(block_data_file, 'odor-block mapping file')
+
 
     results = [True if return_dict[key] is None else False for key in return_dict.keys()]
+    # Check to make sure each value in the return dict is assigned a value
 
     if sum(results) > 0:
         return None
