@@ -21,6 +21,11 @@ def z_score_data(smoothed_data: dict, cell_names) -> dict:
         cell_data = smoothed_data[cell]
         for trial in cell_data.keys():
             trial_dff = cell_data[trial]
+            if trial_dff is None:
+
+                print(f'Cell: {cell} Oh no! An empty {trial} trial')
+                cell_data_zscore[trial] = [0]
+                continue
             z_score = zscore(trial_dff)
             cell_data_zscore[trial] = z_score
 
