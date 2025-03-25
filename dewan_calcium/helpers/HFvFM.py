@@ -15,9 +15,12 @@ def get_pseudotrial_pairs(trial_length, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
 
     return frame_pairs
 
-def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
+def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, NUM_PSEUDOTRIALS, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE, ENTROPY=None):
     # This is a monstrosity, I'm sorry.
     pseudotrial_dff_per_cell = {}
+    seed_sequence = np.random.SeedSequence(entropy=ENTROPY)
+    print(f'Last Entropy Value was: {seed_sequence.entropy}')
+    rng = np.random.default_rng(seed_sequence)
 
     for cell in tqdm(cell_names, desc='Cell: '):  # Loop through each cell
         trial_dff_pseudotrials = {}
@@ -37,7 +40,9 @@ def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, PSEUDOTRIA
                         pseudotrial_dff_values)):  # If the trial is cut short for any reason, we'll skip rows with nan
                     pseudotrial_dff.append(pseudotrial_dff_values)
 
-            trial_dff_pseudotrials[trial] = pseudotrial_dff
+
+            sampled_pseudotrial_dff = rng.choice(pseudotrial_dff, NUM_PSEUDOTRIALS, replace=False)
+            trial_dff_pseudotrials[trial] = sampled_pseudotrial_dff
         pseudotrial_dff_per_cell[cell] = trial_dff_pseudotrials
 
     return pseudotrial_dff_per_cell
