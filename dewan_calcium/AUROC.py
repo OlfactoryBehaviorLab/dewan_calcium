@@ -121,7 +121,7 @@ def pooled_HFFM_auroc(pseudotrial_means, groups, num_workers=8):
     HFFM_iterable = _HFFM_generator(group1, group2)
 
     return_dicts = process_map(_pseudotrial_auroc, HFFM_iterable, max_workers=num_workers,
-                               desc="Calculating auROC Statistics for HF_FM Cells", total=len(group1.index))
+                               desc="Calculating auROC Statistics for HF_FM Cells", chunksize=20, total=len(group1.index))
 
     return return_dicts
 
