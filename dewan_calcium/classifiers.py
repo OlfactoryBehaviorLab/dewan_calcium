@@ -297,7 +297,7 @@ def average_CM(all_confusion_mats, windows):
     return window_averaged_cms
 
 
-def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, labels, cm_data_save_dir, cm_figure_save_dir):
+def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, labels, new_norm, cm_data_save_dir, cm_figure_save_dir):
     odor_cm = []
     start_idx, end_idx = cm_window
     for window in windows:
@@ -309,11 +309,11 @@ def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, label
     average_odor_cm_df = pd.DataFrame(average_odor_cm, columns=labels, index=labels)
 
     title_text = ' '.join(window_name.split('_'))
-    title_with_index = f'{title_text}({start_idx}-{end_idx})'
+    title_with_index = f'{title_text} ({start_idx}-{end_idx})'
     df_save_path = cm_data_save_dir.joinpath(f'{title_with_index}.xlsx')
     fig_save_path = cm_figure_save_dir.joinpath(f'{title_with_index}.pdf')
 
-    fig, ax = plotting.plot_avg_cm(labels, average_odor_cm, fig_save_path, title_with_index)
+    fig, ax = plotting.plot_avg_cm(labels, average_odor_cm, new_norm, fig_save_path, title_with_index)
 
     average_odor_cm_df.to_excel(df_save_path, index=True)
 

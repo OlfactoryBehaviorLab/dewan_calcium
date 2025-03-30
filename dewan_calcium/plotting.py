@@ -451,9 +451,12 @@ def plot_svm_performance(mean_performance, shuffle_mean_performance, CI, shuffle
     return fig
 
 
-def plot_avg_cm(_labels, average_odor_cm, fig_save_path, title_with_index):
-    avg_cm = metrics.ConfusionMatrixDisplay(average_odor_cm, display_labels=_labels)
-    avg_cm.plot(include_values=False)
+def plot_avg_cm(_labels, average_odor_cm, new_linear_cmap, fig_save_path, title_with_index):
+
+    avg_cm = metrics.ConfusionMatrixDisplay(average_odor_cm, display_labels=_labels, )
+    avg_cm.plot(include_values=False, im_kw={'vmin':0, 'vmax':1, 'cmap': new_linear_cmap})
+
+
     avg_cm.ax_.set_title(title_with_index)
     avg_cm.ax_.tick_params(axis='x', labelrotation=90)
     plt.tight_layout()
