@@ -384,16 +384,16 @@ def main():
 
     data_files = get_project_files.get_folders(input_dir, experiment_type, animal_types, error=False)
 
-    for type in animal_types:
-        _data_files = data_files[type]
-        stem=f'{experiment_type}-{type}_Comb'
+    for _type in animal_types:
+        _data_files = data_files[_type]
+        stem=f'{experiment_type}-{_type}_Comb'
         num_animals = len(_data_files)
 
         if experiment_type == 'HFvFM':
             combined_data, total_cells = combine_HFvFM(_data_files)
             write_hffm(combined_data, total_cells, num_animals, output_dir_root, stem)
         else:
-            combined_data, combined_significance_table, stats, cells = combine_odor_data(data_files, type, experiment_type)
+            combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type)
             write_odor(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
 
