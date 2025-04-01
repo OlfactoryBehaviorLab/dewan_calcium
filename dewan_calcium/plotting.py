@@ -463,3 +463,53 @@ def plot_avg_cm(_labels, average_odor_cm, new_linear_cmap, fig_save_path, title_
     avg_cm.figure_.savefig(fig_save_path, dpi=900)
 
     return avg_cm.figure_, avg_cm.ax_
+
+
+def plot_all_avg_dff(dff_for_bin, cell_names, odor_names, _bin, min_val, max_val, fig_save_path):
+    fig, ax = plt.subplots(1, len(_bin), figsize=(20,20) ,sharey=True,
+                           gridspec_kw={'hspace': 0, 'wspace':0.1}, layout='compressed')
+    imgs = []
+
+    cm = LinearSegmentedColormap.from_list('my_gradient', (
+    # Edit this gradient at https://eltos.github.io/gradient/#0:FF0008-7.5:830307-15:000000-25:000000-32.5:0A7000-100:18FF00
+    (0.000, (1.000, 0.000, 0.031)),
+    (0.1, (0.514, 0.012, 0.027)),
+    (0.150, (0.000, 0.000, 0.000)),
+    (0.2250, (0.000, 0.000, 0.000)),
+    (0.325, (0.039, 0.439, 0.000)),
+    (1.000, (0.094, 1.000, 0.000))))
+
+    # cm = LinearSegmentedColormap.from_list('my_gradient', (
+    # # Edit this gradient at https://eltos.github.io/gradient/#0:00FDFF-9.7:007B7C-15:000000-25:000000-32.5:6A4300-100:FFA100
+    # (0.000, (0.000, 0.992, 1.000)),
+    # (0.097, (0.000, 0.482, 0.486)),
+    # (0.150, (0.000, 0.000, 0.000)),
+    # (0.250, (0.000, 0.000, 0.000)),
+    # (0.325, (0.416, 0.263, 0.000)),
+    # (1.000, (1.000, 0.631, 0.000))))
+
+    for i, data in enumerate(dff_for_bin):
+        im = ax[i].imshow(data, aspect='auto', vmin=min_val, vmax=max_val, cmap=cm)
+        imgs.append(im)
+        ax[i].set_xticks([0, 19], labels=[1, 20])
+        ax[i].set_title(f'{_bin[i][0] * 100} - {_bin[i][1] * 100} ms')
+    fig.suptitle('Binned Average dF/F', fontsize=24, va='bottom')
+    fig.colorbar(imgs[-1], ax=ax)
+    plt.show()
+
+
+def plot_avg_dff(dff_for_bin, cell_names, odor_names, _bin, fig_save_path):
+    fig, ax = plt.subplots(figsize=(30, 30))
+    cm = LinearSegmentedColormap.from_list('my_gradient', (
+    # Edit this gradient at https://eltos.github.io/gradient/#0:FF0008-8.8:000000-16:000000-39.4:0E9B00-100:18FF00
+    (0.000, (1.000, 0.000, 0.031)),
+    (0.088, (0.000, 0.000, 0.000)),
+    (0.160, (0.000, 0.000, 0.000)),
+    (0.394, (0.055, 0.608, 0.000)),
+    (1.000, (0.094, 1.000, 0.000))))
+
+
+    im = ax.imshow(dff_for_bin, cmap=cm, vmin=-0.57, vmax=3.46)
+    ax.set_title(f'{_bin[0] * 100} - {_bin[1] * 100} ms')
+    fig.colorbar(im, ax=ax)
+    plt.show()
