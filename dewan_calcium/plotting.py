@@ -479,6 +479,16 @@ def plot_all_avg_dff(dff_for_bin, cell_names, odor_names, _bin, min_val, max_val
     (0.325, (0.039, 0.439, 0.000)),
     (1.000, (0.094, 1.000, 0.000))))
 
+    # VGAT
+    # cm = LinearSegmentedColormap.from_list('my_gradient', (
+    # # Edit this gradient at https://eltos.github.io/gradient/#0:FF0008-5.5:B70105-9:000000-13:000000-16.5:053200-50:0A6600-100:18FF00
+    # (0.000, (1.000, 0.000, 0.031)),
+    # (0.055, (0.718, 0.004, 0.020)),
+    # (0.090, (0.000, 0.000, 0.000)),
+    # (0.130, (0.000, 0.000, 0.000)),
+    # (0.165, (0.020, 0.196, 0.000)),
+    # (0.500, (0.039, 0.400, 0.000)),
+    # (1.000, (0.094, 1.000, 0.000))))
     # cm = LinearSegmentedColormap.from_list('my_gradient', (
     # # Edit this gradient at https://eltos.github.io/gradient/#0:00FDFF-9.7:007B7C-15:000000-25:000000-32.5:6A4300-100:FFA100
     # (0.000, (0.000, 0.992, 1.000)),
@@ -496,6 +506,8 @@ def plot_all_avg_dff(dff_for_bin, cell_names, odor_names, _bin, min_val, max_val
     fig.suptitle('Binned Average dF/F', fontsize=24, va='bottom')
     fig.colorbar(imgs[-1], ax=ax)
     plt.show()
+    output_path = fig_save_path.joinpath('combined_DFF.pdf')
+    fig.savefig(output_path, dpi=600)
 
 
 def plot_avg_dff(dff_for_bin, cell_names, odor_names, _bin, fig_save_path):
