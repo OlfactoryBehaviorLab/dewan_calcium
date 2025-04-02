@@ -9,9 +9,6 @@ from tqdm import tqdm
 
 import get_project_files, odors
 
-input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
-output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/5_Combined')
-
 MIN_BASELINE_TIME_FRAMES = 20
 MIN_POST_TIME_FRAMES = 20
 ODOR_TIME_FRAMES = 20
@@ -337,13 +334,17 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
 
 
 def main():
-    animal_types = ['VGAT']
-    data_files = get_project_files.get_folders(input_dir, 'Identity', animal_types, error=False)
-    for type in animal_types:
-        data_files = data_files[type]
-        combined_data, combined_significance_table, stats, cells = combine(data_files, 'Concentration', type)
+    exp_type = 'Identity'
+    animal_types = ['VGLUT', 'VGAT']
+    input_dir = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/1_OdorAnalysis/2_Identity/')
+    output_dir_root = Path(r'/mnt/r2d2/2_Inscopix/1_DTT/5_Combined')
 
-        stem=f'{type}_Comb'
+    data_files = get_project_files.get_folders(input_dir, exp_type, animal_types, error=False)
+    for _type in animal_types:
+        files = data_files[_type]
+        combined_data, combined_significance_table, stats, cells = combine(files, exp_type, _type, filter_significant=False, drop_multisense=False)
+
+        stem=f'{_type}_Comb'
         num_animals = len(data_files)
         write_to_disk(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
