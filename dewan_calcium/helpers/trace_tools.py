@@ -143,11 +143,19 @@ def _calc_dff(trial_series: pd.Series, baseline_frames: int):
     return dff
 
 
+def _baseline_avg_dff(odor_df: pd.DataFrame, baseline_frames: int):
+    baseline_frames = odor_df.iloc[:, :baseline_frames]
+    f0 = baseline_frames.mean().mean()
+    odor_df = odor_df.subtract(f0)
+    odor_df = odor_df.divide(f0)
+    return odor_df
+
+
 def dff(combined_data: pd.DataFrame, baseline_frames: int):
     dff_combined = pd.DataFrame()
     groupby_cell = combined_data.T.groupby(level=0, group_keys=False)
     for cell, cell_df in groupby_cell:
-        cell_df = cell_df.T.apply(lambda x: _calc_dff(x, baseline_frames))
-        dff_combined = pd.concat([dff_combined, cell_df], axis=1)
+        groupby_odor = cell_df.groupby(level=1, group_keys=False).apply(lambda x: _baseline_avg_dff(x, baseline_frames))
+        dff_combined = pd.concat([dff_combined, groupby_odor.T], axis=1)
 
     return dff_combined
