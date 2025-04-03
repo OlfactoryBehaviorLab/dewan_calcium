@@ -210,12 +210,6 @@ def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
 
 def pooled_odor_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,
                      num_workers: int = 8, latent_cells_only: bool = False):
-    # if latent_cells_only:
-    #     auroc_type = 'Latent'
-    # else:
-    #     auroc_type = 'On Time'
-
-    # print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
 
     iterable = combined_data_shift.T.groupby(level=0)
     # Level 0 is the cells; groupby() works on indexes, so we need to transpose it
