@@ -248,7 +248,7 @@ def shuffle_data(z_scored_combined_data):
 
 
 def postprocess(mean_svm_scores, num_cells, window=None):
-    mean_score_df = pd.DataFrame(mean_svm_scores, np.arange(len(mean_svm_scores)))
+    mean_score_df = pd.DataFrame(mean_svm_scores, index=[0])
     mean_score_df.insert(0, column='num_cells', value=num_cells)
     if window:
         mean_score_df.insert(0, column='window_size', value=window)
