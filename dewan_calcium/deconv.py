@@ -21,6 +21,9 @@ def z_score_data(smoothed_data: dict, cell_names) -> dict:
         cell_data = smoothed_data[cell]
         for trial in cell_data.keys():
             trial_dff = cell_data[trial]
+            if trial_dff is None:
+                cell_data_zscore[trial] = []
+                continue
             z_score = zscore(trial_dff)
             cell_data_zscore[trial] = z_score
 
@@ -42,6 +45,9 @@ def find_peaks(smoothed_data: dict, cell_names, ENDOSCOPE_FRAMERATE, INTER_SPIKE
         trial_indexes = dict()
         for trial in cell_data.keys():
             trace_data = cell_data[trial]
+            if len(trace_data) == 0:
+                print(f"Oh No! no data for {cell_name} {trial}")
+                trial_indexes[cell_name] = []
             peaks = signal.find_peaks(trace_data, height=height, width=peak_width,
                                       distance=inter_transient_distance)
             peaks = peaks[0]  # Return only the indexes (x locations) of the peaks
@@ -110,7 +116,7 @@ def pooled_deconvolution(combined_data, smoothing_kernel, chunksize=1, workers=8
     return _repackage_return(return_dicts)
 
 
-def _repackage_return(return_dicts):
+def repackage_return(return_dicts):
     new_return_dicts = {}
 
     for cell in return_dicts:
