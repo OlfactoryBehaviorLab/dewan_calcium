@@ -145,7 +145,7 @@ def _calc_dff(trial_series: pd.Series, baseline_frames: int):
 
 def _baseline_avg_dff(odor_df: pd.DataFrame, baseline_frames: int):
     baseline_frames = odor_df.iloc[:, :baseline_frames]
-    f0 = baseline_frames.mean().mean()
+    f0 = baseline_frames.mean(axis=1).mean()
     odor_df = odor_df.subtract(f0)
     odor_df = odor_df.divide(f0)
     return odor_df
