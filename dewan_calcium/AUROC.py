@@ -135,8 +135,8 @@ def pooled_HFFM_auroc(pseudotrial_means, groups, num_workers=8):
 
 def _prep_HFFM_data(means, groups):
     group1, group2 = groups
-    group1_data = [means[arm] for arm in group1]
-    group2_data = [means[arm] for arm in group2]
+    group1_data = [means[subgroup] for subgroup in group1]
+    group2_data = [means[subgroup] for subgroup in group2]
     group1_data = pd.concat(group1_data, axis=1)
     group2_data = pd.concat(group2_data, axis=1)
 
