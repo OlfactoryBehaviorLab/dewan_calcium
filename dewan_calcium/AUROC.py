@@ -77,9 +77,9 @@ def _pseudotrial_auroc(pseudotrial_groups):
         bounds = np.percentile(auroc_shuffle, [1, 99])
         lower_bound, upper_bound = bounds
 
-        if auroc_value >= upper_bound:
+        if auroc_value > upper_bound:
             significance = 1
-        elif auroc_value <= lower_bound:
+        elif auroc_value < lower_bound:
             significance = -1
         else:
             significance = 0
