@@ -15,32 +15,39 @@ def get_pseudotrial_pairs(trial_length, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
 
     return frame_pairs
 
-def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE):
+def get_dff_for_pseudotrials(combined_data, cell_names, trial_labels, AUROC_NUM_PSEUDOTRIALS, PSEUDOTRIAL_LEN_S, ENDOSCOPE_FRAMERATE, entropy=None):
     # This is a monstrosity, I'm sorry.
-    pseudotrial_dff_per_cell = {}
+    pseudotrial_df_per_cell = {}
+
+    seed_seq = np.random.SeedSequence(entropy=entropy)
+    print(f'The current RNG seed is {seed_seq.entropy}')
+    rng = np.random.default_rng(seed=seed_seq)
 
     for cell in tqdm(cell_names, desc='Cell: '):  # Loop through each cell
-        trial_dff_pseudotrials = {}
-        cell_dff_data = combined_data[cell]
+        trial_df_pseudotrials = {}
+        cell_df_data = combined_data[cell]
 
         for trial in trial_labels:  # Loop through each trial
-            pseudotrial_dff = []
-            trial_dff_values = cell_dff_data[trial]
+            pseudotrial_df = []
+            trial_dff_values = cell_df_data[trial]
             pseudotrial_pairs = get_pseudotrial_pairs(len(trial_dff_values), PSEUDOTRIAL_LEN_S,
                                                             ENDOSCOPE_FRAMERATE)
             # Get the pseudotrial pairings for this trial
 
             for pair in pseudotrial_pairs:  # Loop through each pair
-                pseudotrial_dff_values = trial_dff_values.iloc[pair[0]:pair[1]].values  # Get df/F Values
+                pseudotrial_dff_values = trial_dff_values.iloc[pair[0]:pair[1]].values  # Get dF Values
 
-                if not np.any(np.isnan(
-                        pseudotrial_dff_values)):  # If the trial is cut short for any reason, we'll skip rows with nan
-                    pseudotrial_dff.append(pseudotrial_dff_values)
+                if not np.any(np.isnan(pseudotrial_dff_values)):
+                    # If the trial is cut short for any reason, we'll skip rows with nan
+                    pseudotrial_df.append(pseudotrial_dff_values)
 
-            trial_dff_pseudotrials[trial] = pseudotrial_dff
-        pseudotrial_dff_per_cell[cell] = trial_dff_pseudotrials
+            random_trials = rng.choice(pseudotrial_df, AUROC_NUM_PSEUDOTRIALS, replace=False)
+            # Choose AUROC_NUM_PSEUDOTRIALS random trials to use
 
-    return pseudotrial_dff_per_cell
+            trial_df_pseudotrials[trial] = random_trials
+        pseudotrial_df_per_cell[cell] = trial_df_pseudotrials
+
+    return pseudotrial_df_per_cell
 
 def get_trial_labels(num_trials, HF_first):
     import math
