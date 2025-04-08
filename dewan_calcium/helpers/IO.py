@@ -213,3 +213,35 @@ def verify_input(var_name, input_var, allowed_types, allowed_values=None, allowe
         else:
             if input_var < allowed_range[0] or input_var > allowed_range[1]:
                 raise ValueError(f'{var_name} has value of {input_var}, but must be between {allowed_range[0]} and {allowed_range[1]} noninclusive')
+
+
+def save_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, output_path):
+    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
+        wilcoxon_total.to_excel(writer, sheet_name='Evoked Period')
+        wilcoxon_binned.to_excel(writer, sheet_name='Bins')
+        cell_bins.to_excel(writer, sheet_name='Significant Bins')
+
+        workbook = writer.book
+        total_ws = writer.sheets['Evoked Period']
+        binned_ws = writer.sheets['Bins']
+
+        green_bg = workbook.add_format({'bg_color': '#22f229'})
+        blue_bg = workbook.add_format({'bg_color': '#22adf2'})
+        total_cf = {
+            'type': 'cell',
+            'criteria': '<',
+            'value': p_val,
+            'format': green_bg
+        }
+
+        corrected_cf = {
+            'type': 'cell',
+            'criteria': '<',
+            'value': corrected_p_val,
+            'format': blue_bg
+        }
+
+        (max_row, max_col) = wilcoxon_total.shape
+        total_ws.conditional_format(1, 1, max_row, max_col, total_cf)
+        (max_row, max_col) = wilcoxon_binned.shape
+        binned_ws.conditional_format(1, 1, max_row, max_col, corrected_cf)
