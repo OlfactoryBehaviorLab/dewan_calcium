@@ -1,6 +1,7 @@
 import itertools
 import numpy as np
 import pandas as pd
+from scipy.stats import wilcoxon
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
 
@@ -70,3 +71,23 @@ def calculate_pairwise_distances(trial_averaged_responses_matrix: pd.DataFrame) 
 
 def calculate_spatial_distance(centroids: pd.DataFrame) -> list:
     return pairwise.euclidean_distances(centroids.values, centroids.values)
+
+
+def _calc_wilcoxon(baseline_periods, evoked_periods, bin_pairs):
+    wilcoxon_results = []
+    baseline_means = np.mean(baseline_periods, axis=1)
+    for _bin in bin_pairs:
+        evoked_periods_bin = evoked_periods[:, _bin[0]:_bin[1]]
+        evoked_means = np.mean(evoked_periods_bin, axis=1)
+        diffs = evoked_means - baseline_means
+        bin_wilcoxon = wilcoxon(diffs).pvalue
+        wilcoxon_results.append(bin_wilcoxon)
+
+    return pd.Series(wilcoxon_results)
+
+
+def binned_wilcoxon(odor_df, bin_pairs, baseline_duration, evoked_duration):
+    baseline_values = odor_df.iloc[:, :baseline_duration].values
+    evoked_values = odor_df.iloc[:, baseline_duration: (evoked_duration + baseline_duration + 1 )].values
+
+    return _calc_wilcoxon(baseline_values, evoked_values, bin_pairs)
