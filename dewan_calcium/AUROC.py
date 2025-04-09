@@ -104,11 +104,13 @@ def _EPM_generator(group1, group2):
 
     return zip(g1_iterable, g2_iterable)
 
+
 def _HFFM_generator(group1, group2):
     g1_iterable = group1.iterrows()
     g2_iterable = group2.iterrows()
 
     return zip(g1_iterable, g2_iterable)
+
 
 def pooled_EPM_auroc(pseudotrial_means, groups, num_workers=8):
     group1, group2 = _prep_EPM_data(pseudotrial_means, groups)
@@ -120,6 +122,7 @@ def pooled_EPM_auroc(pseudotrial_means, groups, num_workers=8):
 
     return return_dicts
 
+
 def pooled_HFFM_auroc(pseudotrial_means, groups, num_workers=8):
     group1, group2 = _prep_HFFM_data(pseudotrial_means, groups)
     HFFM_iterable = _HFFM_generator(group1, group2)
@@ -128,6 +131,7 @@ def pooled_HFFM_auroc(pseudotrial_means, groups, num_workers=8):
                                desc="Calculating auROC Statistics for HF_FM Cells", total=len(group1.index))
 
     return return_dicts
+
 
 def _prep_HFFM_data(means, groups):
     group1, group2 = groups
@@ -153,7 +157,7 @@ def _prep_EPM_data(means, groups):
 
 
 def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
-               latent: bool, cell_data: tuple) -> dict:
+              cell_data: tuple) -> dict:
 
     all_bounds = []
     auroc_values = []
@@ -211,21 +215,15 @@ def odor_auroc(FV_timestamps: pd.DataFrame, baseline_duration: int,
     return return_dict
 
 
-def pooled_odor_auroc(combined_data_shift: pd.DataFrame, FV_timestamps: pd.DataFrame, baseline_duration: int,
-                     num_workers: int = 8, latent_cells_only: bool = False):
-    # if latent_cells_only:
-    #     auroc_type = 'Latent'
-    # else:
-    #     auroc_type = 'On Time'
-
-    # print(f"Begin {auroc_type} AUROC Processing with {num_workers} processes!")
-
-    iterable = combined_data_shift.T.groupby(level=0)
+def pooled_odor_auroc(combined_data_dff: pd.DataFrame, FV_timestamps: pd.DataFrame, evoked_duration,
+                     num_workers: int = 8):
+    print('Starting auROC!')
+    iterable = combined_data_dff.T.groupby(level=0)
     # Level 0 is the cells; groupby() works on indexes, so we need to transpose it
     # since we ordered the data as columns with (Cell Name, Odor Name)
-    auroc_partial_function = partial(odor_auroc, FV_timestamps, baseline_duration, latent_cells_only)
+    auroc_partial_function = partial(odor_auroc, FV_timestamps, evoked_duration)
     return_dicts = process_map(auroc_partial_function, iterable, max_workers=num_workers)
 
-    print("AUROC Processing Finished!")
+    print("auROC Processing Finished!")
 
     return return_dicts
