@@ -8,15 +8,11 @@ values provided as arguments
 """
 import numpy as np
 # from numba.pycc import CC
-from numba import njit
-
-# cc=CC('sliding_prob_numba')
-
+from numba import njit, jit
 
 SLID_PROB_INC = 100
 
-# @cc.export('sliding_prob', '(f8[:], i4, i4)')
-# @njit
+@njit
 def sliding_probability(data, start_range: int, end_range: int) -> np.array:
     prob_vector = []
     bin_steps = (end_range - start_range) / SLID_PROB_INC
@@ -27,14 +23,10 @@ def sliding_probability(data, start_range: int, end_range: int) -> np.array:
 
     return prob_vector
 
-# @cc.export('prep_prob', '(f8[:],)')
-def prep_probabilities(data: np.array):
+@njit()
+def prep_probabilities(data: np.array) -> np.array:
+    flipped_data = np.flip(data)
+    zero_data = np.hstack((np.array([0]), flipped_data))
+    final_data = np.hstack((zero_data, np.array([1.0])))
 
-    data.reverse()
-    data.insert(0, 0.0)
-    data.insert(len(data) + 1, 1.0)
-
-    return data
-
-if __name__ == '__main__':
-    cc.compile()
+    return final_data
