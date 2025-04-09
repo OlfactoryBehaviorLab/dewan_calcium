@@ -10,16 +10,14 @@ December 2022
 import itertools
 import numpy as np
 import pandas as pd
-from tqdm.notebook import tqdm
-from functools import partial
 
+from functools import partial
 from numba import njit
 from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
 
 # Import from local modules
 from .helpers import trace_tools, sliding_prob
-# from .libs import sliding_prob_numba
 
 NUM_SHUFFLES = 1000
 
@@ -176,6 +174,7 @@ def odor_auroc(FV_timestamps: pd.DataFrame, evoked_duration: int,
     MO_timestamps = FV_timestamps['MO']
     MO_data, MO_indices = trace_tools.collect_trial_data(MO_df, MO_timestamps, evoked_duration)
     MO_means = MO_data.mean(axis=1)
+
     for odor in odor_list:
         odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
         odor_timestamps = FV_timestamps[odor]
