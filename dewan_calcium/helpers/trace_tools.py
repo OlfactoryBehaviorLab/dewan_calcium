@@ -23,7 +23,6 @@ def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, evoked_dura
 
     for trial_index, (_, data) in enumerate(odor_df.items()):
         trial_timestamps = time_df.iloc[:, trial_index]
-
         evoked_trial_indices = trial_timestamps[trial_timestamps.between(0, evoked_duration, 'both')].index
         evoked_trial_data = data[evoked_trial_indices]
         evoked_data.append(evoked_trial_data)
@@ -85,7 +84,7 @@ def _baseline_avg_dff(odor_df: pd.DataFrame, baseline_frames: int):
     baseline_frames = odor_df.iloc[:, :baseline_frames-5]
     f0 = baseline_frames.mean(axis=1).mean()
     diff_df = odor_df.subtract(f0)
-    div_df = diff_df.divide(f0)
+    div_df = diff_df.divide(np.abs(f0))
     return div_df
 
 
@@ -93,18 +92,7 @@ def dff(combined_data: pd.DataFrame, num_baseline_frames: int):
     dff_combined = pd.DataFrame()
     groupby_cell = combined_data.T.groupby(level=0, group_keys=False)
     for cell, cell_df in groupby_cell:
-        new_cell_df = pd.DataFrame()
-        groupby_odor = cell_df.groupby(level=1, group_keys=False)
-        for odor_name, odor_df in groupby_odor:
-            baseline_frames = odor_df.iloc[:, :num_baseline_frames]
-            f0 = baseline_frames.mean(axis=1).mean()
-            diff_df = odor_df.subtract(f0)
-
-            div_df = diff_df.divide(f0)
-            new_cell_df = pd.concat([new_cell_df, div_df.T], axis=1)
-        dff_combined = pd.concat([dff_combined, new_cell_df], axis=1)
-
-
-        # dff_combined = pd.concat([dff_combined, groupby_odor.T], axis=1)
+        groupby_odor = cell_df.groupby(level=1, group_keys=False).apply(lambda x: _baseline_avg_dff(x, num_baseline_frames))
+        dff_combined = pd.concat([dff_combined, groupby_odor.T], axis=1)
 
     return dff_combined
