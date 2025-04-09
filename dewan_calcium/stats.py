@@ -79,8 +79,7 @@ def _calc_wilcoxon(baseline_periods, evoked_periods, bin_pairs):
     for _bin in bin_pairs:
         evoked_periods_bin = evoked_periods[:, _bin[0]:_bin[1]]
         evoked_means = np.mean(evoked_periods_bin, axis=1)
-        diffs = evoked_means - baseline_means
-        bin_wilcoxon = wilcoxon(diffs).pvalue
+        bin_wilcoxon = wilcoxon(evoked_means, baseline_means).pvalue
         wilcoxon_results.append(bin_wilcoxon)
 
     return pd.Series(wilcoxon_results)
