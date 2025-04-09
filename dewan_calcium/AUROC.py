@@ -16,7 +16,8 @@ from tqdm.contrib.concurrent import process_map
 from sklearn.model_selection import train_test_split
 
 # Import from local modules
-from .helpers import sliding_prob, trace_tools
+from .helpers import trace_tools, sliding_prob
+# from .libs import sliding_prob_numba
 
 NUM_SHUFFLES = 1000
 
@@ -29,10 +30,10 @@ def compute_auc(means_1, means_2) -> float:
     max_baseline_val = max(means_1)
     min_baseline_val = min(means_1)
 
-    baseline_prob = sliding_prob.sliding_probability(means_1, min_baseline_val, max_baseline_val)
+    baseline_prob = sliding_prob.sliding_probability(means_1.values, min_baseline_val, max_baseline_val)
     baseline_prob = sliding_prob.prep_probabilities(baseline_prob)
 
-    evoked_prob = sliding_prob.sliding_probability(means_2, min_baseline_val, max_baseline_val)
+    evoked_prob = sliding_prob.sliding_probability(means_2.values, min_baseline_val, max_baseline_val)
     evoked_prob = sliding_prob.prep_probabilities(evoked_prob)
 
     auroc_value = np.trapz(evoked_prob, baseline_prob, axis=-1)
