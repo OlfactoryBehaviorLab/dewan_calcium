@@ -22,7 +22,7 @@ class ProjectFolder:
     def get_data(self):
         if self.raw_data_dir:
             self.raw_data_dir._get_files()
-        if self.inscopix_dir:
+        if self.inscopix_dir and not self.combined:
             self.inscopix_dir._get_files()
         if self.analysis_dir:
             self.analysis_dir._get_files()
@@ -113,6 +113,8 @@ class Dir:
         self.name = name
         self.path = self.path_stem.joinpath(name)
 
+        self.subdirs = {}
+
         self._new_dir = False
 
         self._create()
@@ -134,10 +136,14 @@ class Dir:
             return self.path.glob('*')
 
     def subdir(self, name):
+        if name in self.subdirs.keys():
+            return self.subdirs[name]
+
         _temp_path = self.path.joinpath(name)
         if not _temp_path.exists():
             _temp_path.mkdir(exist_ok=True)
 
+        self.subdirs[name] = _temp_path
         return _temp_path
 
     def __str__(self):
@@ -151,18 +157,14 @@ class FigureDir(Dir):
     def __init__(self, parent_folder, name='Figures'):
         super().__init__(parent_folder, name)
 
-        self._auroc_dir = Dir(self, 'auroc')
-        self.ontime_auroc_dir = Dir(self._auroc_dir, 'ontime_auroc')
-        self.latent_auroc_dir = Dir(self._auroc_dir, 'latent_auroc')
-
         # This is a sub folder in a sub folder
         if not self.parent.parent.combined:
-            self._traces_dir = Dir(self, 'traces')
-            self._scatter_dir = Dir(self, 'scatter')
-            self.ontime_traces_dir = Dir(self._traces_dir, 'ontime_traces')
-            self.latent_traces_dir = Dir(self._traces_dir, 'latent_traces')
-            self.ontime_trial_scatter_dir = Dir(self._scatter_dir, 'ontime_trial_scatter')
-            self.latent_trial_scatter_dir = Dir(self._scatter_dir, 'latent_trial_scatter')
+            self.auroc_dir = Dir(self, 'auroc')
+            self.traces_dir = Dir(self, 'traces')
+            self.scatter_dir = Dir(self, 'scatter')
+        else:
+            self.svm_dir = Dir(self, 'svm')
+            self.cm_dir = Dir(self, 'cm')
 
 
 class RawDataDir(Dir):
@@ -189,44 +191,43 @@ class RawDataDir(Dir):
         if not self._new_dir:
             self._get_files()
 
-    def _get_files(self):
-        if self.parent.project_type == 'MAN':
-            return
-        elif self.parent.project_type == 'ODOR':
-            odor_list = list(self.path.glob('*.xlsx'))
-            if self._check_file_not_found(odor_list, 'Odor List'):
-                self.odorlist_path = odor_list[0]
-        elif self.parent.project_type == 'EPM':
-            points_h5_file = list(self.path.glob('*DLC*.h5'))
-            labeled_video = list(self.path.glob('*DLC*labeled*'))  # Usually mp4 files, but this is more flexible
-
-            if self._check_file_not_found(points_h5_file, 'Points H5 File'):
-                self.points_h5_path = points_h5_file[0]
-            if self._check_file_not_found(labeled_video, 'Labeled Video'):
-                self.labeled_video_path = labeled_video[0]
-        elif self.parent.project_type == 'HFvFM':
-            pass # There's nothing here yet
-        elif self.parent.project_type == 'ISX':
-            pass
-        else:
-            raise ValueError((f'{{{self.parent.project_type}}} is not a valid project type. '
-                              f'Please select from the following list: [\'ODOR\', \'EPM\', \'HFvFM\']'))
-
+    def _get_files(self) -> None:
         if not self.parent.combined:
+            if self.parent.project_type == 'MAN':
+                return
+            elif self.parent.project_type == 'ODOR':
+                odor_list = list(self.path.glob('*.xlsx'))
+                if self._check_file_not_found(odor_list, 'Odor List'):
+                    self.odorlist_path = odor_list[0]
+            elif self.parent.project_type == 'EPM':
+                points_h5_file = list(self.path.glob('*DLC*.h5'))
+                labeled_video = list(self.path.glob('*DLC*labeled*'))  # Usually mp4 files, but this is more flexible
+
+                if self._check_file_not_found(points_h5_file, 'Points H5 File'):
+                    self.points_h5_path = points_h5_file[0]
+                if self._check_file_not_found(labeled_video, 'Labeled Video'):
+                    self.labeled_video_path = labeled_video[0]
+            elif self.parent.project_type == 'HFvFM':
+                pass  # There's nothing here yet
+            elif self.parent.project_type == 'ISX':
+                raw_GPIO = list(self.path.glob('*.gpio'))
+                raw_recordings = list(self.path.glob('*.isxd'))
+                exp_h5_file = list(self.path.glob('*mouse*.h5'))
+
+                if self._check_file_not_found(raw_GPIO, 'Raw GPIO'):
+                    self.raw_GPIO_path = raw_GPIO[0]
+                if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
+                    self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
+                if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
+                    self.exp_h5_path = exp_h5_file[0]
+            else:
+                raise ValueError((f'{{{self.parent.project_type}}} is not a valid project type. '
+                                  f'Please select from the following list: [\'ODOR\', \'EPM\', \'HFvFM\']'))
+
             # General Files for all non-combined project types
             json_file = list(self.path.glob('*session*.json'))
-            raw_GPIO = list(self.path.glob('*.gpio'))
-            raw_recordings = list(self.path.glob('*.isxd'))
-            exp_h5_file = list(self.path.glob('*mouse*.h5'))
-
             if self._check_file_not_found(json_file, 'session.json'):
                 self.session_json_path = json_file[0]
-            if self._check_file_not_found(raw_GPIO, 'Raw GPIO'):
-                self.raw_GPIO_path = raw_GPIO[0]
-            if self._check_file_not_found(raw_recordings, 'Raw Recordings'):
-                self.raw_recordings = raw_recordings  # If there are multiple recordings, we want them all
-            if self._check_file_not_found(exp_h5_file, 'Experiment H5 File'):
-                self.exp_h5_path = exp_h5_file[0]
         else:
             combined_data_path = list(self.path.glob('*combined*.pickle'))
             sig_table_path = list(self.path.glob('*combined*.xlsx'))
@@ -240,7 +241,6 @@ class RawDataDir(Dir):
                     self.combined_sig_table_path = sig_table_path
                 else:
                     self.combined_sig_table_path = sig_table_path[0]
-
 
 
 class InscopixDir(Dir):
@@ -260,7 +260,7 @@ class InscopixDir(Dir):
 
     def _get_files(self):
 
-        if not self.parent.project_type == 'ISX':  # These files dont exist if in the ISX notebook
+        if not self.parent.project_type == 'ISX' and not self.parent.combined:  # These files dont exist if in the ISX notebook
             cell_trace_file = list(self.path.glob('*TRACES*.csv'))
             GPIO_file = list(self.path.glob('*GPIO*.csv'))
             max_projection_file = list(self.path.glob('*HD*MAX*.tiff'))
@@ -289,7 +289,6 @@ class AnalysisDir(Dir):
 
         if not self.parent.combined:
             self.preprocess_dir = Dir(self, 'Preprocessed')
-
             #  Output Subdirectories
             self.combined_dir = Dir(self.output_dir, 'combined')
 
