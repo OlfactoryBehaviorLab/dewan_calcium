@@ -7,8 +7,7 @@ Computes sliding probability for a data set based on max, min and increment
 values provided as arguments
 """
 import numpy as np
-# from numba.pycc import CC
-from numba import njit, jit
+from numba import njit
 
 SLID_PROB_INC = 100
 
@@ -28,5 +27,5 @@ def prep_probabilities(data: np.array) -> np.array:
     flipped_data = np.flip(data)
     zero_data = np.hstack((np.array([0]), flipped_data))
     final_data = np.hstack((zero_data, np.array([1.0])))
-
+    
     return final_data
