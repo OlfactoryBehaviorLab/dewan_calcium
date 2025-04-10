@@ -1,6 +1,7 @@
 ### Dewan Trace Tools Helper Functions
 ### Shared functions that collect or manipulate trace data
 ### Austin Pauley: Dewan Lab, Florida State University, 2024
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -40,9 +41,8 @@ def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, duration: i
     return evoked_data, evoked_indices
 
 
-def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, baseline_duration: int):
+def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, baseline_duration: Union[int, None]):
     baseline_means = []
-    evoked_means = []
 
     evoked_data, _ = collect_trial_data(odor_df, timestamps_df, response_duration)
     evoked_means = evoked_data.mean(axis=1)
@@ -55,9 +55,8 @@ def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, ba
 
 
 def average_odor_responses(odor_df: pd.DataFrame, odor_timestamps:pd.DataFrame, response_duration: int) -> float:
-    baseline_means, evoked_means = get_evoked_baseline_means(odor_df, odor_timestamps, response_duration)
-    diff = evoked_means - baseline_means
-    average_response = diff.mean()
+    _, evoked_means = get_evoked_baseline_means(odor_df, odor_timestamps, response_duration, None)
+    average_response = evoked_means.mean()
 
     return average_response
 
