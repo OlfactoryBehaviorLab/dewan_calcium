@@ -1,3 +1,4 @@
+import concurrent
 from functools import partial
 from pathlib import Path
 
@@ -6,8 +7,8 @@ import pandas as pd
 
 import matplotlib as mpl
 import matplotlib.patches as mpatches
-from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection, LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 
@@ -15,12 +16,11 @@ from sklearn import metrics
 
 from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
-import concurrent
+
 from .helpers import IO, trace_tools
 from .helpers.project_folder import ProjectFolder
 
 mpl.rcParams['font.family'] = 'Arial'
-
 AXIS_PAD = 0.05  # PERCENT
 
 
@@ -44,12 +44,6 @@ def genminmax(data: list[pd.Series], pad: float = 0):
         data_max *= (1 + pad)
 
     return data_min, data_max
-
-
-# def generate_color_map(numColors: int):
-#     color_map = cm.get_cmap('rainbow')
-#     indices = (np.linspace(0, 1, numColors))  # % color_map.N
-#     return cycler.cycler('color', color_map(indices))
 
 
 def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
@@ -251,7 +245,6 @@ def pooled_auroc_distributions(AUROC_data, project_folder: ProjectFolder, all_ce
     #             pbar.update()
 
 
-
 def plot_animal_track(line_coordinates, background_img, project_folder):
 
     lc = LineCollection(line_coordinates, colors='dimgrey', alpha=0.8, linewidths=0.1)
@@ -272,8 +265,7 @@ def plot_animal_track(line_coordinates, background_img, project_folder):
     plt.close(fig)
 
 
-def plot_trial_variances(input_data, significance_table: np.array,
-                         latentCells: bool = False) -> None:
+def plot_trial_variances(input_data, significance_table: np.array, latentCells: bool = False) -> None:
     responsive_cells_truth_table = np.any(significance_table, axis=1)  # Find all rows that are not all zeros
     responsive_cell_list_index = np.nonzero(responsive_cells_truth_table)[0]  # Only keep cells that are not
 
