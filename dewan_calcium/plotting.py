@@ -210,26 +210,17 @@ def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, signific
 
 
 def _plot_auroc_distribution(auroc_dir, plot_all, cell_data):
-
-    #cell_df = AUROC_data[cell_name]
     cell_name, cell_df = cell_data
-    # cell_significance_data = cell_df['significance_chart']
-    # auroc_values = cell_df['auroc_values']
-    # ul_bounds = cell_df['bounds']
-    # shuffles = cell_df['shuffles']
 
     output_dir = auroc_dir.subdir(cell_name)
     for odor_name, data in cell_df.T.iterrows():
+        data = data[cell_name]
         significance_value = data['significance_chart']
         auroc_val = data['auroc_values']
         bounds = data['bounds']
         shuffle = data['shuffles']
 
         if significance_value != 0 | plot_all:
-            # odor_name = odor_list[i]
-            # shuffle = shuffles.iloc[i]
-            # auroc_val = auroc_values.iloc[i]
-            # bounds = ul_bounds.iloc[i]
             upper_bound, lower_bound = bounds
 
             fig, ax = plt.subplots()
@@ -240,15 +231,9 @@ def _plot_auroc_distribution(auroc_dir, plot_all, cell_data):
             plt.close(fig)
 
             filename = f'{cell_name}-{odor_name}.pdf'
-            filepath = output_dir.path.joinpath(filename)
+            filepath = output_dir.joinpath(filename)
             fig.savefig(filepath, dpi=300)
 
-def _plot_function(output_dir, all_cells, cell):
-    cell_name, _ = cell
-    try:
-        _plot_auroc_distribution(output_dir, all_cells, cell)
-    except Exception as e:
-        print(f'Error plotting cell {cell_name}')
 
 def pooled_auroc_distributions(AUROC_data, project_folder: ProjectFolder, all_cells: bool = False, num_workers: int = None):
 
@@ -256,7 +241,7 @@ def pooled_auroc_distributions(AUROC_data, project_folder: ProjectFolder, all_ce
 
     iterator = AUROC_data.T.groupby('Cell')
 
-    plot_function = partial(_plot_function, output_dir, all_cells)
+    plot_function = partial(_plot_auroc_distribution, output_dir, all_cells)
 
     _ = process_map(plot_function, iterator, desc="Plotting AUROC Distributions: ", max_workers=num_workers)
 
