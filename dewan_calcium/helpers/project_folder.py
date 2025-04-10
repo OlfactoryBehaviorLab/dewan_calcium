@@ -10,6 +10,7 @@ class ProjectFolder:
         self.path = None
         self.search_root_dir = None
         self.suppress_filenotfound = suppress_filenotfound
+        self.subdirs = {}
 
         self.raw_data_dir: RawDataDir = None
         self.inscopix_dir: InscopixDir = None
@@ -98,6 +99,12 @@ class ProjectFolder:
         return file_names
 
     #  Dunder Methods  #
+    def __getattr__(self, item):
+        if item in self.subdirs.keys():
+            return self.subdirs[item]
+        else:
+            raise AttributeError(item)
+
     def __str__(self):
         return f'Project folder: {str(self.path)}'
 
@@ -155,6 +162,12 @@ class Dir:
             _subdir = Dir(self, name)
             self.subdirs[name] = _subdir
             return _subdir
+
+    def __getattr__(self, item):
+        if item in self.subdirs.keys():
+            return self.subdirs[item]
+        else:
+            raise AttributeError(item)
 
     def __str__(self):
         return f'{self.path}'
