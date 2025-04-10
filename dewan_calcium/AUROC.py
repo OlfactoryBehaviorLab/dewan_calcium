@@ -8,6 +8,8 @@ December 2022
 """
 
 import itertools
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
@@ -155,7 +157,7 @@ def _prep_EPM_data(means, groups):
 
 
 def odor_auroc(FV_timestamps: pd.DataFrame, evoked_duration: int,
-              cell_data: tuple) -> dict:
+              baseline_duration: Union[int, None], cell_data: tuple) -> dict:
 
     all_bounds = []
     auroc_values = []
@@ -168,25 +170,32 @@ def odor_auroc(FV_timestamps: pd.DataFrame, evoked_duration: int,
     cell_name, trace_data = cell_data
     cell_df = trace_data.T[cell_name]  # Transpose data so (Cells, Odor) is the columns, and the enter one level
     odor_list = cell_df.columns.unique()
-    odor_list = [odor for odor in odor_list if odor != 'MO']
 
-    MO_df = cell_df['MO']
-    MO_timestamps = FV_timestamps['MO']
-    MO_data, MO_indices = trace_tools.collect_trial_data(MO_df, MO_timestamps, evoked_duration)
-    MO_means = MO_data.mean(axis=1)
+    if baseline_duration is None:
+        # odor_list = [odor for odor in odor_list if odor != 'MO']
+        MO_df = cell_df['MO']
+        MO_timestamps = FV_timestamps['MO']
+        baseline_data, _ = trace_tools.collect_trial_data(MO_df, MO_timestamps, evoked_duration)
 
     for odor in odor_list:
         odor_df = cell_df[odor]  # Get traces for each odor type, this should be 10-12 long
         odor_timestamps = FV_timestamps[odor]
         evoked_data, evoked_indices = (
-            trace_tools.collect_trial_data(odor_df, odor_timestamps, evoked_duration))
+            trace_tools.collect_trial_data(odor_df, odor_timestamps, evoked_duration)
+        )
+
+        if baseline_duration is not None:
+            baseline_data, _ = (
+                trace_tools.collect_trial_data(odor_df, odor_timestamps, evoked_duration, baseline_duration)
+            )
 
         evoked_means = evoked_data.mean(axis=1)
-        auroc_value = compute_auc(MO_means.values, evoked_means.values)
+        baseline_means = baseline_data.mean(axis=1)
+        auroc_value = compute_auc(baseline_means.values, evoked_means.values)
 
         # # # GET SHUFFLED DISTRIBUTION # # #
-        all_means = pd.concat((MO_means, evoked_means), ignore_index=True)
-        auroc_shuffle = shuffled_distribution(all_means, len(MO_means))
+        all_means = pd.concat((baseline_means, evoked_means), ignore_index=True)
+        auroc_shuffle = shuffled_distribution(all_means, len(baseline_means))
         bounds = np.percentile(auroc_shuffle, [1, 99])
 
         lower_bound, upper_bound = bounds
@@ -218,12 +227,12 @@ def odor_auroc(FV_timestamps: pd.DataFrame, evoked_duration: int,
 
 
 def pooled_odor_auroc(combined_data_dff: pd.DataFrame, FV_timestamps: pd.DataFrame, evoked_duration,
-                     num_workers: int = 8):
+                      baseline_duration: Union[int, None] = None, num_workers: int = 8):
     print('Starting auROC!')
     iterable = combined_data_dff.T.groupby(level=0)
     # Level 0 is the cells; groupby() works on indexes, so we need to transpose it
     # since we ordered the data as columns with (Cell Name, Odor Name)
-    auroc_partial_function = partial(odor_auroc, FV_timestamps, evoked_duration)
+    auroc_partial_function = partial(odor_auroc, FV_timestamps, evoked_duration, baseline_duration)
     return_dicts = process_map(auroc_partial_function, iterable, max_workers=num_workers)
 
     print("auROC Processing Finished!")
