@@ -193,9 +193,9 @@ def odor_auroc(FV_timestamps: pd.DataFrame, evoked_duration: int,
 
         # # # Output Data # # #
         if auroc_value > upper_bound:
-            significance_matrix.append(2)  # Positive evoked response
+            significance_matrix.append(1)  # Positive evoked response
         elif auroc_value < lower_bound:
-            significance_matrix.append(1)  # Negative evoked response
+            significance_matrix.append(-1)  # Negative evoked response
         else:
             significance_matrix.append(0)  # No response
 
