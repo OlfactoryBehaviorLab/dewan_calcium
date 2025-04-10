@@ -132,13 +132,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
 
         x_vals = []  # We want to expose the last set of x_vals for the average to use
         for x_vals, y_vals in plot_data:
-            _, x_vals = x_vals  # Items() returns a name, we don't need it
-            _, y_vals = y_vals
-
-            ax1.plot(x_vals, y_vals, linewidth=0.5, color='k')
+            ax1.plot(x_vals, y_vals, linewidth=0.5, color='k', alpha=0.5)
 
         avg_data = odor_data.mean(axis=1)
-        ax1.plot(x_vals, avg_data, "c", linewidth=1.5)
+        ax1.plot(x_vals, avg_data, "m", linewidth=1.5)
 
         ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
 
@@ -151,13 +148,13 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
                      transform=ax1.transAxes, fontsize='x-small', style='italic',
                      bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
 
-
+        rect_height = y_max + np.abs(y_min)
         baseline_rectangle = mpatches.Rectangle((baseline_start, y_min),
                                                 baseline_end - baseline_start,
-                                                y_max, alpha=0.3, facecolor='blue')
+                                                rect_height, alpha=0.3, facecolor='blue')
 
         evoked_rectangle = mpatches.Rectangle((evoked_start, y_min), (evoked_end - evoked_start),
-                                              y_max,
+                                              rect_height,
                                               alpha=0.3, facecolor='green')
 
         ax1.add_patch(baseline_rectangle)
@@ -174,6 +171,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
         fig_name = f'{cell_name}-{odor}.pdf'
         fig_save_path = save_path.joinpath(fig_name)
         fig.savefig(fig_save_path, dpi=300)
+        plt.close(fig)
 
 
 def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, FV_data: pd.DataFrame, response_duration: int,
