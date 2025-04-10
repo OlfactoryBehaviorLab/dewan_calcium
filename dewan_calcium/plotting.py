@@ -111,13 +111,11 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
             significant = False
             save_path = save_path.subdir('insignificant')
 
-        timestamps = list(odor_times.items())
-        trial_data = list(odor_data.items())
-        x_min, x_max = genminmax(timestamps, 0.05)
-        y_min, y_max = genminmax(trial_data, 0.05)
-        # auroc_stats = auroc_vals.loc[odor]
+        timestamps = [_item[1].values for _item in odor_times.items()]
+        trial_data = [_item[1].values for _item in odor_data.items()]
+        x_min, x_max = genminmax(np.array(timestamps), 0.05)
+        y_min, y_max = genminmax(np.array(trial_data), 0.05)
         percentile = auroc_stats['percentiles']
-        #  lower_bound, upper_bound = auroc_stats['bounds']
 
         baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(
             odor_data, odor_times, response_duration, -2
