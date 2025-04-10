@@ -107,7 +107,7 @@ class ProjectFolder:
 
 
 class Dir:
-    def __init__(self, parent_folder, name):
+    def __init__(self, parent_folder, name, get_subdirs=False):
         self.parent = parent_folder
         self.path_stem = parent_folder.path
         self.name = name
@@ -118,11 +118,19 @@ class Dir:
         self._new_dir = False
 
         self._create()
+        self.parent.subdirs[self.name] = self
+        if get_subdirs:
+            self._get_subdirs()
 
 
     def joinpath(self, addition):
         return self.path.joinpath(addition)
 
+
+    def _get_subdirs(self):
+        for _dir in self.path.iterdir():
+            if _dir.is_dir():
+                self.subdirs[_dir.name] = Dir(self, _dir.name)
 
     def _create(self):
         if not self.path.exists():
@@ -143,13 +151,10 @@ class Dir:
     def subdir(self, name):
         if name in self.subdirs.keys():
             return self.subdirs[name]
-
-        _temp_path = self.path.joinpath(name)
-        if not _temp_path.exists():
-            _temp_path.mkdir(exist_ok=True)
-
-        self.subdirs[name] = _temp_path
-        return _temp_path
+        else:
+            _subdir = Dir(self, name)
+            self.subdirs[name] = _subdir
+            return _subdir
 
     def __str__(self):
         return f'{self.path}'
@@ -164,9 +169,9 @@ class FigureDir(Dir):
 
         # This is a sub folder in a sub folder
         if not self.parent.parent.combined:
-            self.auroc_dir = Dir(self, 'auroc')
-            self.traces_dir = Dir(self, 'traces')
-            self.scatter_dir = Dir(self, 'scatter')
+            self.auroc_dir = Dir(self, 'auroc', get_subdirs=True)
+            self.traces_dir = Dir(self, 'traces', get_subdirs=True)
+            # self.scatter_dir = Dir(self, 'scatter')
         else:
             self.svm_dir = Dir(self, 'svm')
             self.cm_dir = Dir(self, 'cm')
