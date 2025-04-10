@@ -23,9 +23,9 @@ mpl.rcParams['font.family'] = 'Arial'
 AXIS_PAD = 0.05  # PERCENT
 
 
-def plotting_data_generator(combined_data_dff, AUROC_data):
+def plotting_data_generator(combined_data_dff, AUROC_data, wilcoxon_total):
     for cell, cell_data in combined_data_dff.T.groupby('Cells'):
-        yield cell, cell_data, AUROC_data[cell]
+        yield cell, cell_data, AUROC_data[cell], wilcoxon_total[cell]
 
 @njit()
 def genminmax(data: np.array, pad: float = 0):
@@ -79,7 +79,7 @@ def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
 
 def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_folder: ProjectFolder,
                       all_cells: bool, cell_data: tuple):
-    cell_name, cell_df, combo_auroc_data = cell_data
+    cell_name, cell_df, combo_auroc_data, wilcoxon_totals = cell_data
     cell_df = cell_df.T[cell_name]
     odor_list = cell_df.columns.get_level_values(0).unique()
     odor_list = [odor for odor in odor_list if odor != 'MO']
@@ -95,8 +95,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
 
         odor_data = cell_df[odor]
         odor_times = FV_data[odor]
+        wilcoxon_p_val = str(round(wilcoxon_totals[odor], 3))
         auroc_stats = combo_auroc_data.loc[odor]
         significance_val = auroc_stats['significance_chart'].astype(int)
+        percentile = str(round(auroc_stats['percentiles'], 4) * 100)
 
         if all_cells is False and significance_val == 0:
             # If were not plotting everything and the cell is not significant; skip
@@ -114,7 +116,6 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
         trial_data = [_item[1].values for _item in odor_data.items()]
         x_min, x_max = genminmax(np.array(timestamps), 0.05)
         y_min, y_max = genminmax(np.array(trial_data), 0.05)
-        percentile = auroc_stats['percentiles']
 
         baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(
             odor_data, odor_times, response_duration, -2
@@ -143,7 +144,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
                      fontsize='x-small', style='italic',
                      bbox={'facecolor': 'green', 'alpha': 0.5, 'pad': 3})
 
-            ax1.text(0.015, 0.02, f'AUROC Percentile: {str(round(percentile * 100, 4))}',
+            ax1.text(0.015, 0.02, f'AUROC Value Percentile: {percentile}th | Wilcoxon p-value: {wilcoxon_p_val}',
                      transform=ax1.transAxes, fontsize='x-small', style='italic',
                      bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
 
@@ -173,10 +174,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
         plt.close(fig)
 
 
-def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, FV_data: pd.DataFrame, response_duration: int,
+def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, wilcoxon_total, FV_data: pd.DataFrame, response_duration: int,
                          project_folder: ProjectFolder, all_cells: bool = False, num_workers: int = None):
     num_cells = len(combined_data_shift.columns.get_level_values(0).unique())
-    data_iterator = plotting_data_generator(combined_data_shift, AUROC_data)
+    data_iterator = plotting_data_generator(combined_data_shift, AUROC_data, wilcoxon_total)
     plot_function = partial(_plot_odor_traces, FV_data, response_duration, project_folder, all_cells)
 
     # with tqdm(desc=f"Plotting Cell Traces: ", total=len(cell_names)) as pbar:
