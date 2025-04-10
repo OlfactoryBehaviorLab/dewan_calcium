@@ -215,33 +215,90 @@ def verify_input(var_name, input_var, allowed_types, allowed_values=None, allowe
                 raise ValueError(f'{var_name} has value of {input_var}, but must be between {allowed_range[0]} and {allowed_range[1]} noninclusive')
 
 
-def save_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, output_path):
-    with pd.ExcelWriter(output_path, engine='xlsxwriter') as writer:
-        wilcoxon_total.to_excel(writer, sheet_name='Evoked Period')
-        wilcoxon_binned.to_excel(writer, sheet_name='Bins')
-        cell_bins.to_excel(writer, sheet_name='Significant Bins')
+def save_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, output_dir):
+    _handle = lambda writer: _write_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, writer)
+    _write_excel(None, output_dir, 'binned_wilcoxon.xlsx', handle=_handle)
 
-        workbook = writer.book
-        total_ws = writer.sheets['Evoked Period']
-        binned_ws = writer.sheets['Bins']
 
-        green_bg = workbook.add_format({'bg_color': '#22f229'})
-        blue_bg = workbook.add_format({'bg_color': '#22adf2'})
-        total_cf = {
-            'type': 'cell',
-            'criteria': '<',
-            'value': p_val,
-            'format': green_bg
-        }
+def save_auroc_data(significance_table, auroc_values_df, AUROC_data, file_header, output_dir):
+    auroc_values_file_name = f'{file_header}AUROCValues.xlsx'
+    _write_excel(auroc_values_df, output_dir, auroc_values_file_name, index=False)
+    all_return_values_file_name = f'{file_header}AllReturnValues.xlsx'
+    _write_excel(AUROC_data, output_dir, all_return_values_file_name)
 
-        corrected_cf = {
-            'type': 'cell',
-            'criteria': '<',
-            'value': corrected_p_val,
-            'format': blue_bg
-        }
+    significance_table_file_name = f'{file_header}SignificanceTable.xlsx'
+    _handle = lambda writer: _write_significance_table(significance_table, writer)
+    _write_excel(None, output_dir, significance_table_file_name, handle=_handle)
 
-        (max_row, max_col) = wilcoxon_total.shape
-        total_ws.conditional_format(1, 1, max_row, max_col, total_cf)
-        (max_row, max_col) = wilcoxon_binned.shape
-        binned_ws.conditional_format(1, 1, max_row, max_col, corrected_cf)
+
+def _write_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, writer):
+    wilcoxon_total.to_excel(writer, sheet_name='Evoked Period')
+    wilcoxon_binned.to_excel(writer, sheet_name='Bins')
+    cell_bins.to_excel(writer, sheet_name='Significant Bins')
+
+    workbook = writer.book
+    total_ws = writer.sheets['Evoked Period']
+    binned_ws = writer.sheets['Bins']
+
+    green_bg = workbook.add_format({'bg_color': '#22f229'})
+    blue_bg = workbook.add_format({'bg_color': '#22adf2'})
+    total_cf = {
+        'type': 'cell',
+        'criteria': '<',
+        'value': p_val,
+        'format': green_bg
+    }
+
+    corrected_cf = {
+        'type': 'cell',
+        'criteria': '<',
+        'value': corrected_p_val,
+        'format': blue_bg
+    }
+
+    (max_row, max_col) = wilcoxon_total.shape
+    total_ws.conditional_format(1, 1, max_row, max_col, total_cf)
+    (max_row, max_col) = wilcoxon_binned.shape
+    binned_ws.conditional_format(1, 1, max_row, max_col, corrected_cf)
+
+
+def _write_significance_table(significance_table, writer):
+    significance_table.to_excel(writer, sheet_name='Sig Table')
+
+    workbook = writer.book
+    sig_table = writer.sheets['Sig Table']
+
+    green_bg = workbook.add_format({'bg_color': '#22f229'})
+    red_bg = workbook.add_format({'bg_color': '#fc0303'})
+
+    excitatory_cf = {
+        'type': 'cell',
+        'criteria': '=',
+        'value': 1,
+        'format': green_bg
+    }
+
+    inhibitory_cf = {
+        'type': 'cell',
+        'criteria': '=',
+        'value': -1,
+        'format': red_bg
+    }
+
+    (max_row, max_col) = significance_table.shape
+    sig_table.conditional_format(1, 1, max_row, max_col, excitatory_cf)
+    sig_table.conditional_format(1, 1, max_row, max_col, inhibitory_cf)
+
+
+def _write_excel(df, output_dir, file_name, handle=None, **kwargs):
+    file_path = output_dir.joinpath(file_name)
+    try:
+        if not handle:  # Write file directly
+            df.to_excel(file_path, **kwargs)
+        else:  # Open context manager and execute the handle the user passed in
+            with pd.ExcelWriter(file_path, engine='xlsxwriter', **kwargs) as writer:
+                handle(writer)
+    except PermissionError as e:
+        raise PermissionError(f'Cannot write to {file_path} Is it still open?') from e
+
+    print(f'Successfully wrote {file_name} to disk!')
