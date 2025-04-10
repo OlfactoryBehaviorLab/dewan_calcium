@@ -41,21 +41,35 @@ def genminmax(data: np.array, pad: float = 0):
 
     return data_min, data_max
 
+def _plot_evoked_MO_means(ax3: plt.Axes, MO_means, evoked_means):
+
+    x_vals_mo = [1] * len(MO_means)
+    x_vals_evoked = [2] * len(evoked_means)
+    ax3.set_title('Means', fontsize=10)
+
+    ax3.plot(x_vals_mo, MO_means, 'o', color='blue')
+    ax3.plot(x_vals_evoked, evoked_means, 'o', color='green')
+    ax3.set_xticks([1, 2], labels=['MO Baseline', 'Evoked'], rotation=45, ha='right', )
+    ax3.set_xlim([0.8, 2.2])
+
+    baseline_mean = np.mean(MO_means)
+    evoked_mean = np.mean(evoked_means)
+    ax3.plot([[1], [2]], (baseline_mean, evoked_mean), '--ok', linewidth=3)
+
 
 def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
-    ax2.set_title('Baseline v. Evoked Means', fontsize=10)
+    ax2.set_title('Means', fontsize=10)
 
     ax2.plot(x_vals, (baseline_means, evoked_means), '-o', linewidth=2)
 
     ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
-    ax2.yaxis.tick_right()
 
-    y_min = np.min((baseline_means, evoked_means))
-    y_max = np.max((baseline_means, evoked_means))
+    # ax2.yaxis.tick_right()
+    # y_min, y_max = genminmax(np.hstack((baseline_means, evoked_means)), 0.05)
+    # ax2.set_ylim([y_min, y_max])
 
-    ax2.set_ylim([y_min - (0.05 * y_min), y_max + (0.05 * y_max)])
     ax2.set_xlim([0.8, 2.2])
 
     baseline_mean = np.mean(baseline_means)
@@ -109,7 +123,9 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
             odor_data, odor_times, response_duration, -2
         )
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, width_ratios=[5, 1,1 ], sharey=True)
+
+
         plt.suptitle(f'Cell: {cell_name} Odor: {odor}', fontsize=14)
         ax1.set_title('Cell Traces', fontsize=10)
         ax1.set(xlabel="Time ((s) since FV On)", ylabel="dF/F")
@@ -153,8 +169,9 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
         ax1.set_ylim([y_min, y_max])
 
         _plot_evoked_baseline_means(ax2, baseline_means, evoked_means)
+        _plot_evoked_MO_means(ax3, MO_baseline, evoked_means)
 
-        plt.subplots_adjust(bottom=0.15)
+        plt.subplots_adjust(wspace=0.1, bottom=0.18)
 
         fig_name = f'{cell_name}-{odor}.pdf'
         fig_save_path = save_path.joinpath(fig_name)
