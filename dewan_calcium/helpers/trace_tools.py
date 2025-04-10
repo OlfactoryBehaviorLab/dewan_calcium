@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 
-def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, evoked_duration: int):
+def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, duration: int, baseline=None):
     """
 
     Args:
@@ -21,9 +21,16 @@ def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, evoked_dura
     evoked_data = []
     evoked_indices = []
 
+    if baseline is not None:
+        lower_index = baseline
+        upper_index = 0
+    else:
+        lower_index = 0
+        upper_index = duration
+
     for trial_index, (_, data) in enumerate(odor_df.items()):
         trial_timestamps = time_df.iloc[:, trial_index]
-        evoked_trial_indices = trial_timestamps[trial_timestamps.between(0, evoked_duration, 'both')].index
+        evoked_trial_indices = trial_timestamps[trial_timestamps.between(lower_index, upper_index, 'both')].index
         evoked_trial_data = data[evoked_trial_indices]
         evoked_data.append(evoked_trial_data)
 
@@ -33,11 +40,16 @@ def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, evoked_dura
     return evoked_data, evoked_indices
 
 
-def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, latent: bool = False):
-    baseline_data, evoked_data, _, _ = collect_trial_data(odor_df, timestamps_df, response_duration, latent)
+def get_evoked_baseline_means(odor_df, timestamps_df, response_duration: int, baseline_duration: int):
+    baseline_means = []
+    evoked_means = []
 
-    baseline_means = baseline_data.mean(axis=1)
+    evoked_data, _ = collect_trial_data(odor_df, timestamps_df, response_duration)
     evoked_means = evoked_data.mean(axis=1)
+
+    if baseline_duration is not None:
+        baseline_data, _ = collect_trial_data(odor_df, timestamps_df, response_duration, baseline_duration)
+        baseline_means = baseline_data.mean(axis=1)
 
     return baseline_means, evoked_means
 
