@@ -12,9 +12,8 @@ from matplotlib.patches import Polygon
 from matplotlib.collections import PatchCollection, LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 
+from numba import njit
 from sklearn import metrics
-
-from tqdm.auto import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from .helpers import IO, trace_tools
@@ -28,12 +27,9 @@ def plotting_data_generator(combined_data_dff, AUROC_data):
     for cell, cell_data in combined_data_dff.T.groupby('Cells'):
         yield cell, cell_data, AUROC_data[cell]
 
-
-def genminmax(data: list[pd.Series], pad: float = 0):
-    all_values = []
-    for _, values in data:
-        all_values.append(values)
-
+@njit()
+def genminmax(data: np.array, pad: float = 0):
+    all_values = np.ravel(data)
     data_min, data_max = np.min(all_values), np.max(all_values)
 
     if pad > 0:
