@@ -24,9 +24,9 @@ mpl.rcParams['font.family'] = 'Arial'
 AXIS_PAD = 0.05  # PERCENT
 
 
-def plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix):
-    for cell in cell_names:
-        yield cell, combined_data_shift[cell], AUROC_data[cell], significance_matrix[cell]
+def plotting_data_generator(combined_data_dff, AUROC_data):
+    for cell, cell_data in combined_data_dff.T.groupby('Cells'):
+        yield cell, cell_data, AUROC_data[cell]
 
 
 def genminmax(data: list[pd.Series], pad: float = 0):
@@ -67,62 +67,56 @@ def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     ax2.plot(x_val, (baseline_mean, evoked_mean), '--ok', linewidth=3)
 
 
-def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_duration: int, project_folder: ProjectFolder,
+def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_folder: ProjectFolder,
                       all_cells: bool, cell_data: tuple):
-    cell_name, cell_df, combo_auroc_data, significance_table = cell_data
+    cell_name, cell_df, combo_auroc_data = cell_data
+    cell_df = cell_df.T[cell_name]
+    odor_list = cell_df.columns.get_level_values(0).unique()
+    odor_list = [odor for odor in odor_list if odor != 'MO']
+    # significance_values = combo_auroc_data.loc['significance_chart']
+    _, MO_baseline = trace_tools.get_evoked_baseline_means(
+        cell_df['MO'], FV_data['MO'], response_duration, None
+    )
 
     for odor in odor_list:
-        significant = False
-        latent = False
-
         baseline_start = 0
         baseline_end = -response_duration
         evoked_start = 0
         evoked_end = response_duration
-        ontime_auroc_data = combo_auroc_data['ontime']
-        latent_auroc_data = combo_auroc_data['latent']
 
-        auroc_data = ontime_auroc_data
-        significance_val = significance_table[odor].astype(int)
-
-        save_path = project_folder.analysis_dir.figures_dir.ontime_traces_dir
+        odor_data = cell_df[odor]
+        odor_times = FV_data[odor]
+        auroc_stats = combo_auroc_data.loc[odor]
+        significance_val = auroc_stats['significance_chart'].astype(int)
 
         if all_cells is False and significance_val == 0:
             # If were not plotting everything and the cell is not significant; skip
             continue
 
-        if significance_val > 0:  # Tag the significant graphs
+        save_path = project_folder.analysis_dir.figures_dir.traces_dir.subdir(cell_name)
+
+        if significance_val != 0:  # Tag the significant graphs
             significant = True
         else:
             significant = False
-            save_path = project_folder.analysis_dir.figures_dir._traces_dir
-
-        if significance_val in [3, 4]:  # Latent cells; on-time is the default
-            save_path = project_folder.analysis_dir.figures_dir.latent_traces_dir
-            auroc_data = combo_auroc_data['latent']
-            evoked_start = response_duration
-            evoked_end = response_duration * 2
-            latent = True
-
-
-        odor_data = cell_df[odor]
-        odor_times = FV_data[odor]
+            save_path = save_path.subdir('insignificant')
 
         timestamps = list(odor_times.items())
         trial_data = list(odor_data.items())
         x_min, x_max = genminmax(timestamps, 0.05)
         y_min, y_max = genminmax(trial_data, 0.05)
-        auroc_stats = auroc_data.loc[odor]
+        # auroc_stats = auroc_vals.loc[odor]
         percentile = auroc_stats['percentiles']
         #  lower_bound, upper_bound = auroc_stats['bounds']
 
-        baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(odor_data, odor_times,
-                                                                             response_duration, latent)
+        baseline_means, evoked_means = trace_tools.get_evoked_baseline_means(
+            odor_data, odor_times, response_duration, -2
+        )
 
         fig, (ax1, ax2) = plt.subplots(1, 2, width_ratios=[3, 1])
         plt.suptitle(f'Cell: {cell_name} Odor: {odor}', fontsize=14)
         ax1.set_title('Cell Traces', fontsize=10)
-        ax1.set(xlabel="Time ((s) since FV On)", ylabel="Signal")
+        ax1.set(xlabel="Time ((s) since FV On)", ylabel="dF/F")
 
         plot_data = zip(timestamps, trial_data)
 
@@ -131,10 +125,10 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
             _, x_vals = x_vals  # Items() returns a name, we don't need it
             _, y_vals = y_vals
 
-            ax1.plot(x_vals, y_vals, linewidth=0.5)
+            ax1.plot(x_vals, y_vals, linewidth=0.5, color='k')
 
         avg_data = odor_data.mean(axis=1)
-        ax1.plot(x_vals, avg_data, "k", linewidth=1.5)
+        ax1.plot(x_vals, avg_data, "c", linewidth=1.5)
 
         ax1.set_xticks(np.arange(-3, 6), labels=np.arange(-3, 6))
 
@@ -146,24 +140,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
             ax1.text(0.015, 0.02, f'AUROC Percentile: {str(round(percentile * 100, 4))}',
                      transform=ax1.transAxes, fontsize='x-small', style='italic',
                      bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
-        else:
-            # If a cell is insignificant, but we are plotting everything, there are some extra things we want to show
 
-            latent_percentile = latent_auroc_data.loc[odor]['percentiles']
-            evoked_latent_start = response_duration
-            evoked_latent_end = evoked_latent_start + response_duration
-
-            ax1.text(0.015, 0.02, f'On Time AUROC Percentile: {str(round(percentile * 100, 4))}',
-                     transform=ax1.transAxes, fontsize='x-small', style='italic',
-                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
-            ax1.text(0.015, 0.08, f'Latent AUROC Percentile: {str(round(latent_percentile * 100, 4))}',
-                     transform=ax1.transAxes, fontsize='x-small', style='italic',
-                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 3})
-
-            latent_rectangle = mpatches.Rectangle((evoked_latent_start, y_min), (evoked_latent_end - evoked_latent_start),
-                                                  y_max,
-                                                  alpha=0.3, facecolor='magenta')
-            ax1.add_patch(latent_rectangle)
 
         baseline_rectangle = mpatches.Rectangle((baseline_start, y_min),
                                                 baseline_end - baseline_start,
@@ -184,23 +161,21 @@ def _plot_odor_traces(FV_data: pd.DataFrame, odor_list: pd.Series, response_dura
         plt.subplots_adjust(bottom=0.15)
 
         fig_name = f'{cell_name}-{odor}.pdf'
-        fig_save_path = save_path.path.joinpath(fig_name)
+        fig_save_path = save_path.joinpath(fig_name)
         fig.savefig(fig_save_path, dpi=300)
 
 
-def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, significance_matrix: pd.DataFrame,
-                         FV_data: pd.DataFrame, cell_names, odor_list: pd.Series, response_duration: int,
-                         project_folder: ProjectFolder, all_cells: bool = False,
-                         num_workers: int = None):
+def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, FV_data: pd.DataFrame, response_duration: int,
+                         project_folder: ProjectFolder, all_cells: bool = False, num_workers: int = None):
 
-    data_iterator = plotting_data_generator(cell_names, combined_data_shift, AUROC_data, significance_matrix)
-    plot_function = partial(_plot_odor_traces,
-                            FV_data, odor_list, response_duration, project_folder, all_cells)
+    data_iterator = plotting_data_generator(combined_data_shift, AUROC_data)
+    plot_function = partial(_plot_odor_traces, FV_data, response_duration, project_folder, all_cells)
 
-    with tqdm(desc=f"Plotting Cell Traces: ", total=len(cell_names)) as pbar:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as ex:
-            for _ in ex.map(plot_function, data_iterator):
-                pbar.update()
+    # with tqdm(desc=f"Plotting Cell Traces: ", total=len(cell_names)) as pbar:
+    #     with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as ex:
+    #         for _ in ex.map(plot_function, data_iterator):
+    #             pbar.update()
+    process_map(plot_function, data_iterator, max_processes=num_workers, desc="Plotting Cell Traces: ")
 
 
 def _plot_auroc_distribution(auroc_dir, plot_all, cell_data):
