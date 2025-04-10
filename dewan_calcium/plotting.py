@@ -83,7 +83,6 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
     cell_df = cell_df.T[cell_name]
     odor_list = cell_df.columns.get_level_values(0).unique()
     odor_list = [odor for odor in odor_list if odor != 'MO']
-    # significance_values = combo_auroc_data.loc['significance_chart']
     _, MO_baseline = trace_tools.get_evoked_baseline_means(
         cell_df['MO'], FV_data['MO'], response_duration, None
     )
@@ -176,7 +175,7 @@ def _plot_odor_traces(FV_data: pd.DataFrame, response_duration: int, project_fol
 
 def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, FV_data: pd.DataFrame, response_duration: int,
                          project_folder: ProjectFolder, all_cells: bool = False, num_workers: int = None):
-
+    num_cells = len(combined_data_shift.columns.get_level_values(0).unique())
     data_iterator = plotting_data_generator(combined_data_shift, AUROC_data)
     plot_function = partial(_plot_odor_traces, FV_data, response_duration, project_folder, all_cells)
 
@@ -184,7 +183,7 @@ def pooled_cell_plotting(combined_data_shift, AUROC_data: pd.DataFrame, FV_data:
     #     with concurrent.futures.ProcessPoolExecutor(max_workers=num_workers) as ex:
     #         for _ in ex.map(plot_function, data_iterator):
     #             pbar.update()
-    process_map(plot_function, data_iterator, max_processes=num_workers, desc="Plotting Cell Traces: ")
+    process_map(plot_function, data_iterator, max_workers=num_workers, desc="Plotting Cell Traces: ", total=num_cells)
 
 
 def _plot_auroc_distribution(auroc_dir, plot_all, cell_data):
