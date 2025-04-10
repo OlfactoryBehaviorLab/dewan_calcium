@@ -119,6 +119,11 @@ class Dir:
 
         self._create()
 
+
+    def joinpath(self, addition):
+        return self.path.joinpath(addition)
+
+
     def _create(self):
         if not self.path.exists():
             self.path.mkdir(exist_ok=True)
