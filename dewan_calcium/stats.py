@@ -5,6 +5,7 @@ from scipy.stats import wilcoxon
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import pairwise_distances, pairwise
 
+from .helpers import trace_tools
 
 def sparseness(iterable: int, means: np.array) -> float:
     """
@@ -85,8 +86,14 @@ def _calc_wilcoxon(baseline_periods, evoked_periods, bin_pairs):
     return pd.Series(wilcoxon_results)
 
 
-def binned_wilcoxon(odor_df, bin_pairs, baseline_duration, evoked_duration):
-    baseline_values = odor_df.iloc[:, :baseline_duration].values
-    evoked_values = odor_df.iloc[:, baseline_duration: (evoked_duration + baseline_duration + 1 )].values
+def binned_wilcoxon(odor_df, bin_pairs, FV_timestamps, baseline_duration, evoked_duration):
+    odor = odor_df.index.get_level_values(1).unique()
+    odor_timestamps = FV_timestamps[odor]
 
-    return _calc_wilcoxon(baseline_values, evoked_values, bin_pairs)
+    # baseline_values = odor_df.iloc[:, :baseline_duration].values
+    # evoked_values = odor_df.iloc[:, baseline_duration: (evoked_duration + baseline_duration + 1 )].values
+
+    baseline_values, _ = trace_tools.collect_trial_data(odor_df.T, odor_timestamps, None, baseline_duration )
+    evoked_values, _ = trace_tools.collect_trial_data(odor_df.T, odor_timestamps, evoked_duration, None )
+
+    return _calc_wilcoxon(baseline_values.values, evoked_values.values, bin_pairs)
