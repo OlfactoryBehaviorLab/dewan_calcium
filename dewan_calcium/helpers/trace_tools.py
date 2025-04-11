@@ -38,6 +38,7 @@ def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, duration: i
         evoked_indices.append((evoked_trial_indices[0], evoked_trial_indices[-1]))
 
     evoked_data = pd.DataFrame(evoked_data)
+    evoked_data = evoked_data.dropna(axis=1)
     return evoked_data, evoked_indices
 
 
