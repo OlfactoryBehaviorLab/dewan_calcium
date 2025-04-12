@@ -60,16 +60,10 @@ def _plot_evoked_MO_means(ax3: plt.Axes, MO_means, evoked_means):
 def _plot_evoked_baseline_means(ax2: plt.Axes, baseline_means, evoked_means):
     x_val = [[1], [2]]
     x_vals = np.tile(x_val, (1, len(baseline_means)))
-    ax2.set_title('Means', fontsize=10)
-
     ax2.plot(x_vals, (baseline_means, evoked_means), '-o', linewidth=2)
 
+    ax2.set_title('Means', fontsize=10)
     ax2.set_xticks([1, 2], labels=['Baseline', 'Evoked'], rotation=45, ha='right', )
-
-    # ax2.yaxis.tick_right()
-    # y_min, y_max = genminmax(np.hstack((baseline_means, evoked_means)), 0.05)
-    # ax2.set_ylim([y_min, y_max])
-
     ax2.set_xlim([0.8, 2.2])
 
     baseline_mean = np.mean(baseline_means)
