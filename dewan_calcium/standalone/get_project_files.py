@@ -40,7 +40,7 @@ def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     if exp_type == 'Concentration' or exp_type == 'Identity':
         return_dict['folder'] = animal_dir
 
-        data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_shift.pickle')
+        data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_dff.pickle')
         FV_timestamps = animal_dir.glob('Analysis/Preprocessed/*FV_timestamps*.pickle')
         significance_file = animal_dir.glob('Analysis/Output/*SignificanceTable.xlsx')
         odor_data_file = animal_dir.glob('Raw_Data/*List*.xlsx')
