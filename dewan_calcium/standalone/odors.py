@@ -10,6 +10,9 @@ def normalize_odors(odor_list, experiment_type, cell_class):
             _odor = if_sep_remove(odor, ['-', '_'])
             normalized.append(if_two_remove(_odor))
 
+    if not normalized:
+        return odor_list
+
     return normalized
 
 def if_two_remove(odor):
