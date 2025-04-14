@@ -302,14 +302,12 @@ def combine(files: list, experiment_type, cell_class, filter_significant=True, d
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
         block_order = get_block_maps(blocks, trial_order)
         trial_order = odors.normalize_odors(trial_order, experiment_type, cell_class)
-        trial_labels = zip(trial_order, block_order)
+        trial_labels = list(zip(trial_order, block_order))
         new_numbers = generate_new_numbers(num_new_cells, good_cells)
         cell_trial_labels = itertools.product(new_numbers, trial_labels)
-        cell_trial_tuples = [tuple([item[0]]) + item[1] for item in cell_trial_labels]
-
-
+        cell_trial_tuples = [tuple([item[0]]) + item[1] + tuple([name]) for item in cell_trial_labels]
         # Generate new labels for this set of cells
-        new_multiindex = pd.MultiIndex.from_tuples(cell_trial_tuples, sortorder=None, names=['Cells', 'Trials', 'Blocks'])
+        new_multiindex = pd.MultiIndex.from_tuples(cell_trial_tuples, sortorder=None, names=['Cells', 'Trials', 'Blocks', 'Animal'])
         cell_data.columns = new_multiindex
         # Create new multiindex with new cell labels and block and apply it to the new data
 
