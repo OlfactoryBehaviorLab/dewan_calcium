@@ -220,6 +220,7 @@ class RawDataDir(Dir):
                 return
             elif self.parent.project_type == 'ODOR':
                 odor_list = list(self.path.glob('*.xlsx'))
+                odor_list = [path for path in odor_list if 'Blocks' not in path.name]
                 if self._check_file_not_found(odor_list, 'Odor List'):
                     self.odorlist_path = odor_list[0]
             elif self.parent.project_type == 'EPM':
