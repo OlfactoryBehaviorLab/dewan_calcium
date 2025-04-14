@@ -325,7 +325,7 @@ def add_odor_class(combined_data, odor_classes):
     for i, orig_tuple in enumerate(combined_data.columns.values):
         odor_class = odor_classes[odors[i]]
         new_columns.append(orig_tuple + tuple([odor_class]))
-    new_index = pd.MultiIndex.from_tuples(new_columns, names=['Cells', 'Odor', 'Block', 'Class'])
+    new_index = pd.MultiIndex.from_tuples(new_columns, names=['Cells', 'Odor', 'Block', 'Animal', 'Class'])
     combined_data.columns = new_index
     original_columns = combined_data.columns
 
