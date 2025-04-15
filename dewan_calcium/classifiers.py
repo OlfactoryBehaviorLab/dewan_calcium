@@ -219,6 +219,10 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
     return mean_score_df, split_score_df, all_confusion_mats, all_y_vals
 
 
+def _per_cell_generator(combined_data_dff, bins):
+    for bin in bins:
+        yield combined_data_dff[bin]
+
 def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
     iterator = np.arange(n_repeats)
     loop_message = 'Running Repeat SVM Ensemble Decoding: '
