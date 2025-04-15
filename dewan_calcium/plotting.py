@@ -425,10 +425,12 @@ def plot_avg_cm(_labels, average_odor_cm, new_linear_cmap, fig_save_path, title_
     return avg_cm.figure_, avg_cm.ax_
 
 
-def plot_all_avg_dff(dff_for_bin, cell_names, odor_names, _bin, min_val, max_val, fig_save_path):
-    fig, ax = plt.subplots(1, len(_bin), figsize=(20,20) ,sharey=True,
-                           gridspec_kw={'hspace': 0, 'wspace':0.1}, layout='compressed')
-    imgs = []
+def plot_all_avg_dff(combined_data_dff, fig_save_path):
+    import matplotlib
+    matplotlib.rcParams['pdf.fonttype'] = 42
+    matplotlib.rcParams['ps.fonttype'] = 42
+
+    fig, ax = plt.subplots(figsize=(12,30))
 
     # cm = LinearSegmentedColormap.from_list('my_gradient', (
     # # Edit this gradient at https://eltos.github.io/gradient/#0:FF0008-7.5:830307-15:000000-25:000000-32.5:0A7000-100:18FF00
@@ -439,36 +441,25 @@ def plot_all_avg_dff(dff_for_bin, cell_names, odor_names, _bin, min_val, max_val
     # (0.325, (0.039, 0.439, 0.000)),
     # (1.000, (0.094, 1.000, 0.000))))
 
-    #VGAT
+    # New Orleans (VGLUT ID)
     cm = LinearSegmentedColormap.from_list('my_gradient', (
-    # Edit this gradient at https://eltos.github.io/gradient/#0:FF0008-5.5:B70105-9:000000-13:000000-16.5:053200-50:0A6600-100:18FF00
-    (0.000, (1.000, 0.000, 0.031)),
-    (0.055, (0.718, 0.004, 0.020)),
-    (0.090, (0.000, 0.000, 0.000)),
-    (0.130, (0.000, 0.000, 0.000)),
-    (0.165, (0.020, 0.196, 0.000)),
-    (0.500, (0.039, 0.400, 0.000)),
-    (1.000, (0.094, 1.000, 0.000))))
+    # Edit this gradient at https://eltos.github.io/gradient/#0:5D2A9B-19.3:C18FFD-25:FFFFFF-39:FFFFFF-44.5:58C153-100:008C00
+    (0.000, (0.365, 0.165, 0.608)),
+    (0.193, (0.757, 0.561, 0.992)),
+    (0.250, (1.000, 1.000, 1.000)),
+    (0.390, (1.000, 1.000, 1.000)),
+    (0.445, (0.345, 0.757, 0.325)),
+    (1.000, (0.000, 0.549, 0.000))))
 
-    # cm = LinearSegmentedColormap.from_list('my_gradient', (
-    # # Edit this gradient at https://eltos.github.io/gradient/#0:00FDFF-9.7:007B7C-15:000000-25:000000-32.5:6A4300-100:FFA100
-    # (0.000, (0.000, 0.992, 1.000)),
-    # (0.097, (0.000, 0.482, 0.486)),
-    # (0.150, (0.000, 0.000, 0.000)),
-    # (0.250, (0.000, 0.000, 0.000)),
-    # (0.325, (0.416, 0.263, 0.000)),
-    # (1.000, (1.000, 0.631, 0.000))))
+    im = ax.imshow(combined_data_dff, aspect=.25, vmax=0.1, vmin=-0.05, cmap=cm)
+    ax.set_xticks(np.arange(combined_data_dff.shape[1]), labels=[])
+    ax.set_yticks(np.arange(combined_data_dff.shape[0]), labels=[])
+    _ = ax.vlines(x=[3.5, 7.5, 11.5, 15.5, 19.5], ymin=0, ymax=combined_data_dff.shape[0]-1, linestyles='--', color='k')
+    _ = fig.colorbar(im, ticks=np.linspace(-0.05, 0.1, 7, endpoint=True), shrink=0.5, aspect=40)
+    plt.tight_layout()
 
-    for i, data in enumerate(dff_for_bin):
-        im = ax[i].imshow(data, aspect='auto', vmin=-1, vmax=8, cmap=cm)
-        imgs.append(im)
-        ax[i].set_xticks([0, 19], labels=[1, 20])
-        ax[i].set_title(f'{_bin[i][0] * 100} - {_bin[i][1] * 100} ms')
-    fig.suptitle('Binned Average dF/F', fontsize=24, va='bottom')
-    fig.colorbar(imgs[-1], ax=ax)
-    plt.show()
     output_path = fig_save_path.joinpath('combined_DFF.pdf')
-    fig.savefig(output_path, dpi=600)
+    fig.savefig(output_path, dpi=600, transparent=True)
 
 
 def plot_avg_dff(dff_for_bin, cell_names, odor_names, _bin, fig_save_path):
