@@ -231,6 +231,12 @@ def save_auroc_data(significance_table, auroc_values_df, AUROC_data, file_header
     _write_excel(None, output_dir, significance_table_file_name, handle=_handle)
 
 
+def save_sorted_significance_table(significance_table, output_dir):
+    significance_table_file_name = f'SignificanceTable_sorted.xlsx'
+    _handle = lambda writer: _write_significance_table(significance_table, writer)
+    _write_excel(None, output_dir, significance_table_file_name, handle=_handle)
+
+
 def _write_wilcoxon_data(wilcoxon_total, wilcoxon_binned, cell_bins, p_val, corrected_p_val, writer):
     wilcoxon_total.to_excel(writer, sheet_name='Evoked Period')
     wilcoxon_binned.to_excel(writer, sheet_name='Bins')
