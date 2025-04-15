@@ -112,3 +112,71 @@ def dff(combined_data: pd.DataFrame, FV_timestamps: pd.DataFrame, num_baseline_f
         dff_combined = pd.concat([dff_combined, groupby_odor.T], axis=1)
 
     return dff_combined
+
+
+def dff_magnitude_means(combined_data_dff, labels, BASELINE_FRAMES, ODOR_FRAMES, subset: int = 0):
+    cell_medians = {}
+    cell_means = {}
+    nonzero_cell_medians = {}
+    nonzero_cell_means = {}
+    cell_odor_orders = []
+
+    cells = combined_data_dff.groupby('Cells')
+
+    for cell_name, cell_df in cells:
+        odor_medians = []
+        odor_means = []
+        nonzero_odor_medians = []
+        nonzero_odor_means = []
+        odor_order = []
+
+        odors = cell_df.groupby('Odor')
+
+        for i, (odor_name, odor_data) in enumerate(odors):
+            odor_trial_means = odor_data.iloc[:, BASELINE_FRAMES: BASELINE_FRAMES + ODOR_FRAMES].mean(
+                axis=1)  # odor evoked means for each trial
+            baseline_mean = odor_data.iloc[:, :BASELINE_FRAMES].mean(axis=1)  # baseline means for each trial
+            diff = odor_trial_means.subtract(baseline_mean, axis=0)  # subtract the baseline from odor activity
+
+            _mean = diff.mean()
+            _median = diff.median()
+
+            nonzero_odor_means.append(_mean)
+            nonzero_odor_medians.append(_median)
+
+            # What happens if you zero the values BEFORE taking the mean?
+            if _mean < 0:
+                _mean = 0
+            if _median < 0:
+                _median = 0
+
+            odor_means.append(_mean)
+            odor_medians.append(_median)
+            odor_order.append(odor_name)
+
+        cell_means[cell_name] = odor_means
+        cell_medians[cell_name] = odor_medians
+        nonzero_cell_medians[cell_name] = nonzero_odor_medians
+        nonzero_cell_means[cell_name] = nonzero_odor_means
+        cell_odor_orders.append(odor_order)
+
+    odors = cell_odor_orders[0]
+
+    cell_means = pd.DataFrame(cell_means, index=odors)
+    cell_medians = pd.DataFrame(cell_medians, index=odors)
+    nonzero_cell_medians = pd.DataFrame(nonzero_cell_medians, index=odors)
+    nonzero_cell_means = pd.DataFrame(nonzero_cell_means, index=odors)
+    cell_means = cell_means.loc[labels]
+    cell_medians = cell_medians.loc[labels]
+
+    nonzero_cell_order = nonzero_cell_means.median().sort_values(ascending=False).index
+    nonzero_cell_means = nonzero_cell_means.loc[labels]
+    nonzero_cell_means = nonzero_cell_means[nonzero_cell_order]
+    nonzero_cell_medians = nonzero_cell_medians.loc[labels]
+    nonzero_cell_medians = nonzero_cell_medians[nonzero_cell_order]
+
+    if subset > 0:
+        nonzero_cell_means = nonzero_cell_means.iloc[:, np.r_[0:subset, -subset:0]]
+        nonzero_cell_medians = nonzero_cell_medians.iloc[:, np.r_[0:subset, -subset:0]]
+
+    return cell_means, cell_medians, nonzero_cell_means, nonzero_cell_medians
