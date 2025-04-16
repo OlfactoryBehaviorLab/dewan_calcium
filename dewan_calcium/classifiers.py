@@ -50,7 +50,20 @@ class CorrelationClassifier:
 
 
     def predict(self, x_test):
-        pass
+        vectorized_predict_class = np.vectorize(self._predict_class)
+        self.predicted_labels = vectorized_predict_class(x_test)
+
+
+    def score(self, y_test):
+        if not self.predicted_labels:
+            raise ValueError('Predictions must be run on the test dataset before the classifier score can be calculated')
+
+        correct_results = y_test == self.predicted_labels
+        num_correct = correct_results.sum()
+        percent_correct = round(num_correct / len(y_test))
+        cm = confusion_matrix(y_test, self.predicted_labels, labels=self.labels)
+
+        return percent_correct, cm
 
 
     def _predict_class(self, sample):
@@ -69,8 +82,7 @@ class CorrelationClassifier:
         if shared_max_coeff.sum() > 1:
             # we now need to ensure there is only one; for simplicity, we will randomly choose
             possible_labels = max_corr_coeff.index[shared_max_coeff]
-
-            pass
+            predicted_class = self.rng.choice(possible_labels, 1)
         else:
             predicted_class = max_corr_coeff.index[-1]
 
