@@ -10,12 +10,71 @@ import itertools
 
 import numpy as np
 import pandas as pd
+from scipy.stats import pearsonr
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
 
+
 from dewan_calcium import plotting
+
+
+class CorrelationClassifier:
+
+    labels = []
+    templates = {}
+    test_results = {}
+    entropy_seed = []
+    current_entropy = []
+    rng = None
+
+
+    def __init__(self, entropy_seed=None, rng=None):
+        if rng is None:
+            self._init_rng(entropy_seed)
+        else:
+            self.rng = rng
+
+    def train(self, x_train: pd.DataFrame, y_train: pd.Series):
+        self.labels = y_train.unique()
+        for label in self.labels:
+            _mean_vector = x_train.loc[label].mean(axis=0)  # get one mean vector
+            self.templates[label] = _mean_vector
+
+
+    def predict(self, x_test):
+        pass
+
+
+    def _predict_class(self, sample):
+        sample_corr_coeff = pd.Series(index=self.labels)
+        for label in self.labels:
+            template_vector = self.templates[label]
+            correlation_coeff, _ = round(pearsonr(sample, template_vector), 3)  # for our sanity, round to 3 places
+            sample_corr_coeff[label] = correlation_coeff
+
+        max_corr_coeff = sample_corr_coeff.sort_values(ascending=False)  # Largest at the top
+        largest_corr_coeff = max_corr_coeff.iloc[0]
+
+        shared_max_coeff = (max_corr_coeff == largest_corr_coeff)
+        # Check to see if any other labels share the largest (by sorting) correlation coefficient
+        # If there are multiple, we now have to choose.
+        if shared_max_coeff.sum() > 1:
+            # we now need to ensure there is only one; for simplicity, we will randomly choose
+            possible_labels = max_corr_coeff.index[shared_max_coeff]
+
+            pass
+        else:
+            predicted_class = max_corr_coeff.index[-1]
+
+        return predicted_class, sample_corr_coeff
+
+
+    def _init_rng(self, entropy_seed=None):
+        seed_generator = np.random.SeedSequence(entropy=entropy_seed)
+        self.rng = np.random.default_rng(seed_generator)
+        self.current_entropy = seed_generator.entropy
 
 def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20, class_labels: list = None):
     """
@@ -322,6 +381,7 @@ def save_and_plot_CM(window_averaged_cms, cm_window, window_name, windows, label
     average_odor_cm_df.to_excel(df_save_path, index=True)
 
     return fig, ax
+
 
 def add_odor_class(combined_data, odor_classes):
     new_columns = []
