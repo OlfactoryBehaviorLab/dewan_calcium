@@ -5,6 +5,9 @@ Date Created: 10/30/2024
 
 Most of the code in this module is either directly from, or heavily influenced by, code from
 The Vincis Lab at Florida State University (https://github.com/vincisLab/thermalGC)
+
+CorrelationClassifier is heavy influenced and based on the Neural Decoding Toolbox by Ethan Meyers (emeyers@mit.edu)
+More information can be found at <https://readout.info/>
 """
 import itertools
 
@@ -21,7 +24,31 @@ from dewan_calcium import plotting
 
 
 class CorrelationClassifier:
+    """
+    Classifier that computes 'template' vectors for each unique label. Predictions are made by computing the pearson correlation coefficient
+    between the test sample and each template vector. The label from the template-test pair with the largest correlation coefficient
+    is chosen as the predicted label. In the event of a tie, a random label is chosen from the tied results.
 
+    This class is heavily influenced by and based on the max_correlation_coefficient_CL class from
+    the Neural Decoding Toolbox by Ethan Meyers (emeyers@mit.edu). Original license found below:
+
+    %     This code is part of the Neural Decoding Toolbox.
+    %     Copyright (C) 2011 by Ethan Meyers (emeyers@mit.edu)
+    %
+    %     This program is free software: you can redistribute it and/or modify
+    %     it under the terms of the GNU General Public License as published by
+    %     the Free Software Foundation, either version 3 of the License, or
+    %     (at your option) any later version.
+    %
+    %     This program is distributed in the hope that it will be useful,
+    %     but WITHOUT ANY WARRANTY; without even the implied warranty of
+    %     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    %     GNU General Public License for more details.
+    %
+    %     You should have received a copy of the GNU General Public License
+    %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    """
     entropy_seed = []
     current_entropy = []
     rng = None
@@ -39,6 +66,7 @@ class CorrelationClassifier:
 
         if labels:
             self.labels=labels
+
 
     def train(self, x_train: pd.DataFrame, y_train: pd.Series):
         if not self.labels:
@@ -93,6 +121,7 @@ class CorrelationClassifier:
         seed_generator = np.random.SeedSequence(entropy=entropy_seed)
         self.rng = np.random.default_rng(seed_generator)
         self.current_entropy = seed_generator.entropy
+
 
 def _run_svm(traces: pd.DataFrame, trial_labels: pd.Series, test_percentage: float = 0.2, num_splits: int = 20, class_labels: list = None):
     """
