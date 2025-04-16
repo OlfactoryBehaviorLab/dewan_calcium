@@ -22,22 +22,28 @@ from dewan_calcium import plotting
 
 class CorrelationClassifier:
 
-    labels = []
-    templates = {}
-    test_results = {}
     entropy_seed = []
     current_entropy = []
     rng = None
 
+    labels = []
+    templates = {}
+    predicted_labels = []
 
-    def __init__(self, entropy_seed=None, rng=None):
+
+    def __init__(self, labels=None, entropy_seed=None, rng=None):
         if rng is None:
             self._init_rng(entropy_seed)
         else:
             self.rng = rng
 
+        if labels:
+            self.labels=labels
+
     def train(self, x_train: pd.DataFrame, y_train: pd.Series):
-        self.labels = y_train.unique()
+        if not self.labels:
+            self.labels = y_train.unique()
+
         for label in self.labels:
             _mean_vector = x_train.loc[label].mean(axis=0)  # get one mean vector
             self.templates[label] = _mean_vector
