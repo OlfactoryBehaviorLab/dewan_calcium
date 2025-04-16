@@ -411,10 +411,17 @@ def plot_svm_performance(mean_performance, shuffle_mean_performance, CI, shuffle
     return fig
 
 
-def plot_avg_cm(_labels, average_odor_cm, new_linear_cmap, fig_save_path, title_with_index):
+def plot_avg_cm(_labels, average_odor_cm, fig_save_path, title_with_index):
+    cm = LinearSegmentedColormap.from_list('my_gradient', (
+        # Edit this gradient at https://eltos.github.io/gradient/#0:093391-28.4:019C5C-50:66B946-85:D5FF00
+        (0.000, (0.035, 0.200, 0.569)),
+        (0.284, (0.004, 0.612, 0.361)),
+        (0.500, (0.400, 0.725, 0.275)),
+        (0.850, (0.835, 1.000, 0.000)),
+        (1.000, (0.835, 1.000, 0.000))))
 
     avg_cm = metrics.ConfusionMatrixDisplay(average_odor_cm, display_labels=_labels, )
-    avg_cm.plot(include_values=False, im_kw={'vmin':0, 'vmax':1, 'cmap': new_linear_cmap})
+    avg_cm.plot(include_values=False, im_kw={'vmin':0, 'vmax':1, 'cmap': cm})
 
 
     avg_cm.ax_.set_title(title_with_index)
