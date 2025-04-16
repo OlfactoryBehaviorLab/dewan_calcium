@@ -13,13 +13,11 @@ import itertools
 
 import numpy as np
 import pandas as pd
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
-
-
 from dewan_calcium import plotting
 
 
@@ -56,7 +54,9 @@ class CorrelationClassifier:
     labels = []
     templates = {}
     predicted_labels = []
+    all_correlation_coeff = []
 
+    random_guesses = 0
 
     def __init__(self, labels=None, entropy_seed=None, rng=None):
         if rng is None:
@@ -78,9 +78,12 @@ class CorrelationClassifier:
 
 
     def predict(self, x_test):
-        vectorized_predict_class = np.vectorize(self._predict_class)
-        self.predicted_labels = vectorized_predict_class(x_test)
-
+        self.all_correlation_coeff = pd.DataFrame(columns=self.labels, index=np.arange(x_test.shape[0]))
+        self.predicted_labels = []
+        for i, (label, row) in enumerate(x_test.iterrows()):
+            predicted_class, sample_corr_coeff = self._predict_class(row)
+            self.predicted_labels.append(predicted_class)
+            self.all_correlation_coeff.iloc[i] = sample_corr_coeff
 
     def score(self, y_test):
         if not self.predicted_labels:
@@ -88,7 +91,7 @@ class CorrelationClassifier:
 
         correct_results = y_test == self.predicted_labels
         num_correct = correct_results.sum()
-        percent_correct = round(num_correct / len(y_test))
+        percent_correct = round(num_correct / len(y_test), 3)
         cm = confusion_matrix(y_test, self.predicted_labels, labels=self.labels)
 
         return percent_correct, cm
@@ -98,21 +101,22 @@ class CorrelationClassifier:
         sample_corr_coeff = pd.Series(index=self.labels)
         for label in self.labels:
             template_vector = self.templates[label]
-            correlation_coeff, _ = round(pearsonr(sample, template_vector), 3)  # for our sanity, round to 3 places
+            correlation_coeff = pearsonr(sample, template_vector).statistic  # for our sanity, round to 3 places
             sample_corr_coeff[label] = correlation_coeff
 
-        max_corr_coeff = sample_corr_coeff.sort_values(ascending=False)  # Largest at the top
+        max_corr_coeff = sample_corr_coeff.abs().sort_values(ascending=False)  # Largest at the top
         largest_corr_coeff = max_corr_coeff.iloc[0]
-
         shared_max_coeff = (max_corr_coeff == largest_corr_coeff)
         # Check to see if any other labels share the largest (by sorting) correlation coefficient
         # If there are multiple, we now have to choose.
         if shared_max_coeff.sum() > 1:
             # we now need to ensure there is only one; for simplicity, we will randomly choose
+            print('Random Guess!')
             possible_labels = max_corr_coeff.index[shared_max_coeff]
-            predicted_class = self.rng.choice(possible_labels, 1)
+            predicted_class = self.rng.choice(possible_labels, 1)[0]
+            self.random_guesses = self.random_guesses + 1
         else:
-            predicted_class = max_corr_coeff.index[-1]
+            predicted_class = max_corr_coeff.index[0]
 
         return predicted_class, sample_corr_coeff
 
@@ -328,6 +332,7 @@ def single_neuron_decoding(combined_data: pd.DataFrame, test_percentage=0.2, num
 def _per_cell_generator(combined_data_dff, bins):
     for bin in bins:
         yield combined_data_dff[bin]
+
 
 def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
     iterator = np.arange(n_repeats)
