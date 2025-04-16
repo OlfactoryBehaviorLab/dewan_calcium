@@ -6,7 +6,7 @@ Date Created: 10/30/2024
 Most of the code in this module is either directly from, or heavily influenced by, code from
 The Vincis Lab at Florida State University (https://github.com/vincisLab/thermalGC)
 """
-import itertools
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,8 @@ from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from tqdm.auto import tqdm, trange
+from tqdm.contrib.concurrent import process_map
+
 
 from dewan_calcium import plotting
 
@@ -223,6 +225,7 @@ def _per_cell_generator(combined_data_dff, bins):
     for bin in bins:
         yield combined_data_dff[bin]
 
+
 def ensemble_decoding(z_scored_combined_data, n_repeats=50, test_percentage=.2, num_splits=20, class_labels=None):
     iterator = np.arange(n_repeats)
     loop_message = 'Running Repeat SVM Ensemble Decoding: '
@@ -239,6 +242,22 @@ def sliding_window_ensemble_decoding(z_scored_combined_data, window_size=2, test
 
     return _decode_ensemble(z_scored_combined_data, test_percentage, num_splits, windows, loop_message,
                             window=True, class_labels=class_labels)
+
+
+def pooled_neuron_decoding(combined_data, run_order, class_labels, test_percentage=0.2, num_splits=20, num_repeats=10, max_workers=20):
+    data_generator = _per_cell_generator(combined_data, run_order)
+    partial_function = partial(
+        ensemble_decoding,
+        class_labels=class_labels,
+        n_repeats=num_repeats,
+        num_splits=num_splits,
+        test_percentage=test_percentage
+    )
+
+    results = process_map(partial_function, data_generator, desc='Cell Number SVM Decoding: ',
+                          total=len(run_order), max_workers=max_workers)
+    return results
+
 
 
 def shuffle_data(z_scored_combined_data):
@@ -274,6 +293,7 @@ def preprocess_for_plotting(mean_svm_scores, splits_v_repeat_df):
     CI_max = np.add(mean_performance, CI_scalar)
 
     return mean_performance, CI_min, CI_max
+
 
 
 def save_svm_data(mean_performance, shuffle_mean_performance, index, CI, shuffle_CI, svm_output_dir):
