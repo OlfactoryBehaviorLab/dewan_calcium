@@ -6,6 +6,8 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
+from scipy.stats import zscore
+
 
 def collect_trial_data(odor_df: pd.DataFrame, time_df: pd.DataFrame, duration: int, baseline=None):
     """
@@ -180,3 +182,19 @@ def dff_magnitude_means(combined_data_dff, labels, BASELINE_FRAMES, ODOR_FRAMES,
         nonzero_cell_medians = nonzero_cell_medians.iloc[:, np.r_[0:subset, -subset:0]]
 
     return cell_means, cell_medians, nonzero_cell_means, nonzero_cell_medians
+
+
+def _z_score_dff(cell_dff):
+    z_scored_data = zscore(cell_dff)
+    z_scored_data_df = pd.DataFrame(z_scored_data)
+    z_scored_data_df.columns = cell_dff.columns
+    z_scored_data_df.index = cell_dff.index
+
+    return z_scored_data_df
+
+
+def z_score_dff(combined_data_dff):
+    return combined_data_dff.T.groupby('Cells', group_keys=False).apply(_z_score_dff)
+
+
+
