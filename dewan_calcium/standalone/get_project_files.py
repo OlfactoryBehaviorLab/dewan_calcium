@@ -49,6 +49,8 @@ def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
         return_dict['folder'] = animal_dir
         data_file = animal_dir.glob('Analysis/Output/combined/*combined_data.pickle')
         # FV_timestamps = animal_dir.glob('Analysis/Preprocessed/*FV_timestamps*.pickle')
+    elif exp_type == 'EPM':
+        data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_dff.pickle')
     else:
         raise ValueError(f'{exp_type} not implemented!')
 
@@ -56,7 +58,7 @@ def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     return_dict['file'] = _check_file(data_file, 'combined data file')
 
 
-    if not exp_type == 'HFvFM':
+    if exp_type == 'Identity' or exp_type == 'Concentration':
         FV_timestamps_file = list(FV_timestamps)
         significance_file = list(significance_file)
         odor_data_file = list(odor_data_file)

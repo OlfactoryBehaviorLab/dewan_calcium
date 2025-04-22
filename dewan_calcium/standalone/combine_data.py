@@ -193,12 +193,34 @@ def write_hffm(combined_data, total_cells, num_animals, output_dir_root, file_st
     pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
     total_file = output_dir.joinpath(f"{file_stem}.txt")
 
+    print(f'Writing combined data for {file_stem} to disk...')
+
     with open(total_file, "w") as out_file:
         out_file.write(f'Number Total Animals: {num_animals}\n')
         out_file.write(f'Number Total Cells: {total_cells}\n')
-        print(f'Writing combined data for {file_stem} to disk...')
-        combined_data.to_pickle(str(pickle_path), compression={'method': 'xz'})
-        print(f'Combined data for {file_stem} successfully written to disk!')
+
+    combined_data.to_pickle(str(pickle_path), compression={'method': 'xz'})
+    print(f'Combined data for {file_stem} successfully written to disk!')
+
+
+def write_epm(combined_data, total_cells, num_animals, output_dir_root, file_stem):
+    import pickle
+
+    output_dir = output_dir_root.joinpath(file_stem)
+    output_dir.mkdir(exist_ok=True, parents=True)
+
+    pickle_path = output_dir.joinpath(f'{file_stem}-combined.pickle')
+    total_file = output_dir.joinpath(f"{file_stem}.txt")
+
+    print(f'Writing combined data for {file_stem} to disk...')
+    with open(total_file, "w") as out_file:
+        out_file.write(f'Number Total Animals: {num_animals}\n')
+        out_file.write(f'Number Total Cells: {total_cells}\n')
+
+    with open(pickle_path, 'wb') as pickle_file:
+        pickle.dump(combined_data, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+
+    print(f'Combined data for {file_stem} successfully written to disk!')
 
 
 def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
@@ -378,9 +400,39 @@ def combine_odor_data(files: list, cell_class, experiment_type, filter_significa
     return combined_data, combined_significance_table, stats, (good_cells, total_cells)
 
 
+def combine_EPM(files: list):
+    combined_data = {}
+    total_cells = 0
+    for file in tqdm(files):
+        animal_files = files[file]
+        combined_data_path = animal_files['file']
+
+        # Load Data
+        try:
+            cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
+        except Exception:  # yeah yeah I know; I can't remember how they were saved
+            cell_data = pd.read_pickle(combined_data_path)
+
+        uneeded_columns = ['Arms', 'Coordinates', 'Coordinate_Index']
+        cell_names = [col for col in cell_data.columns if col not in uneeded_columns]
+        cell_data = cell_data.loc[:, cell_names]
+        num_new_cells = len(cell_names)
+        new_numbers = generate_new_numbers(num_new_cells, total_cells)
+        new_cell_pairs = zip(cell_names, new_numbers)
+        for original, new in new_cell_pairs:
+            new_key = "".join(['C', str(new)])
+            combined_data[new_key] = cell_data.loc[:, original]
+        total_cells += num_new_cells
+
+    return combined_data, total_cells
+
+
 def main():
-    animal_types = ['VGLUT']
-    experiment_type = 'HFvFM'
+    animal_types = ['VGLUT', 'VGAT']
+    experiment_type = 'EPM'
+    input_dir = Path(r'R:\2_Inscopix\1_DTT\3_EPM')
+    output_dir_root = Path(r'R:\2_Inscopix\1_DTT\5_Combined\EPM')
+    output_dir_root.mkdir(exist_ok=True, parents=True)
 
     data_files = get_project_files.get_folders(input_dir, experiment_type, animal_types, error=False)
 
@@ -392,6 +444,9 @@ def main():
         if experiment_type == 'HFvFM':
             combined_data, total_cells = combine_HFvFM(_data_files)
             write_hffm(combined_data, total_cells, num_animals, output_dir_root, stem)
+        elif experiment_type == 'EPM':
+            combined_data, total_cells = combine_EPM(_data_files)
+            write_epm(combined_data, total_cells, num_animals, output_dir_root, stem)
         else:
             combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type)
             write_odor(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
