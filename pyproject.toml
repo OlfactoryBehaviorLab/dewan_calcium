@@ -30,7 +30,7 @@ jupyter = [
 epm = [
     'opencv-python==4.10.0.84',
     'roipoly @ git+https://github.com/jdoepfert/roipoly.py',
-    'shapely<2.0.6',
+    'shapely>=2.0.7',
 ]
 
 [build-system]
