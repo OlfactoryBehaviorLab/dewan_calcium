@@ -94,6 +94,25 @@ def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_
     return trials_per_arm, trial_stats
 
 
+def segment_by_arm(trimmed_trace_data):
+    uneeded_columns = ['Arms', 'Coordinates', 'Coordinate_Index']
+    needed_columns = [col for col in trimmed_trace_data.columns if col not in uneeded_columns]
+
+    arm_location = trimmed_trace_data['Arms']
+    unique_arms = arm_location.unique()
+    dff_per_cell = {}
+
+    for cell in needed_columns:
+        dff_per_arm = {}
+        for arm in unique_arms:
+            arm_mask = arm_location.values == arm
+            arm_dff = trimmed_trace_data.loc[arm_mask, needed_columns]
+            dff_per_arm[arm] = arm_dff
+        dff_per_cell[cell] = dff_per_arm
+
+    return dff_per_cell
+
+
 def calc_pseudotrial_stats(pseudotrials: dict, trial_stats_dict: dict) -> dict:
 
     arm_count = {}
