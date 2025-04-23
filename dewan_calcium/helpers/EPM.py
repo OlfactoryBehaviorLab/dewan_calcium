@@ -17,19 +17,11 @@ else:
 
 def subsample_pseudotrials(pseudotrials: dict, NUM_PSEUDOTRIALS: int, seed: Union[None, np.random.SeedSequence]):
     rng_generator = np.random.default_rng(seed)
-    trials = pseudotrials.keys()
 
     subsampled_pseudotrials = {}
 
-    for trial in trials:
-        trial_pseudotrials = pseudotrials[trial]
-        _num_pseudotrials = len(trial_pseudotrials)
-
-        if _num_pseudotrials < NUM_PSEUDOTRIALS:  # We do not want to select the same trial more than once
-            _num_pseudotrials = NUM_PSEUDOTRIALS
-
-        subsample = rng_generator.choice(trial_pseudotrials, _num_pseudotrials, replace=False, shuffle=False)
-
+    for trial, trial_pseudotrials in pseudotrials.items():
+        subsample = rng_generator.choice(trial_pseudotrials, NUM_PSEUDOTRIALS, replace=False, shuffle=False)
         subsampled_pseudotrials[trial] = subsample
 
     del rng_generator
@@ -92,6 +84,31 @@ def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_
         trial_stats['PSEUDOTRIAL_LEN_S'] = pseudotrial_len_s
 
     return trials_per_arm, trial_stats
+
+
+def new_get_pseudotrials(auroc_data, num_pseudotrials, pseudotrial_len_s, endoscope_framerate):
+    import math
+    pseudotrials = {}
+    pseudotrial_len_f = pseudotrial_len_s * endoscope_framerate
+
+    for cell_name, cell_data in auroc_data.items():
+        cell_pseudotrials = {}
+        for trial_name, trial_data in cell_data.items():
+            remainder = len(trial_data) % pseudotrial_len_f
+            _data = trial_data[:-remainder] # Trim data so it equally divides
+            _pseudotrials = int(len(_data) / pseudotrial_len_f)
+            # Number of pseudotrial_len_f length rows to divide data into
+            if _pseudotrials < num_pseudotrials:
+                # If any of the pseudotrial types don't have enough pseudotrials, we toss that cell
+                print(f'Cell {cell_name} has an insufficient number of {trial_name} pseudotrials. Discarding!')
+                break
+
+            cell_pseudotrials[trial_name] = np.reshape(_data, (_pseudotrials, -1))
+            # split data into the previously calculated pseudotrials
+        else:
+            pseudotrials[cell_name] = cell_pseudotrials
+
+    return pseudotrials
 
 
 def segment_by_arm(trimmed_trace_data):
