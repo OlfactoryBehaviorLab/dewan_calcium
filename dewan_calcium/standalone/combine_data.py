@@ -409,20 +409,30 @@ def combine_EPM(files: list):
 
         # Load Data
         try:
-            cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
+            raw_cell_data = pd.read_pickle(combined_data_path, compression={'method': 'xz'})
         except Exception:  # yeah yeah I know; I can't remember how they were saved
-            cell_data = pd.read_pickle(combined_data_path)
+            raw_cell_data = pd.read_pickle(combined_data_path)
 
         uneeded_columns = ['Arms', 'Coordinates', 'Coordinate_Index']
-        cell_names = [col for col in cell_data.columns if col not in uneeded_columns]
-        cell_data = cell_data.loc[:, cell_names]
+        cell_names = [col for col in raw_cell_data.columns if col not in uneeded_columns]
+
         num_new_cells = len(cell_names)
         new_numbers = generate_new_numbers(num_new_cells, total_cells)
         new_cell_pairs = zip(cell_names, new_numbers)
-        for original, new in new_cell_pairs:
-            new_key = "".join(['C', str(new)])
-            combined_data[new_key] = cell_data.loc[:, original]
         total_cells += num_new_cells
+        new_cell_names = ["".join(['C', str(num)]) for num in new_numbers]
+        new_cell_pairs = zip(cell_names, new_cell_names)
+        arm_location = raw_cell_data['Arms']
+        unique_arms = arm_location.unique()
+
+        for original_cell, new_cell in new_cell_pairs:
+            dff_per_arm = {}
+            for arm in unique_arms:
+                arm_mask = arm_location.values == arm
+                arm_dff = raw_cell_data.loc[arm_mask, original_cell]
+                dff_per_arm[arm] = arm_dff
+            combined_data[new_cell] = dff_per_arm
+
 
     return combined_data, total_cells
 
