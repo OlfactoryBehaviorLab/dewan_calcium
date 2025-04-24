@@ -14,6 +14,25 @@ if 'ipykernel' in sys.modules:
 else:
     from tqdm import tqdm
 
+def parse_auroc_return(auroc_returns):
+    auroc_return_dict = {}
+
+    for cell_data in auroc_returns:
+        cell_name = cell_data['name']
+        cell_data.pop('name', None)
+
+        auroc_val = round(cell_data['auroc'], 3)
+        direction_index = round(2 * (auroc_val - 0.5), 2)
+
+        cell_data['auroc'] = auroc_val
+        cell_data['direction_index'] = direction_index
+
+        auroc_return_dict[cell_name] = cell_data
+
+    EPM_df = pd.DataFrame(auroc_return_dict).T
+
+    return EPM_df
+
 
 def subsample_pseudotrials(pseudotrials: dict, NUM_PSEUDOTRIALS: int, seed: Union[None, np.random.SeedSequence]):
     rng_generator = np.random.default_rng(seed)
@@ -87,7 +106,6 @@ def get_pseudotrials(arm_indexes, all_transitions, pseudotrial_len_s, endoscope_
 
 
 def new_get_pseudotrials(auroc_data, num_pseudotrials, pseudotrial_len_s, endoscope_framerate):
-    import math
     pseudotrials = {}
     pseudotrial_len_f = pseudotrial_len_s * endoscope_framerate
 
@@ -103,7 +121,9 @@ def new_get_pseudotrials(auroc_data, num_pseudotrials, pseudotrial_len_s, endosc
                 print(f'Cell {cell_name} has an insufficient number of {trial_name} pseudotrials. Discarding!')
                 break
 
-            cell_pseudotrials[trial_name] = np.reshape(_data, (_pseudotrials, -1))
+            split_pseudotrials = np.reshape(_data, (_pseudotrials, -1))
+            pseudotrial_means = np.mean(split_pseudotrials, axis=1)
+            cell_pseudotrials[trial_name] = pseudotrial_means
             # split data into the previously calculated pseudotrials
         else:
             pseudotrials[cell_name] = cell_pseudotrials
