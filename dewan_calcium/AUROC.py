@@ -52,9 +52,11 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
 
         split_1, split_2 = train_test_split(all_vector, test_size=test_data_size)
         # Split all the data into two randomized pools
-
-        shuffled_auroc_value = compute_auc(split_1.values, split_2.values)
-        # Get the AUC between the two pools
+        if isinstance(split_1, pd.Series):
+            shuffled_auroc_value = compute_auc(split_1.values, split_2.values)
+            # Get the AUC between the two pools
+        else:
+            shuffled_auroc_value = compute_auc(split_1, split_2)
 
         shuffled_auroc.append(shuffled_auroc_value)
         # Save that AUC value
@@ -63,16 +65,21 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
 
 
 def _pseudotrial_auroc(pseudotrial_groups):
-    group_1, group_2 = pseudotrial_groups
-    cell, g1_data = group_1
-    _, g2_data = group_2
+    # group_1, group_2 = pseudotrial_groups
+    # cell, g1_data = group_1
+    # _, g2_data = group_2
+
+    cell, g1_data, g2_data = pseudotrial_groups
 
     try:
 
         auroc_value = compute_auc(g1_data, g2_data)
 
         # # # GET SHUFFLED DISTRIBUTION # # #
-        all_means = pd.concat((g1_data, g2_data), ignore_index=True)
+        if isinstance(g1_data, pd.Series):
+            all_means = pd.concat((g1_data, g2_data), ignore_index=True)
+        else:
+            all_means = np.hstack((g1_data, g2_data))
         auroc_shuffle = shuffled_distribution(all_means, len(g1_data))
         bounds = np.percentile(auroc_shuffle, [1, 99])
         lower_bound, upper_bound = bounds
