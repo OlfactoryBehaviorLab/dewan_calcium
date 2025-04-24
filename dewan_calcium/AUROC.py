@@ -98,11 +98,13 @@ def _pseudotrial_auroc(pseudotrial_groups):
         return {'name': cell, 'error': 'error'}
 
 
-def _EPM_generator(group1, group2):
-    g1_iterable = group1.items()
-    g2_iterable = group2.items()
+def _EPM_generator(means, group):
+    group1, group2 = group
+    for cell_name, cell_data in means.items():
+        g1_data = cell_data[group1]
+        g2_data = cell_data[group2]
 
-    return zip(g1_iterable, g2_iterable)
+        yield cell_name, g1_data, g2_data
 
 
 def _HFFM_generator(group1, group2):
@@ -113,12 +115,12 @@ def _HFFM_generator(group1, group2):
 
 
 def pooled_EPM_auroc(pseudotrial_means, groups, num_workers=8):
-    group1, group2 = _prep_EPM_data(pseudotrial_means, groups)
-
-    EPM_iterable = _EPM_generator(group1, group2)
+    #group1, group2 = _prep_EPM_data(pseudotrial_means, groups)
+    num_cells = len(pseudotrial_means.keys())
+    EPM_iterable = _EPM_generator(pseudotrial_means, groups)
 
     return_dicts = process_map(_pseudotrial_auroc, EPM_iterable, max_workers=num_workers,
-                               desc="Calculating auROC Statistics for EPM Cells", total=len(group1.columns))
+                               desc="Calculating auROC Statistics for EPM Cells", total=num_cells)
 
     return return_dicts
 
