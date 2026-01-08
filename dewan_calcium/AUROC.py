@@ -73,12 +73,13 @@ def _pseudotrial_auroc(pseudotrial_groups):
 
     try:
 
-        auroc_value = compute_auc(g1_data, g2_data)
 
         # # # GET SHUFFLED DISTRIBUTION # # #
         if isinstance(g1_data, pd.Series):
+            auroc_value = compute_auc(g1_data.to_numpy(), g2_data.to_numpy())
             all_means = pd.concat((g1_data, g2_data), ignore_index=True)
         else:
+            auroc_value = compute_auc(g1_data, g2_data)
             all_means = np.hstack((g1_data, g2_data))
         auroc_shuffle = shuffled_distribution(all_means, len(g1_data))
         bounds = np.percentile(auroc_shuffle, [1, 99])

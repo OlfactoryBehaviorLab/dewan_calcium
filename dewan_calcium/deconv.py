@@ -113,7 +113,7 @@ def pooled_deconvolution(combined_data, smoothing_kernel, chunksize=1, workers=8
 
     return_dicts = process_map(partial_function, iterable, chunksize=chunksize, max_workers=workers)
 
-    return _repackage_return(return_dicts)
+    return repackage_return(return_dicts)
 
 
 def repackage_return(return_dicts):
