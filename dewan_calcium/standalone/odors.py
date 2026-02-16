@@ -5,6 +5,10 @@ def normalize_odors(odor_list, experiment_type, cell_class):
             for odor in odor_list:
                 normalized.append(if_two_remove(odor))
 
+    if experiment_type == 'Social' and cell_class == 'OXTR':
+        for odor in odor_list:
+            normalized.append(odor.replace(" ", ""))
+
     elif experiment_type == 'Concentration':
         for odor in odor_list:
             _odor = if_sep_remove(odor, ['-', '_'])
