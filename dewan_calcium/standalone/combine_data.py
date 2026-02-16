@@ -15,7 +15,7 @@ ODOR_TIME_FRAMES = 20
 ODOR_TIME_S = 2
 
 
-def update_cell_names(combined_data, significance_table):
+def update_cell_names(combined_data, significance_table=None):
     """
     Function which will take each cell number, and add it to a string prepended with a 'C.' The dataframe can then be
     indexed by unique cell names instead of an integer. This reflects the nomenclature in the normal processing
@@ -33,7 +33,7 @@ def update_cell_names(combined_data, significance_table):
     string_names = [f'C{i}' for i in range(len(combined_data.columns.levels[0]))]
     combined_data.columns = combined_data.columns.set_levels(string_names, level=0)
 
-    if significance_table:
+    if significance_table is not None:
         string_names = [f'C{i}' for i in range(len(significance_table.columns))]
         significance_table.columns = string_names
 
@@ -299,6 +299,7 @@ def combine_odor_data(files: list, cell_class, experiment_type, filter_significa
     stats = {}
 
     for file in tqdm(files):
+        print(file)
         animal_stats = dict.fromkeys(['trials', 'MO', 'Buzzer', 'insig', 'good_cells', 'orig_cells'], [])
         animal_files = files[file]
         name = file
@@ -334,8 +335,15 @@ def combine_odor_data(files: list, cell_class, experiment_type, filter_significa
         num_orig_cells = len(orig_cells)
         animal_stats['orig_cells'] = num_orig_cells
 
+        # current_index = cell_data.columns
+        # new_index_tuples = []
+        # for item in current_index:
+        #     new_index_tuples.append((item[0], item[1].replace(" ", "")))
+
+
         # # Reset MultiIndex since we may have updated the odor list
         # new_index = pd.MultiIndex.from_product([orig_cells, odor_data], names=['Cells', 'Frames'])
+        # new_index = pd.MultiIndex.from_tuples(new_index_tuples, names=['Cells', 'Frames'])
         # cell_data.columns = new_index
 
         # Get good/bad trials
@@ -366,6 +374,9 @@ def combine_odor_data(files: list, cell_class, experiment_type, filter_significa
 
         cell_names = cell_data.columns.get_level_values(0).unique().values  # Get all the unique cells in the multiindex
         num_new_cells = len(cell_names)
+        if num_new_cells == 0:
+            print(f'Skipping {name}, as all cells have no responses!')
+            continue
         animal_stats['good_cells'] = num_new_cells
         trial_order = cell_data[cell_names[0]].columns.values
         # Get the order of the trials, all cells in this df share this order, so just use the first cell
@@ -438,10 +449,10 @@ def combine_EPM(files: list):
 
 
 def main():
-    animal_types = ['VGLUT', 'VGAT']
-    experiment_type = 'EPM'
-    input_dir = Path(r'R:\2_Inscopix\1_DTT\3_EPM')
-    output_dir_root = Path(r'R:\2_Inscopix\1_DTT\5_Combined\EPM')
+    animal_types = ['OXTR']
+    experiment_type = 'Social'
+    input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\4_Social_Odor')
+    output_dir_root = Path(r'R:\2_Inscopix\1_DTT\5_Combined\Social_Odor')
     output_dir_root.mkdir(exist_ok=True, parents=True)
 
     data_files = get_project_files.get_folders(input_dir, experiment_type, animal_types, error=False)
@@ -458,7 +469,7 @@ def main():
             combined_data, total_cells = combine_EPM(_data_files)
             write_epm(combined_data, total_cells, num_animals, output_dir_root, stem)
         else:
-            combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type)
+            combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type, filter_significant=False, drop_multisense=False)
             write_odor(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
 
