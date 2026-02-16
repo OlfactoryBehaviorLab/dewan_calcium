@@ -37,7 +37,7 @@ def _check_file(path, name):
 def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     return_dict = {}
 
-    if exp_type == 'Concentration' or exp_type == 'Identity':
+    if exp_type in ['Concentration', 'Identity', 'Social']:
         return_dict['folder'] = animal_dir
 
         data_file = animal_dir.glob('Analysis/Output/combined/*combined_data_dff.pickle')
@@ -58,7 +58,7 @@ def _find_data_files(animal_dir: Path, exp_type: str, error: bool = False):
     return_dict['file'] = _check_file(data_file, 'combined data file')
 
 
-    if exp_type == 'Identity' or exp_type == 'Concentration':
+    if exp_type in ['Concentration', 'Identity', 'Social']:
         FV_timestamps_file = list(FV_timestamps)
         significance_file = list(significance_file)
         odor_data_file = list(odor_data_file)
