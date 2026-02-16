@@ -469,7 +469,9 @@ def main():
             combined_data, total_cells = combine_EPM(_data_files)
             write_epm(combined_data, total_cells, num_animals, output_dir_root, stem)
         else:
-            combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type, filter_significant=False, drop_multisense=False)
+            combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type) # Filtered output
+            # combined_data, combined_significance_table, stats, cells = combine_odor_data(_data_files, _type, experiment_type, filter_significant=False, drop_multisense=False)
+            # Unfiltered Output
             write_odor(combined_data, combined_significance_table, output_dir_root, stem, stats, cells, num_animals)
 
 
