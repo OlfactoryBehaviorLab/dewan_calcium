@@ -228,9 +228,9 @@ def find_trials(time_data, debug=False) -> tuple[dict, list[int]]:
     trial_indices = {}
     for i, (name, data) in enumerate(time_data.items()):
         trial_periods = {}
-        baseline_indices = np.where(data < 0)[0]
-        odor_indices = np.where(data >=0)[0]
-        post_indices = np.where(data >= ODOR_TIME_S)[0]
+        baseline_indices = data.index[np.where(data < 0)[0]]
+        odor_indices = data.index[np.where(data >=0)[0]]
+        post_indices = data.index[np.where(data >= ODOR_TIME_S)[0]]
 
         baseline_frames = len(baseline_indices)
         post_frames = len(post_indices)
@@ -450,9 +450,9 @@ def combine_EPM(files: list):
 
 def main():
     animal_types = ['OXTR']
-    experiment_type = 'Social'
-    input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\4_Social_Odor')
-    output_dir_root = Path(r'R:\2_Inscopix\1_DTT\5_Combined\Social_Odor')
+    experiment_type = 'Concentration'
+    input_dir = Path(r'R:\2_Inscopix\1_DTT\1_OdorAnalysis\1_Concentration')
+    output_dir_root = Path(r'R:\2_Inscopix\1_DTT\5_Combined\Conc')
     output_dir_root.mkdir(exist_ok=True, parents=True)
 
     data_files = get_project_files.get_folders(input_dir, experiment_type, animal_types, error=False)
