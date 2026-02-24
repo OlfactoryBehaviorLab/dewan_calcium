@@ -65,11 +65,13 @@ def shuffled_distribution(all_vector: pd.DataFrame, test_data_size: int) -> np.n
 
 
 def _pseudotrial_auroc(pseudotrial_groups):
-    # group_1, group_2 = pseudotrial_groups
-    # cell, g1_data = group_1
-    # _, g2_data = group_2
 
-    cell, g1_data, g2_data = pseudotrial_groups
+    if len(pseudotrial_groups) == 2:
+        group_1, group_2 = pseudotrial_groups
+        cell, g1_data = group_1
+        _, g2_data = group_2
+    else:
+        cell, g1_data, g2_data = pseudotrial_groups
 
     try:
 
