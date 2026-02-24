@@ -4,6 +4,10 @@ def normalize_odors(odor_list, experiment_type, cell_class):
         if cell_class == 'VGAT':
             for odor in odor_list:
                 normalized.append(if_two_remove(odor))
+        if cell_class == 'OXTR':
+            for odor in odor_list:
+                _odor = if_sep_remove(odor, ['-', '_'])
+                normalized.append(if_two_remove(_odor))
 
     if experiment_type == 'Social' and cell_class == 'OXTR':
         for odor in odor_list:
@@ -11,7 +15,7 @@ def normalize_odors(odor_list, experiment_type, cell_class):
 
     elif experiment_type == 'Concentration':
         for odor in odor_list:
-            _odor = if_sep_remove(odor, ['-', '_'])
+            _odor = if_sep_remove_conc(odor, ['-', '_'])
             normalized.append(if_two_remove(_odor))
 
     if not normalized:
@@ -25,7 +29,7 @@ def if_two_remove(odor):
     else:
         return odor
 
-def if_sep_remove(odor, separators):
+def if_sep_remove_conc(odor, separators):
     for separator in separators:
         if separator in odor:
             odor_parts = odor.split(separator)
@@ -34,7 +38,19 @@ def if_sep_remove(odor, separators):
                 _odor = "".join([odor_parts[1], odor_parts[0]])
             except ValueError:
                 _odor = "".join([odor_parts[0], odor_parts[1]])
+            return _odor
 
+    return odor
+
+def if_sep_remove(odor, separators):
+    for separator in separators:
+        if separator in odor:
+            odor_parts = odor.split(separator)
+            try:
+                _ = int(odor_parts[0])
+                _odor = "".join([odor_parts[0], odor_parts[1]])
+            except ValueError:
+                _odor = "".join([odor_parts[1], odor_parts[0]])
             return _odor
 
     return odor
