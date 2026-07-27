@@ -449,20 +449,29 @@ def plot_all_avg_dff(combined_data_dff, fig_save_path):
     # (1.000, (0.094, 1.000, 0.000))))
 
     # New Orleans (VGLUT ID)
-    cm = LinearSegmentedColormap.from_list('my_gradient', (
-    # Edit this gradient at https://eltos.github.io/gradient/#0:5D2A9B-19.3:C18FFD-25:FFFFFF-39:FFFFFF-44.5:58C153-100:008C00
+    # cm = LinearSegmentedColormap.from_list('my_gradient', (
+    # # Edit this gradient at https://eltos.github.io/gradient/#0:5D2A9B-19.3:C18FFD-25:FFFFFF-39:FFFFFF-44.5:58C153-100:008C00
+    # (0.000, (0.365, 0.165, 0.608)),
+    # (0.193, (0.757, 0.561, 0.992)),
+    # (0.250, (1.000, 1.000, 1.000)),
+    # (0.390, (1.000, 1.000, 1.000)),
+    # (0.445, (0.345, 0.757, 0.325)),
+    # (1.000, (0.000, 0.549, 0.000))))
+
+    cm = LinearSegmentedColormap.from_list('my gradient', (
+    # Edit this gradient at https://eltos.github.io/gradient/#0:5D2A9B-13.3:C18FFD-21.1:FFFFFF-30.3:FFFFFF-38.7:58C153-100:008C00
     (0.000, (0.365, 0.165, 0.608)),
-    (0.193, (0.757, 0.561, 0.992)),
-    (0.250, (1.000, 1.000, 1.000)),
-    (0.390, (1.000, 1.000, 1.000)),
-    (0.445, (0.345, 0.757, 0.325)),
+    (0.133, (0.757, 0.561, 0.992)),
+    (0.2, (1.000, 1.000, 1.000)),
+    (0.3, (1.000, 1.000, 1.000)),
+    (0.38, (0.345, 0.757, 0.325)),
     (1.000, (0.000, 0.549, 0.000))))
 
-    im = ax.imshow(combined_data_dff, aspect=.25, vmax=0.1, vmin=-0.05, cmap=cm)
+    im = ax.imshow(combined_data_dff, aspect=.25, vmax=12, vmin=-4, cmap=cm)
     ax.set_xticks(np.arange(combined_data_dff.shape[1]), labels=[])
     ax.set_yticks(np.arange(combined_data_dff.shape[0]), labels=[])
     _ = ax.vlines(x=[3.5, 7.5, 11.5, 15.5, 19.5], ymin=0, ymax=combined_data_dff.shape[0]-1, linestyles='--', color='k')
-    _ = fig.colorbar(im, ticks=np.linspace(-0.05, 0.1, 7, endpoint=True), shrink=0.5, aspect=40)
+    _ = fig.colorbar(im, ticks=np.linspace(-4, 12, 9, endpoint=True), shrink=0.5, aspect=40)
     plt.tight_layout()
 
     output_path = fig_save_path.joinpath('combined_DFF.pdf')
